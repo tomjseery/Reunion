@@ -48,12 +48,12 @@ public readonly partial struct UnitResult<TError> :
     bool IUnionMembers.TryGetValue(out Success value)
     {
         value = default;
-        return this.tag == SuccessTag;
+        return this.tag is SuccessTag;
     }
 
     bool IUnionMembers.TryGetValue(out Failure<TError> value)
     {
-        if (this.tag == FailureTag)
+        if (this.tag is FailureTag)
         {
             value = new Failure<TError>(this.error!);
             return true;

@@ -18,7 +18,7 @@ public readonly partial struct Option<T> : IEquatable<Option<T>>
     }
 
     /// <summary>Gets whether the option contains a value.</summary>
-    public bool IsSome => this.tag == SomeTag;
+    public bool IsSome => this.tag is SomeTag;
 
     /// <summary>Gets whether the option contains no value.</summary>
     public bool IsNone => !this.IsSome;

@@ -49,7 +49,7 @@ public readonly partial struct Result<TValue, TError> :
 
     bool IUnionMembers.TryGetValue(out Success<TValue> value)
     {
-        if (this.tag == SuccessTag)
+        if (this.tag is SuccessTag)
         {
             value = new Success<TValue>(this.value!);
             return true;
@@ -61,7 +61,7 @@ public readonly partial struct Result<TValue, TError> :
 
     bool IUnionMembers.TryGetValue(out Failure<TError> value)
     {
-        if (this.tag == FailureTag)
+        if (this.tag is FailureTag)
         {
             value = new Failure<TError>(this.error!);
             return true;

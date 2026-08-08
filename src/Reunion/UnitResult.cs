@@ -38,7 +38,7 @@ public readonly partial struct UnitResult<TError> : IEquatable<UnitResult<TError
         get
         {
             this.EnsureInitialized();
-            return this.tag == SuccessTag;
+            return this.tag is SuccessTag;
         }
     }
 
@@ -48,7 +48,7 @@ public readonly partial struct UnitResult<TError> : IEquatable<UnitResult<TError
         get
         {
             this.EnsureInitialized();
-            return this.tag == FailureTag;
+            return this.tag is FailureTag;
         }
     }
 
@@ -69,7 +69,7 @@ public readonly partial struct UnitResult<TError> : IEquatable<UnitResult<TError
         ArgumentNullException.ThrowIfNull(success);
         ArgumentNullException.ThrowIfNull(failure);
 
-        return this.tag == SuccessTag ? success() : failure(this.error!);
+        return this.tag is SuccessTag ? success() : failure(this.error!);
     }
 
     /// <summary>Invokes the callback for the active case.</summary>
@@ -79,7 +79,7 @@ public readonly partial struct UnitResult<TError> : IEquatable<UnitResult<TError
         ArgumentNullException.ThrowIfNull(success);
         ArgumentNullException.ThrowIfNull(failure);
 
-        if (this.tag == SuccessTag)
+        if (this.tag is SuccessTag)
             success();
         else
             failure(this.error!);
@@ -90,7 +90,7 @@ public readonly partial struct UnitResult<TError> : IEquatable<UnitResult<TError
     {
         this.EnsureInitialized();
         error = this.error;
-        return this.tag == FailureTag;
+        return this.tag is FailureTag;
     }
 
     /// <summary>Composes the result with another result-producing operation.</summary>
@@ -100,7 +100,7 @@ public readonly partial struct UnitResult<TError> : IEquatable<UnitResult<TError
         ArgumentNullException.ThrowIfNull(bind);
         ArgumentNullException.ThrowIfNull(mapError);
 
-        if (this.tag == FailureTag)
+        if (this.tag is FailureTag)
             return Result.Failure(mapError(this.error!));
 
         var result = bind();
@@ -118,7 +118,7 @@ public readonly partial struct UnitResult<TError> : IEquatable<UnitResult<TError
         ArgumentNullException.ThrowIfNull(bind);
         ArgumentNullException.ThrowIfNull(mapError);
 
-        if (this.tag == FailureTag)
+        if (this.tag is FailureTag)
             return Result.Failure<TValue>(mapError(this.error!));
 
         var result = bind();
@@ -132,7 +132,7 @@ public readonly partial struct UnitResult<TError> : IEquatable<UnitResult<TError
         this.EnsureInitialized();
         ArgumentNullException.ThrowIfNull(bind);
 
-        if (this.tag == FailureTag)
+        if (this.tag is FailureTag)
             return this;
 
         var result = bind();
@@ -147,7 +147,7 @@ public readonly partial struct UnitResult<TError> : IEquatable<UnitResult<TError
         this.EnsureInitialized();
         ArgumentNullException.ThrowIfNull(bind);
 
-        if (this.tag == FailureTag)
+        if (this.tag is FailureTag)
             return Result.Failure<TValue, TError>(this.error!);
 
         var result = bind();
@@ -162,7 +162,7 @@ public readonly partial struct UnitResult<TError> : IEquatable<UnitResult<TError
         this.EnsureInitialized();
         ArgumentNullException.ThrowIfNull(map);
 
-        return this.tag == SuccessTag
+        return this.tag is SuccessTag
             ? UnitResult.Success<TNextError>()
             : UnitResult.Failure(map(this.error!));
     }
@@ -173,7 +173,7 @@ public readonly partial struct UnitResult<TError> : IEquatable<UnitResult<TError
         this.EnsureInitialized();
         ArgumentNullException.ThrowIfNull(action);
 
-        if (this.tag == SuccessTag)
+        if (this.tag is SuccessTag)
             action();
 
         return this;
@@ -185,7 +185,7 @@ public readonly partial struct UnitResult<TError> : IEquatable<UnitResult<TError
         this.EnsureInitialized();
         ArgumentNullException.ThrowIfNull(action);
 
-        if (this.tag == FailureTag)
+        if (this.tag is FailureTag)
             action(this.error!);
 
         return this;
@@ -197,7 +197,7 @@ public readonly partial struct UnitResult<TError> : IEquatable<UnitResult<TError
         this.EnsureInitialized();
         ArgumentNullException.ThrowIfNull(fallback);
 
-        if (this.tag == SuccessTag)
+        if (this.tag is SuccessTag)
             return this;
 
         fallback(this.error!);
@@ -210,7 +210,7 @@ public readonly partial struct UnitResult<TError> : IEquatable<UnitResult<TError
         this.EnsureInitialized();
         ArgumentNullException.ThrowIfNull(fallback);
 
-        if (this.tag == SuccessTag)
+        if (this.tag is SuccessTag)
             return this;
 
         var result = fallback(this.error!);
@@ -224,7 +224,7 @@ public readonly partial struct UnitResult<TError> : IEquatable<UnitResult<TError
         if (this.tag != other.tag)
             return false;
 
-        return this.tag != FailureTag
+        return this.tag is not FailureTag
             || EqualityComparer<TError>.Default.Equals(this.error!, other.error!);
     }
 
@@ -234,7 +234,7 @@ public readonly partial struct UnitResult<TError> : IEquatable<UnitResult<TError
 
     /// <summary>Returns the hash code for this value.</summary>
     public override int GetHashCode() =>
-        this.tag == FailureTag
+        this.tag is FailureTag
             ? HashCode.Combine(this.tag, EqualityComparer<TError>.Default.GetHashCode(this.error!))
             : HashCode.Combine(this.tag);
 
@@ -260,7 +260,7 @@ public readonly partial struct UnitResult<TError> : IEquatable<UnitResult<TError
         if (this.tag is not SuccessTag and not FailureTag)
             throw new InvalidOperationException("The UnitResult is uninitialized.");
 
-        if (this.tag == FailureTag && this.error is null)
+        if (this.tag is FailureTag && this.error is null)
             throw new InvalidOperationException("The UnitResult failure has no error.");
     }
 }

@@ -44,12 +44,12 @@ public readonly partial struct Result : IUnion, Result.IUnionMembers
     bool IUnionMembers.TryGetValue(out Success value)
     {
         value = default;
-        return this.tag == SuccessTag;
+        return this.tag is SuccessTag;
     }
 
     bool IUnionMembers.TryGetValue(out Failure<string> value)
     {
-        if (this.tag == FailureTag)
+        if (this.tag is FailureTag)
         {
             value = new Failure<string>(this.error!);
             return true;
