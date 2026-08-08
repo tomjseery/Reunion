@@ -108,6 +108,26 @@ public readonly partial struct Result<TValue, TError> : IEquatable<Result<TValue
             : Result.Failure<TNext, TError>(this.error!);
     }
 
+    /// <summary>Projects a successful value for C# query-expression support.</summary>
+    public Result<TNext, TError> Select<TNext>(Func<TValue, TNext> selector)
+        where TNext : notnull =>
+        this.Map(selector);
+
+    /// <summary>Composes and projects successful values for C# query-expression support.</summary>
+    public Result<TResult, TError> SelectMany<TIntermediate, TResult>(
+        Func<TValue, Result<TIntermediate, TError>> bind,
+        Func<TValue, TIntermediate, TResult> project)
+        where TIntermediate : notnull
+        where TResult : notnull
+    {
+        this.EnsureInitialized();
+        ArgumentNullException.ThrowIfNull(bind);
+        ArgumentNullException.ThrowIfNull(project);
+
+        return this.Bind(value =>
+            bind(value).Map(intermediate => project(value, intermediate)));
+    }
+
     /// <summary>Composes the result with another result-producing operation.</summary>
     public Result Bind(
         Func<TValue, Result> bind,

@@ -2,6 +2,21 @@
 override Reunion.Option<T>.Equals(object? obj) -> bool
 override Reunion.Option<T>.GetHashCode() -> int
 override Reunion.Option<T>.ToString() -> string!
+override Reunion.Failure<TError>.Equals(object? obj) -> bool
+override Reunion.Failure<TError>.GetHashCode() -> int
+override Reunion.Failure<TError>.ToString() -> string!
+override Reunion.None.Equals(object? obj) -> bool
+override Reunion.None.GetHashCode() -> int
+override Reunion.None.ToString() -> string!
+override Reunion.Some<T>.Equals(object? obj) -> bool
+override Reunion.Some<T>.GetHashCode() -> int
+override Reunion.Some<T>.ToString() -> string!
+override Reunion.Success.Equals(object? obj) -> bool
+override Reunion.Success.GetHashCode() -> int
+override Reunion.Success.ToString() -> string!
+override Reunion.Success<TValue>.Equals(object? obj) -> bool
+override Reunion.Success<TValue>.GetHashCode() -> int
+override Reunion.Success<TValue>.ToString() -> string!
 override Reunion.Result.Equals(object? obj) -> bool
 override Reunion.Result.GetHashCode() -> int
 override Reunion.Result.ToString() -> string!
@@ -16,10 +31,17 @@ override Reunion.UnitResult<TError>.GetHashCode() -> int
 override Reunion.UnitResult<TError>.ToString() -> string!
 Reunion.Failure<TError>
 Reunion.Failure<TError>.Error.get -> TError
+Reunion.Failure<TError>.Deconstruct(out TError error) -> void
+Reunion.Failure<TError>.Equals(Reunion.Failure<TError> other) -> bool
 Reunion.Failure<TError>.Failure() -> void
 Reunion.Failure<TError>.Failure(TError error) -> void
+static Reunion.Failure<TError>.operator !=(Reunion.Failure<TError> left, Reunion.Failure<TError> right) -> bool
+static Reunion.Failure<TError>.operator ==(Reunion.Failure<TError> left, Reunion.Failure<TError> right) -> bool
 Reunion.None
+Reunion.None.Equals(Reunion.None other) -> bool
 Reunion.None.None() -> void
+static Reunion.None.operator !=(Reunion.None left, Reunion.None right) -> bool
+static Reunion.None.operator ==(Reunion.None left, Reunion.None right) -> bool
 Reunion.Option
 Reunion.Option<T>
 Reunion.Option<T>.Bind<TResult>(System.Func<T, Reunion.Option<TResult>>! bind) -> Reunion.Option<TResult>
@@ -33,20 +55,33 @@ Reunion.Option<T>.Option() -> void
 Reunion.Option<T>.OrElse(System.Func<Reunion.Option<T>>! fallback) -> Reunion.Option<T>
 Reunion.Option<T>.OrFailure<TError>(System.Func<TError>! errorFactory) -> Reunion.Result<T, TError>
 Reunion.Option<T>.OrFailure<TError>(TError error) -> Reunion.Result<T, TError>
+Reunion.Option<T>.Select<TResult>(System.Func<T, TResult>! selector) -> Reunion.Option<TResult>
+Reunion.Option<T>.SelectMany<TIntermediate, TResult>(System.Func<T, Reunion.Option<TIntermediate>>! bind, System.Func<T, TIntermediate, TResult>! project) -> Reunion.Option<TResult>
 Reunion.Option<T>.TryGetValue(out T value) -> bool
 Reunion.Option<T>.ValueOr(T fallback) -> T
 Reunion.Option<T>.ValueOrElse(System.Func<T>! fallback) -> T
 Reunion.OptionExtensions
 Reunion.Some<T>
+Reunion.Some<T>.Deconstruct(out T value) -> void
+Reunion.Some<T>.Equals(Reunion.Some<T> other) -> bool
 Reunion.Some<T>.Some() -> void
 Reunion.Some<T>.Some(T value) -> void
 Reunion.Some<T>.Value.get -> T
+static Reunion.Some<T>.operator !=(Reunion.Some<T> left, Reunion.Some<T> right) -> bool
+static Reunion.Some<T>.operator ==(Reunion.Some<T> left, Reunion.Some<T> right) -> bool
 Reunion.Success
+Reunion.Success.Equals(Reunion.Success other) -> bool
 Reunion.Success.Success() -> void
+static Reunion.Success.operator !=(Reunion.Success left, Reunion.Success right) -> bool
+static Reunion.Success.operator ==(Reunion.Success left, Reunion.Success right) -> bool
 Reunion.Success<TValue>
+Reunion.Success<TValue>.Deconstruct(out TValue value) -> void
+Reunion.Success<TValue>.Equals(Reunion.Success<TValue> other) -> bool
 Reunion.Success<TValue>.Success() -> void
 Reunion.Success<TValue>.Success(TValue value) -> void
 Reunion.Success<TValue>.Value.get -> TValue
+static Reunion.Success<TValue>.operator !=(Reunion.Success<TValue> left, Reunion.Success<TValue> right) -> bool
+static Reunion.Success<TValue>.operator ==(Reunion.Success<TValue> left, Reunion.Success<TValue> right) -> bool
 Reunion.Result
 Reunion.Result.Bind(System.Func<Reunion.Result>! bind) -> Reunion.Result
 Reunion.Result.Bind<TError>(System.Func<Reunion.UnitResult<TError>>! bind, System.Func<string!, TError>! mapError) -> Reunion.UnitResult<TError>
@@ -79,6 +114,8 @@ Reunion.Result<TValue, TError>.Match(System.Action<TValue>! success, System.Acti
 Reunion.Result<TValue, TError>.Match<TResult>(System.Func<TValue, TResult>! success, System.Func<TError, TResult>! failure) -> TResult
 Reunion.Result<TValue, TError>.Recover(System.Func<TError, TValue>! fallback) -> Reunion.Result<TValue, TError>
 Reunion.Result<TValue, TError>.RecoverWith(System.Func<TError, Reunion.Result<TValue, TError>>! fallback) -> Reunion.Result<TValue, TError>
+Reunion.Result<TValue, TError>.Select<TNext>(System.Func<TValue, TNext>! selector) -> Reunion.Result<TNext, TError>
+Reunion.Result<TValue, TError>.SelectMany<TIntermediate, TResult>(System.Func<TValue, Reunion.Result<TIntermediate, TError>>! bind, System.Func<TValue, TIntermediate, TResult>! project) -> Reunion.Result<TResult, TError>
 Reunion.Result<TValue, TError>.Result() -> void
 Reunion.Result<TValue, TError>.Tap(System.Action<TValue>! action) -> Reunion.Result<TValue, TError>
 Reunion.Result<TValue, TError>.TapError(System.Action<TError>! action) -> Reunion.Result<TValue, TError>
@@ -97,6 +134,8 @@ Reunion.Result<TValue>.Match(System.Action<TValue>! success, System.Action<strin
 Reunion.Result<TValue>.Match<TResult>(System.Func<TValue, TResult>! success, System.Func<string!, TResult>! failure) -> TResult
 Reunion.Result<TValue>.Recover(System.Func<string!, TValue>! fallback) -> Reunion.Result<TValue>
 Reunion.Result<TValue>.RecoverWith(System.Func<string!, Reunion.Result<TValue>>! fallback) -> Reunion.Result<TValue>
+Reunion.Result<TValue>.Select<TNext>(System.Func<TValue, TNext>! selector) -> Reunion.Result<TNext>
+Reunion.Result<TValue>.SelectMany<TIntermediate, TResult>(System.Func<TValue, Reunion.Result<TIntermediate>>! bind, System.Func<TValue, TIntermediate, TResult>! project) -> Reunion.Result<TResult>
 Reunion.Result<TValue>.Result() -> void
 Reunion.Result<TValue>.Tap(System.Action<TValue>! action) -> Reunion.Result<TValue>
 Reunion.Result<TValue>.TapError(System.Action<string!>! action) -> Reunion.Result<TValue>

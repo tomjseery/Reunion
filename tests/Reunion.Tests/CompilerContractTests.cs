@@ -133,6 +133,22 @@ public sealed class CompilerContractTests
     }
 
     [Fact]
+    public void DefaultResultsMatchTheUnionNullState()
+    {
+        Assert.Equal("uninitialized", MatchDefault(default(Result)));
+        Assert.Equal("uninitialized", MatchDefault(default(Result<int>)));
+        Assert.Equal("uninitialized", MatchDefault(default(Result<int, string>)));
+        Assert.Equal("uninitialized", MatchDefault(default(UnitResult<string>)));
+    }
+
+    [Fact]
+    public void NamedCasesSupportPositionalPatterns()
+    {
+        Assert.Equal("42", MatchPositional(Result.Success<int, string>(42)));
+        Assert.Equal("error", MatchPositional(Result.Failure<int, string>("error")));
+    }
+
+    [Fact]
     public void UnionAccessorsAreNotExposedDirectlyOnFunctionalTypes()
     {
         Assert.Empty(PublicTryGetValueMethods(typeof(Result)));
@@ -219,6 +235,40 @@ public sealed class CompilerContractTests
     {
         Some<string> some => some.Value,
         None _ => "none"
+    };
+
+    private static string MatchDefault(Result result) => result switch
+    {
+        null => "uninitialized",
+        Success _ => "success",
+        Failure<string> failure => failure.Error
+    };
+
+    private static string MatchDefault(Result<int> result) => result switch
+    {
+        null => "uninitialized",
+        Success<int> success => success.Value.ToString(),
+        Failure<string> failure => failure.Error
+    };
+
+    private static string MatchDefault(Result<int, string> result) => result switch
+    {
+        null => "uninitialized",
+        Success<int> success => success.Value.ToString(),
+        Failure<string> failure => failure.Error
+    };
+
+    private static string MatchDefault(UnitResult<string> result) => result switch
+    {
+        null => "uninitialized",
+        Success _ => "success",
+        Failure<string> failure => failure.Error
+    };
+
+    private static string MatchPositional(Result<int, string> result) => result switch
+    {
+        Success<int>(var value) => value.ToString(),
+        Failure<string>(var error) => error
     };
 
     private static string MatchInstrumented(InstrumentedUnion union) => union switch

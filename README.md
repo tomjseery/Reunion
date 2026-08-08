@@ -16,11 +16,34 @@ The public family is `Result`, `Result<TValue>`, `Result<TValue, TError>`,
 > The .NET 11 custom-union support currently depends on preview language and runtime features. It is
 > intended for preview packages until .NET 11 and C# 15 reach general availability. The .NET 10 API
 > uses shipping language/runtime behavior and does not require preview features.
+>
+> The pinned Preview 6 compiler unwraps existing property patterns such as
+> `result is { IsSuccess: true }` to the contained case and rejects a typed
+> `Result<TValue, TError> { ... }` pattern. Use `IsSuccess`/`IsFailure` directly, `Match`, or named
+> case patterns in the preview asset. The current C# proposal specifies instance-first behavior for
+> these patterns, but Reunion will not claim that compatibility until it passes against a released
+> SDK. See [dotnet/roslyn#83055](https://github.com/dotnet/roslyn/issues/83055).
+
+## What Reunion optimizes for
+
+Reunion is deliberately strict at the boundaries of the type system:
+
+- Results are created explicitly; raw values and errors do not implicitly become Results.
+- Payloads are read through `Match`, `TryGetValue`, and `TryGetError`; there is no accessor that
+  throws merely because the caller selected the wrong case.
+- Success and failure use distinct case types, so `Result<T, T>` remains fully discriminated.
+- A default Result is an explicit uninitialized union state and rejects operational use; a default
+  Option is `None`.
+- The functional and native-union views use the same storage, validation, cases, and semantics.
+
+These are intentional tradeoffs rather than claims that another Result library cannot technically
+implement custom unions. Reunion can make them foundational guarantees because its API was designed
+with the union model in mind, before compatibility constraints accumulated.
 
 ## Conventional API on .NET 10 and .NET 11
 
 ```csharp
-var result = Result.Success<User, Error>(user);
+var result = Result<User, Error>.Success(user);
 
 var message = result.Match(
     success => success.Name,
@@ -29,7 +52,22 @@ var message = result.Match(
 
 Both target frameworks also expose the shared named case value types: `Success`,
 `Success<TValue>`, `Failure<TError>`, `Some<T>`, and `None`. Payload-bearing cases reject `null`, and
-conversions into a Result or Option revalidate the case through the normal factories.
+the .NET 11 case conversions revalidate them through the normal Result/Option factories. Cases
+have value equality, readable formatting, and payload deconstruction:
+
+```csharp
+var description = result.Match(
+    static value => $"found {value.Name}",
+    static error => $"failed: {error.Message}");
+
+var query =
+    from user in FindUser(id)
+    from account in FindAccount(user.AccountId)
+    select (user, account);
+```
+
+`Result<TValue>`, `Result<TValue, TError>`, and `Option<T>` support this minimal LINQ query syntax
+by forwarding to their existing fail-fast `Map` and `Bind` semantics.
 
 ## Native union matching on .NET 11
 
@@ -48,8 +86,8 @@ Result<User, Error> result = GetUser();
 
 var message = result switch
 {
-    Success<User> success => success.Value.Name,
-    Failure<Error> failure => failure.Error.Message,
+    Success<User>(var user) => user.Name,
+    Failure<Error>(var error) => error.Message,
 };
 ```
 

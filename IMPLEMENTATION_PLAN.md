@@ -130,6 +130,11 @@ The case types will be public readonly value types with runtime validation:
 - `Some<T>` contains `Value`.
 - `None` is the no-payload absence marker.
 
+Payload cases provide value equality, stable diagnostic formatting, and `Deconstruct` members so
+the same named cases are pleasant to use in ordinary code and positional union patterns. Marker
+cases have marker value semantics: every `Success` equals every other `Success`, and every `None`
+equals every other `None`.
+
 Every Result/Option construction boundary must revalidate wrapper contents. A caller can produce
 `default(Success<string>)` even if the wrapper's normal constructor rejects null, so the receiving
 factory/provider cannot blindly trust a wrapper value.
@@ -165,6 +170,9 @@ Migration changes:
 5. Add XML documentation to the public surface.
 6. Do not add application error types, HTTP mappings, ASP.NET integrations, logging, serialization
    policy, or error-taxonomy abstractions to the core package.
+7. Provide the minimal `Select`/`SelectMany` surface needed for LINQ query expressions on
+   `Result<TValue>`, `Result<TValue, TError>`, and `Option<T>`, forwarding to the same validated,
+   fail-fast `Map`/`Bind` implementation.
 
 The source audit found no Concertable-specific dependency beyond the namespace. The migrated code
 should remain package-dependency-free.
@@ -186,6 +194,7 @@ Behavioral tests must cover:
 - Collection ordering, first-failure behavior, empty inputs, selector invocation counts, and
   cancellation before and during traversal.
 - Same-type `Result<T, T>` throughout the synchronous and asynchronous API.
+- LINQ query projection, failure/None propagation, and callback laziness.
 
 Create and approve a public API baseline before further refactoring. This guards the large task
 extension surface against accidentally losing overloads during the namespace migration.
@@ -234,14 +243,24 @@ The `net11.0` test leg must compile consumer-style snippets, not only call the A
 - `Result<string, string>` success and failure patterns.
 - Reference-type and value-type payloads.
 - Existing `TryGetValue(out var value)` calls remain unambiguous.
-- Existing property, type, and switch patterns do not regress after `[Union]` is applied.
+- Track existing property, type, and switch pattern compatibility as the preview compiler's union
+  matching rules evolve.
+- Positional patterns deconstruct named case payloads.
 - Pattern matching does not use the boxing `Value` path.
 - `IUnion.Value` returns only a declared case or null for an uninitialized Result.
+- Every default Result family member matches the union's null/uninitialized state.
 - `default(Option<T>)` matches `None`.
 - Invalid/default case wrappers cannot bypass Result/Option validation.
 
 Run these tests against every adopted .NET 11 preview/RC SDK. Pin SDK upgrades in `global.json` and
 review compiler diagnostic changes rather than floating silently between previews.
+
+The pinned Preview 6 compiler applies an untyped property pattern to a union's contained value and
+rejects a type pattern naming the union itself. This is the behavior reported in
+`dotnet/roslyn#83055`; it cannot be corrected by a custom union implementation. The current language
+proposal instead specifies that an untyped property pattern targets the union instance and that a
+type pattern tests the instance before its value. Those compatibility cases become mandatory
+compiler-contract tests as soon as an adopted SDK implements the revised rules.
 
 ## Phase 6: project and CI configuration
 

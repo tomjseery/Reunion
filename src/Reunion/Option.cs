@@ -68,6 +68,25 @@ public readonly partial struct Option<T> : IEquatable<Option<T>>
             : Option.None<TResult>();
     }
 
+    /// <summary>Projects a present value for C# query-expression support.</summary>
+    public Option<TResult> Select<TResult>(Func<T, TResult> selector)
+        where TResult : notnull =>
+        this.Map(selector);
+
+    /// <summary>Composes and projects present values for C# query-expression support.</summary>
+    public Option<TResult> SelectMany<TIntermediate, TResult>(
+        Func<T, Option<TIntermediate>> bind,
+        Func<T, TIntermediate, TResult> project)
+        where TIntermediate : notnull
+        where TResult : notnull
+    {
+        ArgumentNullException.ThrowIfNull(bind);
+        ArgumentNullException.ThrowIfNull(project);
+
+        return this.Bind(value =>
+            bind(value).Map(intermediate => project(value, intermediate)));
+    }
+
     /// <summary>Composes the result with another result-producing operation.</summary>
     public Option<TResult> Bind<TResult>(Func<T, Option<TResult>> bind)
         where TResult : notnull
