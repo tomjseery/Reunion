@@ -9,6 +9,7 @@
   <PropertyGroup>
     <IsPackable>true</IsPackable>
     <PackageId>Reunion</PackageId>
+    <Version>0.0.1</Version>
     <Description>A Result/Option library for .NET, designed to adopt C# native union types as they ship.</Description>
     <Authors>Thomas Seery</Authors>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
