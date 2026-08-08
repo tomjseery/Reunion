@@ -23,6 +23,15 @@ public sealed class UnitResultTests
         Assert.Throws<ArgumentNullException>(() => UnitResult.Failure<string>(null!));
     }
 
+    [Theory]
+    [InlineData("")]
+    [InlineData(" ")]
+    public void FailureFactoriesRejectEmptyStringErrors(string error)
+    {
+        Assert.Throws<ArgumentException>(() => UnitResult<string>.Failure(error));
+        Assert.Throws<ArgumentException>(() => UnitResult.Failure(error));
+    }
+
     [Fact]
     public void MatchAndBind_EachCase_InvokesOnlySelectedDelegate()
     {
@@ -120,8 +129,5 @@ public sealed class UnitResultTests
         Assert.Equal("Uninitialized", default(UnitResult<string>).ToString());
         Assert.Empty(type.GetConstructors(BindingFlags.Public | BindingFlags.Instance));
         Assert.DoesNotContain(type.GetProperties(), property => property.Name is "Value" or "Error");
-        Assert.DoesNotContain(
-            type.GetMethods(BindingFlags.Public | BindingFlags.Static),
-            method => method.Name == "op_Implicit");
     }
 }

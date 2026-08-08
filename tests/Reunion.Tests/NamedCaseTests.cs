@@ -29,6 +29,14 @@ public sealed class NamedCaseTests
         Assert.Throws<ArgumentNullException>(() => new Some<string>(null!));
     }
 
+    [Theory]
+    [InlineData("")]
+    [InlineData(" ")]
+    public void StringFailureCasesRejectEmptyErrors(string error)
+    {
+        Assert.Throws<ArgumentException>(() => new Failure<string>(error));
+    }
+
     [Fact]
     public void DefaultPayloadCasesRemainInvalid()
     {

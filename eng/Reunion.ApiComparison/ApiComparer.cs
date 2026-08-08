@@ -1,10 +1,11 @@
 using System.Reflection;
-using System.Runtime.CompilerServices;
 
 namespace Reunion.ApiComparison;
 
 internal static class ApiComparer
 {
+    private const string UnionInterfaceName = "System.Runtime.CompilerServices.IUnion";
+
     private static readonly HashSet<string> ExpectedUnionTypes = new(StringComparer.Ordinal)
     {
         "Reunion.Result",
@@ -17,7 +18,9 @@ internal static class ApiComparer
     public static IReadOnlyList<string> Compare(Assembly net10, Assembly net11)
     {
         var errors = new List<string>();
-        var net10Surface = net10.GetPublicSurface(excludeUnionProviders: true);
+        var net10Surface = net10.GetPublicSurface(
+            excludeUnionProviders: true,
+            compatibilityConversionProviders: ExpectedUnionTypes);
         var net11Surface = net11.GetPublicSurface(excludeUnionProviders: true);
 
         AddDifferences(errors, "net10-only public API", net10Surface.Except(net11Surface));
@@ -27,8 +30,50 @@ internal static class ApiComparer
         var net11Types = net11.GetExportedTypesByName();
         ValidateInterfaces(errors, net10Types, net11Types);
         ValidateAddedTypes(errors, net10Types, net11Types);
+        ValidateCompatibilityConversions(errors, net10Types, net11Types);
 
         return errors;
+    }
+
+    public static IReadOnlyList<string> CompareExact(Assembly net10, Assembly net11)
+    {
+        var errors = new List<string>();
+        var net10Surface = net10.GetPublicSurface(excludeUnionProviders: false);
+        var net11Surface = net11.GetPublicSurface(excludeUnionProviders: false);
+
+        AddDifferences(errors, "net10-only public API", net10Surface.Except(net11Surface));
+        AddDifferences(errors, "net11-only public API", net11Surface.Except(net10Surface));
+        return errors;
+    }
+
+    private static void ValidateCompatibilityConversions(
+        ICollection<string> errors,
+        IReadOnlyDictionary<string, Type> net10Types,
+        IReadOnlyDictionary<string, Type> net11Types)
+    {
+        foreach (var typeName in ExpectedUnionTypes)
+        {
+            var net10Conversions = net10Types[typeName].GetMethods(
+                    BindingFlags.Public | BindingFlags.Static | BindingFlags.DeclaredOnly)
+                .Count(method => method.Name is "op_Implicit");
+            var net11Conversions = net11Types[typeName].GetMethods(
+                    BindingFlags.Public | BindingFlags.Static | BindingFlags.DeclaredOnly)
+                .Count(method => method.Name is "op_Implicit");
+
+            if (net10Conversions is not 2)
+            {
+                errors.Add(
+                    $"{typeName} must expose exactly two net10 case compatibility conversions; "
+                    + $"found {net10Conversions}.");
+            }
+
+            if (net11Conversions is not 0)
+            {
+                errors.Add(
+                    $"{typeName} must rely on native net11 union conversions; "
+                    + $"found {net11Conversions} metadata operators.");
+            }
+        }
     }
 
     private static void ValidateInterfaces(
@@ -51,7 +96,7 @@ internal static class ApiComparer
             if (ExpectedUnionTypes.Contains(typeName))
             {
                 var expectedProvider = typeName + "+IUnionMembers";
-                if (!addedInterfaces.SetEquals([typeof(IUnion).FullName!, expectedProvider]))
+                if (!addedInterfaces.SetEquals([UnionInterfaceName, expectedProvider]))
                 {
                     errors.Add($"{typeName} has unexpected added interfaces: {string.Join(", ", addedInterfaces)}");
                 }

@@ -106,18 +106,11 @@ public sealed class CompilerContractTests
     [Theory]
     [InlineData("")]
     [InlineData(" ")]
-    public void StringFailureConversionsPreserveWhitespaceValidation(string error)
+    public void StringFailureCasesShareWhitespaceValidation(string error)
     {
-        var failure = new Failure<string>(error);
-
-        Assert.Throws<ArgumentException>(() =>
-        {
-            Result _ = failure;
-        });
-        Assert.Throws<ArgumentException>(() =>
-        {
-            Result<int> _ = failure;
-        });
+        Assert.Throws<ArgumentException>(() => new Failure<string>(error));
+        Assert.Throws<ArgumentException>(() => Result.Failure<int, string>(error));
+        Assert.Throws<ArgumentException>(() => UnitResult.Failure(error));
     }
 
     [Fact]

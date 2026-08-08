@@ -51,7 +51,7 @@ public readonly partial struct Result<TValue, TError> : IEquatable<Result<TValue
     /// <summary>Creates a failed result.</summary>
     public static Result<TValue, TError> Failure(TError error)
     {
-        ArgumentNullException.ThrowIfNull(error);
+        ResultGuards.ThrowIfInvalidError(error, nameof(error));
         return new Result<TValue, TError>(FailureTag, default, error);
     }
 
@@ -327,7 +327,9 @@ public readonly partial struct Result<TValue, TError> : IEquatable<Result<TValue
         if (this.tag is SuccessTag && this.value is null)
             throw new InvalidOperationException("The Result success has no value.");
 
-        if (this.tag is FailureTag && this.error is null)
-            throw new InvalidOperationException("The Result failure has no error.");
+        if (this.tag is FailureTag)
+            ResultGuards.ThrowIfStoredErrorIsInvalid(
+                this.error,
+                "The Result failure has no error.");
     }
 }

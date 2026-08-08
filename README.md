@@ -51,11 +51,17 @@ var message = result.Match(
 ```
 
 Both target frameworks also expose the shared named case value types: `Success`,
-`Success<TValue>`, `Failure<TError>`, `Some<T>`, and `None`. Payload-bearing cases reject `null`, and
-the .NET 11 case conversions revalidate them through the normal Result/Option factories. Cases
-have value equality, readable formatting, and payload deconstruction:
+`Success<TValue>`, `Failure<TError>`, `Some<T>`, and `None`. Payload-bearing cases reject `null`,
+and `Failure<string>` also rejects empty or whitespace errors. Named cases implicitly convert to
+their compatible Result or Option on both targets: .NET 10 uses case-only compatibility operators,
+while .NET 11 uses native union conversions. Every conversion revalidates through the normal
+Result/Option factories. Cases have value equality, readable formatting, and payload
+deconstruction:
 
 ```csharp
+Result<User, Error> found = new Success<User>(user);
+Result<User, Error> failed = new Failure<Error>(error);
+
 var description = result.Match(
     static value => $"found {value.Name}",
     static error => $"failed: {error.Message}");
@@ -91,7 +97,8 @@ var message = result switch
 };
 ```
 
-Cases convert natively to their Result or Option union on .NET 11. Distinct wrappers keep
+Cases convert natively to their Result or Option union on .NET 11; the equivalent source syntax is
+provided by compatibility operators on .NET 10. Distinct wrappers keep
 `Result<string, string>` correctly discriminated, while Reunion's existing
 `TryGetValue(out var value)` API remains unambiguous. Compiler-generated matching uses strongly
 typed case accessors rather than the boxing `IUnion.Value` fallback.
@@ -118,6 +125,127 @@ NuGet.org remains available for SDK reference packs needed by clean or split SDK
 the restore check proves Reunion itself came from the generated package source.
 `eng/Inspect-Package.ps1` verifies the package identity, metadata, framework assets, and empty
 dependency groups before either consumer runs.
+
+## ASP.NET Core integration
+
+An `Option<T>` can already cross a domain boundary without knowing anything about HTTP by using
+`OrFailure` from the core package. Both eager and lazy errors are supported, and `Map`, `Bind`,
+`OrElse`, `ValueOr`, and `ValueOrElse` cover the other general-purpose option transformations:
+
+```csharp
+Result<User, DomainError> requiredUser = maybeUser.OrFailure(
+    () => new DomainError("not_found", "The user does not exist."));
+```
+
+`OrFailure` remains a core/domain operation; the HTTP methods below deliberately map only at the
+endpoint boundary.
+
+The dependency-free functional types and the optional endpoint adapters are separate packages:
+
+```xml
+<!-- Core Result and Option types only -->
+<PackageReference Include="Reunion" />
+
+<!-- Optional ASP.NET Core endpoint integration -->
+<PackageReference Include="Reunion.AspNetCore" />
+```
+
+`Reunion.AspNetCore` depends on `Reunion`; the core package never depends on ASP.NET Core. The
+integration package supports two deliberately separate programming models with the same semantic
+method names. Import exactly one mapping namespace in a source file:
+
+```csharp
+// Concrete TypedResults and Results<T1, T2> unions.
+using Reunion.AspNetCore.HttpResults;
+
+// MVC ActionResult<T> and ActionResult.
+using Reunion.AspNetCore.Mvc;
+```
+
+The `HttpResults` surface works in Minimal APIs and in API controllers. The MVC surface retains
+MVC action-result execution, configured output formatters, and content negotiation. Importing both
+mapping namespaces makes identical extension calls ambiguous by design rather than silently
+selecting an HTTP programming model.
+
+### Minimal API examples
+
+GET with `200 OK` or `404 Not Found`:
+
+```csharp
+app.MapGet("/users/{id:int}", async (int id, UserService service) =>
+    (await service.FindUser(id)).ToOkOrNotFound());
+```
+
+GET with `200 OK` or `204 No Content`:
+
+```csharp
+app.MapGet("/users/{id:int}/avatar", async (int id, UserService service) =>
+    (await service.FindAvatar(id)).ToOkOrNoContent());
+```
+
+GET with `200 OK` or a caller-mapped problem:
+
+```csharp
+app.MapGet("/users/{id:int}", async (int id, UserService service) =>
+    (await service.GetUser(id)).ToOkOrProblem(ToProblem));
+```
+
+POST with `201 Created`, a response body and a `Location` header, or a caller-mapped problem:
+
+```csharp
+app.MapPost("/users", async (CreateUserRequest request, UserService service) =>
+    (await service.CreateUser(request)).ToCreatedOrProblem(
+        user => $"/users/{user.Id}",
+        ToProblem));
+```
+
+DELETE with `204 No Content` or a caller-mapped problem:
+
+```csharp
+app.MapDelete("/users/{id:int}", async (int id, UserService service) =>
+    (await service.DeleteUser(id)).ToNoContentOrProblem(ToProblem));
+```
+
+The application owns the mapping from its error type to HTTP semantics:
+
+```csharp
+static ProblemHttpResult ToProblem(DomainError error) => error switch
+{
+    { Code: "not_found" } => TypedResults.Problem(
+        detail: error.Message,
+        statusCode: StatusCodes.Status404NotFound),
+    { Code: "conflict" } => TypedResults.Problem(
+        detail: error.Message,
+        statusCode: StatusCodes.Status409Conflict),
+    _ => TypedResults.Problem(
+        detail: error.Message,
+        statusCode: StatusCodes.Status500InternalServerError)
+};
+```
+
+The string-error `Result` families also have parameterless overloads. Because a string contains no
+reliable status classification, those overloads produce an explicit `500 Internal Server Error`
+problem with the string as its detail. Use the mapper overload whenever the string represents an
+expected client error.
+
+### MVC controller example
+
+MVC uses the same call names after importing `Reunion.AspNetCore.Mvc`:
+
+```csharp
+[HttpGet("{id:int}")]
+public async Task<ActionResult<User>> Get(int id) =>
+    (await service.GetUser(id)).ToOkOrProblem(error => new ProblemDetails
+    {
+        Status = error.Code == "not_found"
+            ? StatusCodes.Status404NotFound
+            : StatusCodes.Status500InternalServerError,
+        Detail = error.Message
+    });
+```
+
+MVC error mappers return `ProblemDetails` with an explicit status. Subtypes such as
+`ValidationProblemDetails`, including their structured errors and extensions, are preserved.
 
 ## License
 

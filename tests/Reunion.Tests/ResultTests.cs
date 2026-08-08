@@ -30,6 +30,15 @@ public sealed class ResultTests
         Assert.Throws<ArgumentNullException>(() => Result<string, string>.Failure(null!));
     }
 
+    [Theory]
+    [InlineData("")]
+    [InlineData(" ")]
+    public void Factories_EmptyStringErrors_ThrowArgumentException(string error)
+    {
+        Assert.Throws<ArgumentException>(() => Result.Failure<int, string>(error));
+        Assert.Throws<ArgumentException>(() => Result<int, string>.Failure(error));
+    }
+
     [Fact]
     public void CaseProperties_EachCase_ReportOnlySelectedCase()
     {
@@ -361,14 +370,13 @@ public sealed class ResultTests
     }
 
     [Fact]
-    public void PublicSurface_HasNoConstructorFieldsPayloadPropertiesOrImplicitConversions()
+    public void PublicSurface_HasNoConstructorFieldsOrPayloadProperties()
     {
         var type = typeof(Result<int, string>);
 
         Assert.Empty(type.GetConstructors(BindingFlags.Public | BindingFlags.Instance));
         Assert.Empty(type.GetFields(BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static));
         Assert.DoesNotContain(type.GetProperties(), property => property.Name is "Value" or "Error");
-        Assert.DoesNotContain(type.GetMethods(BindingFlags.Public | BindingFlags.Static), method => method.Name == "op_Implicit");
     }
 
     [Fact]

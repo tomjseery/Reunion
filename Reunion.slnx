@@ -1,8 +1,10 @@
 <Solution>
   <Folder Name="/src/">
     <Project Path="src/Reunion/Reunion.csproj" />
+    <Project Path="src/Reunion.AspNetCore/Reunion.AspNetCore.csproj" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/Reunion.AspNetCore.Tests/Reunion.AspNetCore.Tests.csproj" />
     <Project Path="tests/Reunion.Tests/Reunion.Tests.csproj" />
   </Folder>
   <Folder Name="/eng/">

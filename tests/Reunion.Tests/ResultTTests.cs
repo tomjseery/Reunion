@@ -263,9 +263,6 @@ public sealed class ResultTTests
         Assert.Equal("Uninitialized", default(Result<int>).ToString());
         Assert.Empty(type.GetConstructors(BindingFlags.Public | BindingFlags.Instance));
         Assert.DoesNotContain(type.GetProperties(), property => property.Name is "Value" or "Error");
-        Assert.DoesNotContain(
-            type.GetMethods(BindingFlags.Public | BindingFlags.Static),
-            method => method.Name == "op_Implicit");
     }
 
     private sealed class TestException : Exception;

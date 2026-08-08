@@ -135,7 +135,9 @@ the same named cases are pleasant to use in ordinary code and positional union p
 cases have marker value semantics: every `Success` equals every other `Success`, and every `None`
 equals every other `None`.
 
-Every Result/Option construction boundary must revalidate wrapper contents. A caller can produce
+Every Result/Option construction boundary must revalidate wrapper contents. String failure cases
+reject empty or whitespace errors consistently across the generic and string-specialized Result
+families. A caller can produce
 `default(Success<string>)` even if the wrapper's normal constructor rejects null, so the receiving
 factory/provider cannot blindly trust a wrapper value.
 
@@ -204,8 +206,10 @@ extension surface against accidentally losing overloads during the namespace mig
 Add `Success`, `Success<TValue>`, `Failure<TError>`, `Some<T>`, and `None` to the core package for
 both target frameworks.
 
-Route all conversions through the existing validated Result/Option factories. The case wrappers
-are part of the functional model and do not constitute an error taxonomy.
+Route all conversions through the existing validated Result/Option factories. Add case-only
+implicit operators on .NET 10 matching the conversions supplied by the native union contract on
+.NET 11. Do not add conversions from raw success values or errors. The case wrappers are part of
+the functional model and do not constitute an error taxonomy.
 
 Add ordinary construction tests on both TFMs so the case API is consistent even where the compiler
 does not yet recognize `[Union]`.

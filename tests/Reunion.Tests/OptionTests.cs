@@ -283,13 +283,12 @@ public sealed class OptionTests
     }
 
     [Fact]
-    public void PublicSurface_HasNoConstructorFieldsOrImplicitConversions()
+    public void PublicSurface_HasNoConstructorOrFields()
     {
         var type = typeof(Option<string>);
 
         Assert.Empty(type.GetConstructors(BindingFlags.Public | BindingFlags.Instance));
         Assert.Empty(type.GetFields(BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static));
-        Assert.DoesNotContain(type.GetMethods(BindingFlags.Public | BindingFlags.Static), method => method.Name == "op_Implicit");
     }
 
     [Fact]

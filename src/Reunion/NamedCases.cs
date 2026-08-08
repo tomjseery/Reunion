@@ -75,7 +75,7 @@ public readonly struct Failure<TError> : IEquatable<Failure<TError>>
     /// <param name="error">The failure error.</param>
     public Failure(TError error)
     {
-        ArgumentNullException.ThrowIfNull(error);
+        ResultGuards.ThrowIfInvalidError(error, nameof(error));
         this.Error = error;
     }
 

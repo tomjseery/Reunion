@@ -6,7 +6,8 @@ internal static class ReflectionExtensions
 {
     public static SortedSet<string> GetPublicSurface(
         this Assembly assembly,
-        bool excludeUnionProviders)
+        bool excludeUnionProviders,
+        IReadOnlySet<string>? compatibilityConversionProviders = null)
     {
         var surface = new SortedSet<string>(StringComparer.Ordinal);
         foreach (var type in assembly.GetExportedTypes())
@@ -24,6 +25,12 @@ internal static class ReflectionExtensions
                          | BindingFlags.DeclaredOnly))
             {
                 if (excludeUnionProviders && member is Type nestedType && nestedType.IsUnionProvider())
+                {
+                    continue;
+                }
+
+                if (compatibilityConversionProviders?.Contains(type.FullName!) is true
+                    && member is MethodInfo { Name: "op_Implicit" })
                 {
                     continue;
                 }

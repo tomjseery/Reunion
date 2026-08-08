@@ -58,7 +58,7 @@ public readonly partial struct UnitResult<TError> : IEquatable<UnitResult<TError
     /// <summary>Creates a failed result.</summary>
     public static UnitResult<TError> Failure(TError error)
     {
-        ArgumentNullException.ThrowIfNull(error);
+        ResultGuards.ThrowIfInvalidError(error, nameof(error));
         return new UnitResult<TError>(FailureTag, error);
     }
 
@@ -260,7 +260,9 @@ public readonly partial struct UnitResult<TError> : IEquatable<UnitResult<TError
         if (this.tag is not SuccessTag and not FailureTag)
             throw new InvalidOperationException("The UnitResult is uninitialized.");
 
-        if (this.tag is FailureTag && this.error is null)
-            throw new InvalidOperationException("The UnitResult failure has no error.");
+        if (this.tag is FailureTag)
+            ResultGuards.ThrowIfStoredErrorIsInvalid(
+                this.error,
+                "The UnitResult failure has no error.");
     }
 }
