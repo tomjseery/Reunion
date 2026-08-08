@@ -2,4 +2,10 @@
   <Folder Name="/src/">
     <Project Path="src/Reunion/Reunion.csproj" />
   </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Reunion.Tests/Reunion.Tests.csproj" />
+  </Folder>
+  <Folder Name="/eng/">
+    <Project Path="eng/Reunion.ApiComparison/Reunion.ApiComparison.csproj" />
+  </Folder>
 </Solution>
