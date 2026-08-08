@@ -132,7 +132,7 @@ public sealed class ResultTests
     }
 
     [Fact]
-    public void Bind_NoValueResult_PreservesSelectedCase()
+    public void Bind_UnitResult_PreservesSelectedCase()
     {
         var success = Result.Success<int, string>(2)
             .Bind(_ => UnitResult.Success<string>());

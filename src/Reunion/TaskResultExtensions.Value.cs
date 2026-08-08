@@ -68,6 +68,36 @@ public static partial class TaskResultExtensions
         return (await source.ConfigureAwait(false)).MapError(map);
     }
 
+    /// <summary>Asynchronously transforms the failure error while preserving success.</summary>
+    public static async Task<Result<TValue, TError>> MapErrorAsync<TValue, TError>(
+        this Result<TValue> result,
+        Func<string, Task<TError>> map)
+        where TValue : notnull
+        where TError : notnull
+    {
+        result.EnsureInitialized();
+        ArgumentNullException.ThrowIfNull(map);
+        if (result.TryGetValue(out var value))
+            return Result.Success<TValue, TError>(value);
+
+        result.TryGetError(out var error);
+        return Result.Failure<TValue, TError>(
+            await RequireTask(map(error!)).ConfigureAwait(false));
+    }
+
+    /// <summary>Asynchronously transforms the failure error while preserving success.</summary>
+    public static async Task<Result<TValue, TError>> MapErrorAsync<TValue, TError>(
+        this Task<Result<TValue>> source,
+        Func<string, Task<TError>> map)
+        where TValue : notnull
+        where TError : notnull
+    {
+        ArgumentNullException.ThrowIfNull(source);
+        return await (await source.ConfigureAwait(false))
+            .MapErrorAsync(map)
+            .ConfigureAwait(false);
+    }
+
     /// <summary>Validates a successful value against a predicate.</summary>
     public static async Task<Result<TValue>> Ensure<TValue>(
         this Task<Result<TValue>> source,
@@ -231,6 +261,35 @@ public static partial class TaskResultExtensions
         return await (await source.ConfigureAwait(false)).BindAsync(bind).ConfigureAwait(false);
     }
 
+    /// <summary>Asynchronously composes the result with another result-producing operation.</summary>
+    public static async Task<Result> BindAsync<TValue>(
+        this Result<TValue> result,
+        Func<TValue, Task<Result>> bind)
+        where TValue : notnull
+    {
+        result.EnsureInitialized();
+        ArgumentNullException.ThrowIfNull(bind);
+        if (result.TryGetError(out var error))
+            return Result.Failure(error);
+
+        result.TryGetValue(out var value);
+        var bound = await RequireTask(bind(value!)).ConfigureAwait(false);
+        bound.EnsureInitialized();
+        return bound;
+    }
+
+    /// <summary>Asynchronously composes the result with another result-producing operation.</summary>
+    public static async Task<Result> BindAsync<TValue>(
+        this Task<Result<TValue>> source,
+        Func<TValue, Task<Result>> bind)
+        where TValue : notnull
+    {
+        ArgumentNullException.ThrowIfNull(source);
+        return await (await source.ConfigureAwait(false))
+            .BindAsync(bind)
+            .ConfigureAwait(false);
+    }
+
     /// <summary>Asynchronously validates a successful value.</summary>
     public static async Task<Result<TValue>> EnsureAsync<TValue>(
         this Result<TValue> result,
@@ -334,6 +393,34 @@ public static partial class TaskResultExtensions
         ArgumentNullException.ThrowIfNull(source);
         return await (await source.ConfigureAwait(false))
             .RecoverWithAsync(fallback)
+            .ConfigureAwait(false);
+    }
+
+    /// <summary>Asynchronously recovers from a failure.</summary>
+    public static async Task<Result<TValue>> RecoverAsync<TValue>(
+        this Result<TValue> result,
+        Func<string, Task<TValue>> fallback)
+        where TValue : notnull
+    {
+        result.EnsureInitialized();
+        ArgumentNullException.ThrowIfNull(fallback);
+        if (result.TryGetValue(out _))
+            return result;
+
+        result.TryGetError(out var error);
+        return Result.Success(
+            await RequireTask(fallback(error!)).ConfigureAwait(false));
+    }
+
+    /// <summary>Asynchronously recovers from a failure.</summary>
+    public static async Task<Result<TValue>> RecoverAsync<TValue>(
+        this Task<Result<TValue>> source,
+        Func<string, Task<TValue>> fallback)
+        where TValue : notnull
+    {
+        ArgumentNullException.ThrowIfNull(source);
+        return await (await source.ConfigureAwait(false))
+            .RecoverAsync(fallback)
             .ConfigureAwait(false);
     }
 }

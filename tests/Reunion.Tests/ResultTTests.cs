@@ -3,7 +3,7 @@ using System.Reflection;
 
 namespace Reunion.Tests;
 
-public sealed class ValueResultTests
+public sealed class ResultTTests
 {
     [Fact]
     public void FactoriesPropertiesAndTryGet_CreateSelectedCases()

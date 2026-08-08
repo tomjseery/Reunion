@@ -2,7 +2,7 @@ using Reunion;
 
 namespace Reunion.Tests;
 
-public sealed class NoValueResultTaskExtensionsTests
+public sealed class ResultAndUnitResultTaskExtensionsTests
 {
     [Fact]
     public async Task StatusTaskSource_SynchronousCombinators_PreserveError()

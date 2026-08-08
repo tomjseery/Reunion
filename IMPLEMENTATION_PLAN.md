@@ -143,13 +143,14 @@ For `Option<T>`, union `HasValue` means “the union contains a case,” not “
 Copy these files from the read-only Concertable reference into `src/Reunion`:
 
 - `Result.cs`
+- `ResultT.cs`
+- `ResultTE.cs`
 - `Option.cs`
-- `ValueResult.cs`
 - `UnitResult.cs`
-- `ResultTaskExtensions.cs`
-- `ResultTaskExtensions.NoValue.cs`
-- `ValueResultTaskExtensions.cs`
-- `OptionTaskExtensions.cs`
+- `TaskResultExtensions.cs`
+- `TaskResultExtensions.Value.cs`
+- `TaskResultExtensions.NoValue.cs`
+- `TaskOptionExtensions.cs`
 - `ResultCollectionExtensions.cs`
 
 Migration changes:
@@ -205,8 +206,8 @@ does not yet recognize `[Union]`.
 Add conditional partial files for:
 
 - `Result.Union.cs`
-- `ResultOfT.Union.cs`
-- `ResultOfTError.Union.cs`
+- `ResultT.Union.cs`
+- `ResultTE.Union.cs`
 - `UnitResult.Union.cs`
 - `Option.Union.cs`
 
