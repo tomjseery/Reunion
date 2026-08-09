@@ -1,0 +1,8 @@
+#nullable enable
+Reunion.Errors.OptionErrorExtensions
+static Reunion.Errors.OptionErrorExtensions.OrNotFound<T, TError>(this Reunion.Option<T> option, System.Func<TError>! errorFactory) -> Reunion.Result<T, TError>
+static Reunion.Errors.OptionErrorExtensions.OrNotFound<T, TError>(this Reunion.Option<T> option, TError error) -> Reunion.Result<T, TError>
+static Reunion.Errors.OptionErrorExtensions.OrNotFound<T, TError>(this System.Threading.Tasks.Task<Reunion.Option<T>>! source, System.Func<TError>! errorFactory) -> System.Threading.Tasks.Task<Reunion.Result<T, TError>>!
+static Reunion.Errors.OptionErrorExtensions.OrNotFound<T, TError>(this System.Threading.Tasks.Task<Reunion.Option<T>>! source, TError error) -> System.Threading.Tasks.Task<Reunion.Result<T, TError>>!
+static Reunion.Errors.OptionErrorExtensions.OrNotFoundAsync<T, TError>(this Reunion.Option<T> option, System.Func<System.Threading.Tasks.Task<TError>!>! errorFactory) -> System.Threading.Tasks.Task<Reunion.Result<T, TError>>!
+static Reunion.Errors.OptionErrorExtensions.OrNotFoundAsync<T, TError>(this System.Threading.Tasks.Task<Reunion.Option<T>>! source, System.Func<System.Threading.Tasks.Task<TError>!>! errorFactory) -> System.Threading.Tasks.Task<Reunion.Result<T, TError>>!
