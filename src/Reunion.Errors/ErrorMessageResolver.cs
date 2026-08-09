@@ -7,10 +7,10 @@ internal static partial class ErrorMessageResolver
 {
     private static readonly ConcurrentDictionary<Type, string> Cache = new();
 
-    internal static string Of(Type caseType) =>
-        Cache.GetOrAdd(caseType, Resolve);
+    internal static string Resolve(Type caseType) =>
+        Cache.GetOrAdd(caseType, ResolveUncached);
 
-    private static string Resolve(Type caseType)
+    private static string ResolveUncached(Type caseType)
     {
         var caseName = caseType.Name.EndsWith("Case", StringComparison.Ordinal)
             ? caseType.Name[..^"Case".Length]

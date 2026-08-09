@@ -148,11 +148,11 @@ public abstract partial record ErrorDefinition
                 + "\"Payer not found.\").");
         }
 
-        return ErrorCodeResolver.Of(ownerType, caseType);
+        return ErrorCodeResolver.Resolve(ownerType, caseType);
     }
 
     private static string ResolveMessage<TCase>() =>
-        ErrorMessageResolver.Of(typeof(TCase));
+        ErrorMessageResolver.Resolve(typeof(TCase));
 
     private static string ValidateMessage(string message)
     {
