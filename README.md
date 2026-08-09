@@ -15,8 +15,7 @@ The same functional type family ships in both package assets:
 
 The public family is `Result`, `Result<TValue>`, `Result<TValue, TError>`,
 `UnitResult<TError>`, and `Option<T>`. The `Reunion` core package has no runtime or transitive package
-dependencies; optional error, typed-error Option, and ASP.NET Core concerns live in companion
-packages.
+dependencies; optional error and ASP.NET Core concerns live in companion packages.
 
 > [!IMPORTANT]
 > The .NET 11 custom-union support currently depends on preview language and runtime features. It is
@@ -197,29 +196,6 @@ var definition = ErrorDefinition.For<UserLookupError>()
 that union. This keeps `Result<TValue, TError>` strongly typed while avoiding repeated codes,
 classifications, and consistent messages at every return site.
 
-### Typed-error Option extensions
-
-`Reunion.Errors.Extensions` is the optional bridge between the dependency-free functional core and
-the independent error definitions package:
-
-```xml
-<PackageReference Include="Reunion.Errors.Extensions" />
-```
-
-It adds `OrNotFound(...)` as Result-based semantic sugar over the core `OrFailure(...)` operation.
-The error remains the consumer-owned `IError` union/root; a `NotFoundError` is the metadata exposed
-by that error, not the Result's error type:
-
-```csharp
-UserLookupError missing = new UserLookupError.UserNotFound();
-Result<User, UserLookupError> requiredUser = maybeUser.OrNotFound(missing);
-```
-
-Eager and lazy typed errors, `Task<Option<T>>` receivers, and asynchronous error factories are
-supported. Lazy factories run once only for `None`; task faults, exceptions, and cancellation flow
-through unchanged. These methods delegate to `OrFailure` and never use exceptions or display-name
-resolution to represent absence.
-
 ## ASP.NET Core integration
 
 An `Option<T>` can already cross a domain boundary without knowing anything about HTTP by using
@@ -227,7 +203,8 @@ An `Option<T>` can already cross a domain boundary without knowing anything abou
 `OrElse`, `ValueOr`, and `ValueOrElse` cover the other general-purpose option transformations:
 
 ```csharp
-Result<User, DomainError> requiredUser = maybeUser.OrFailure(
+Option<User> userOption = FindUser(userId);
+Result<User, DomainError> requiredUser = userOption.OrFailure(
     () => new DomainError("not_found", "The user does not exist."));
 ```
 
@@ -243,18 +220,14 @@ The dependency-free functional types and the optional endpoint adapters are sepa
 <!-- Optional transport-neutral typed error definitions -->
 <PackageReference Include="Reunion.Errors" />
 
-<!-- Optional Option-to-typed-Result conveniences -->
-<PackageReference Include="Reunion.Errors.Extensions" />
-
 <!-- Optional ASP.NET Core endpoint integration -->
 <PackageReference Include="Reunion.AspNetCore" />
 ```
 
-`Reunion.Errors` is independent of the core functional types. `Reunion.Errors.Extensions` depends
-only on `Reunion` and `Reunion.Errors`. `Reunion.AspNetCore` also depends on both and supplies their
-optional endpoint integration; the core package never depends on either companion. The ASP.NET Core
-package supports two deliberately separate programming models with the same semantic method names.
-Import exactly one mapping namespace in a source file:
+`Reunion.Errors` is independent of the core functional types. `Reunion.AspNetCore` depends outward
+on both `Reunion` and `Reunion.Errors`; neither dependency points back to the endpoint integration.
+The ASP.NET Core package supports two deliberately separate programming models with the same
+semantic method names. Import exactly one mapping namespace in a source file:
 
 ```csharp
 // Concrete TypedResults and Results<T1, T2> unions.
