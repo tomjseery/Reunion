@@ -1,0 +1,55 @@
+#nullable enable
+override Reunion.Validation.Invalid.Equals(object? obj) -> bool
+override Reunion.Validation.Invalid.GetHashCode() -> int
+override Reunion.Validation.Invalid.ToString() -> string!
+override Reunion.Validation.Valid.Equals(object? obj) -> bool
+override Reunion.Validation.Valid.GetHashCode() -> int
+override Reunion.Validation.Valid.ToString() -> string!
+override Reunion.Validation.ValidationResult.Equals(object? obj) -> bool
+override Reunion.Validation.ValidationResult.GetHashCode() -> int
+override Reunion.Validation.ValidationResult.ToString() -> string!
+Reunion.Validation.Invalid
+Reunion.Validation.Invalid.Deconstruct(out Reunion.Errors.ValidationErrors! errors) -> void
+Reunion.Validation.Invalid.Equals(Reunion.Validation.Invalid other) -> bool
+Reunion.Validation.Invalid.Errors.get -> Reunion.Errors.ValidationErrors!
+Reunion.Validation.Invalid.Invalid() -> void
+Reunion.Validation.Invalid.Invalid(Reunion.Errors.ValidationErrors! errors) -> void
+Reunion.Validation.TaskValidationResultExtensions
+Reunion.Validation.Valid
+Reunion.Validation.Valid.Equals(Reunion.Validation.Valid other) -> bool
+Reunion.Validation.Valid.Valid() -> void
+Reunion.Validation.ValidationResult
+Reunion.Validation.ValidationResult.Combine(Reunion.Validation.ValidationResult other) -> Reunion.Validation.ValidationResult
+Reunion.Validation.ValidationResult.Equals(Reunion.Validation.ValidationResult other) -> bool
+Reunion.Validation.ValidationResult.IsInvalid.get -> bool
+Reunion.Validation.ValidationResult.IsValid.get -> bool
+Reunion.Validation.ValidationResult.Match(System.Action! valid, System.Action<Reunion.Errors.ValidationErrors!>! invalid) -> void
+Reunion.Validation.ValidationResult.Match<TResult>(System.Func<TResult>! valid, System.Func<Reunion.Errors.ValidationErrors!, TResult>! invalid) -> TResult
+Reunion.Validation.ValidationResult.TryGetErrors(out Reunion.Errors.ValidationErrors? errors) -> bool
+Reunion.Validation.ValidationResult.ValidationResult() -> void
+Reunion.Validation.ValidationResultExtensions
+static Reunion.Validation.Invalid.operator !=(Reunion.Validation.Invalid left, Reunion.Validation.Invalid right) -> bool
+static Reunion.Validation.Invalid.operator ==(Reunion.Validation.Invalid left, Reunion.Validation.Invalid right) -> bool
+static Reunion.Validation.TaskValidationResultExtensions.Match(this System.Threading.Tasks.Task<Reunion.Validation.ValidationResult>! source, System.Action! valid, System.Action<Reunion.Errors.ValidationErrors!>! invalid) -> System.Threading.Tasks.Task!
+static Reunion.Validation.TaskValidationResultExtensions.Match<TResult>(this System.Threading.Tasks.Task<Reunion.Validation.ValidationResult>! source, System.Func<TResult>! valid, System.Func<Reunion.Errors.ValidationErrors!, TResult>! invalid) -> System.Threading.Tasks.Task<TResult>!
+static Reunion.Validation.TaskValidationResultExtensions.MatchAsync(this Reunion.Validation.ValidationResult validation, System.Func<System.Threading.Tasks.Task!>! valid, System.Func<Reunion.Errors.ValidationErrors!, System.Threading.Tasks.Task!>! invalid) -> System.Threading.Tasks.Task!
+static Reunion.Validation.TaskValidationResultExtensions.MatchAsync(this System.Threading.Tasks.Task<Reunion.Validation.ValidationResult>! source, System.Func<System.Threading.Tasks.Task!>! valid, System.Func<Reunion.Errors.ValidationErrors!, System.Threading.Tasks.Task!>! invalid) -> System.Threading.Tasks.Task!
+static Reunion.Validation.TaskValidationResultExtensions.MatchAsync<TResult>(this Reunion.Validation.ValidationResult validation, System.Func<System.Threading.Tasks.Task<TResult>!>! valid, System.Func<Reunion.Errors.ValidationErrors!, System.Threading.Tasks.Task<TResult>!>! invalid) -> System.Threading.Tasks.Task<TResult>!
+static Reunion.Validation.TaskValidationResultExtensions.MatchAsync<TResult>(this System.Threading.Tasks.Task<Reunion.Validation.ValidationResult>! source, System.Func<System.Threading.Tasks.Task<TResult>!>! valid, System.Func<Reunion.Errors.ValidationErrors!, System.Threading.Tasks.Task<TResult>!>! invalid) -> System.Threading.Tasks.Task<TResult>!
+static Reunion.Validation.TaskValidationResultExtensions.ToResult(this System.Threading.Tasks.Task<Reunion.Validation.ValidationResult>! source) -> System.Threading.Tasks.Task<Reunion.UnitResult<Reunion.Errors.ValidationErrors!>>!
+static Reunion.Validation.TaskValidationResultExtensions.ToResult<TError>(this System.Threading.Tasks.Task<Reunion.Validation.ValidationResult>! source, System.Func<Reunion.Errors.ValidationErrors!, TError>! errorMapper) -> System.Threading.Tasks.Task<Reunion.UnitResult<TError>>!
+static Reunion.Validation.TaskValidationResultExtensions.ToResult<TValue, TError>(this System.Threading.Tasks.Task<Reunion.Validation.ValidationResult>! source, System.Func<TValue>! successFactory, System.Func<Reunion.Errors.ValidationErrors!, TError>! errorMapper) -> System.Threading.Tasks.Task<Reunion.Result<TValue, TError>>!
+static Reunion.Validation.TaskValidationResultExtensions.ToResult<TValue>(this System.Threading.Tasks.Task<Reunion.Validation.ValidationResult>! source, System.Func<TValue>! successFactory) -> System.Threading.Tasks.Task<Reunion.Result<TValue, Reunion.Errors.ValidationErrors!>>!
+static Reunion.Validation.Valid.operator !=(Reunion.Validation.Valid left, Reunion.Validation.Valid right) -> bool
+static Reunion.Validation.Valid.operator ==(Reunion.Validation.Valid left, Reunion.Validation.Valid right) -> bool
+static Reunion.Validation.ValidationResult.Invalid(Reunion.Errors.ValidationErrors! errors) -> Reunion.Validation.ValidationResult
+static Reunion.Validation.ValidationResult.operator !=(Reunion.Validation.ValidationResult left, Reunion.Validation.ValidationResult right) -> bool
+static Reunion.Validation.ValidationResult.operator ==(Reunion.Validation.ValidationResult left, Reunion.Validation.ValidationResult right) -> bool
+static Reunion.Validation.ValidationResult.Valid() -> Reunion.Validation.ValidationResult
+static Reunion.Validation.ValidationResultExtensions.Combine(this System.Collections.Generic.IEnumerable<Reunion.Validation.ValidationResult>! source) -> Reunion.Validation.ValidationResult
+static Reunion.Validation.ValidationResultExtensions.ToResult(this Reunion.Validation.ValidationResult validation) -> Reunion.UnitResult<Reunion.Errors.ValidationErrors!>
+static Reunion.Validation.ValidationResultExtensions.ToResult<TError>(this Reunion.Validation.ValidationResult validation, System.Func<Reunion.Errors.ValidationErrors!, TError>! errorMapper) -> Reunion.UnitResult<TError>
+static Reunion.Validation.ValidationResultExtensions.ToResult<TValue, TError>(this Reunion.Validation.ValidationResult validation, System.Func<TValue>! successFactory, System.Func<Reunion.Errors.ValidationErrors!, TError>! errorMapper) -> Reunion.Result<TValue, TError>
+static Reunion.Validation.ValidationResultExtensions.ToResult<TValue>(this Reunion.Validation.ValidationResult validation, System.Func<TValue>! successFactory) -> Reunion.Result<TValue, Reunion.Errors.ValidationErrors!>
+static Reunion.Validation.ValidationResultExtensions.TryGetFailure(this Reunion.Validation.ValidationResult validation, out Reunion.Failure<Reunion.Errors.ValidationErrors!> failure) -> bool
+static Reunion.Validation.ValidationResultExtensions.TryGetFailure<TError>(this Reunion.Validation.ValidationResult validation, System.Func<Reunion.Errors.ValidationErrors!, TError>! errorMapper, out Reunion.Failure<TError> failure) -> bool

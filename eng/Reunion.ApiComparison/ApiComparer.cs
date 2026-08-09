@@ -6,31 +6,35 @@ internal static class ApiComparer
 {
     private const string UnionInterfaceName = "System.Runtime.CompilerServices.IUnion";
 
-    private static readonly HashSet<string> ExpectedUnionTypes = new(StringComparer.Ordinal)
+    private static readonly HashSet<string> KnownUnionTypes = new(StringComparer.Ordinal)
     {
         "Reunion.Result",
         "Reunion.Result`1",
         "Reunion.Result`2",
         "Reunion.UnitResult`1",
-        "Reunion.Option`1"
+        "Reunion.Option`1",
+        "Reunion.Validation.ValidationResult"
     };
 
     public static IReadOnlyList<string> Compare(Assembly net10, Assembly net11)
     {
         var errors = new List<string>();
+        var net10Types = net10.GetExportedTypesByName();
+        var net11Types = net11.GetExportedTypesByName();
+        var expectedUnionTypes = KnownUnionTypes
+            .Where(net11Types.ContainsKey)
+            .ToHashSet(StringComparer.Ordinal);
         var net10Surface = net10.GetPublicSurface(
             excludeUnionProviders: true,
-            compatibilityConversionProviders: ExpectedUnionTypes);
+            compatibilityConversionProviders: expectedUnionTypes);
         var net11Surface = net11.GetPublicSurface(excludeUnionProviders: true);
 
         AddDifferences(errors, "net10-only public API", net10Surface.Except(net11Surface));
         AddDifferences(errors, "unexpected net11-only public API", net11Surface.Except(net10Surface));
 
-        var net10Types = net10.GetExportedTypesByName();
-        var net11Types = net11.GetExportedTypesByName();
-        ValidateInterfaces(errors, net10Types, net11Types);
-        ValidateAddedTypes(errors, net10Types, net11Types);
-        ValidateCompatibilityConversions(errors, net10Types, net11Types);
+        ValidateInterfaces(errors, net10Types, net11Types, expectedUnionTypes);
+        ValidateAddedTypes(errors, net10Types, net11Types, expectedUnionTypes);
+        ValidateCompatibilityConversions(errors, net10Types, net11Types, expectedUnionTypes);
 
         return errors;
     }
@@ -49,9 +53,10 @@ internal static class ApiComparer
     private static void ValidateCompatibilityConversions(
         ICollection<string> errors,
         IReadOnlyDictionary<string, Type> net10Types,
-        IReadOnlyDictionary<string, Type> net11Types)
+        IReadOnlyDictionary<string, Type> net11Types,
+        IReadOnlySet<string> expectedUnionTypes)
     {
-        foreach (var typeName in ExpectedUnionTypes)
+        foreach (var typeName in expectedUnionTypes)
         {
             var net10Conversions = net10Types[typeName].GetMethods(
                     BindingFlags.Public | BindingFlags.Static | BindingFlags.DeclaredOnly)
@@ -79,7 +84,8 @@ internal static class ApiComparer
     private static void ValidateInterfaces(
         ICollection<string> errors,
         IReadOnlyDictionary<string, Type> net10Types,
-        IReadOnlyDictionary<string, Type> net11Types)
+        IReadOnlyDictionary<string, Type> net11Types,
+        IReadOnlySet<string> expectedUnionTypes)
     {
         foreach (var typeName in net10Types.Keys.Intersect(net11Types.Keys, StringComparer.Ordinal))
         {
@@ -93,7 +99,7 @@ internal static class ApiComparer
                 errors.Add($"{typeName} lost interfaces: {string.Join(", ", removedInterfaces)}");
             }
 
-            if (ExpectedUnionTypes.Contains(typeName))
+            if (expectedUnionTypes.Contains(typeName))
             {
                 var expectedProvider = typeName + "+IUnionMembers";
                 if (!addedInterfaces.SetEquals([UnionInterfaceName, expectedProvider]))
@@ -111,12 +117,13 @@ internal static class ApiComparer
     private static void ValidateAddedTypes(
         ICollection<string> errors,
         IReadOnlyDictionary<string, Type> net10Types,
-        IReadOnlyDictionary<string, Type> net11Types)
+        IReadOnlyDictionary<string, Type> net11Types,
+        IReadOnlySet<string> expectedUnionTypes)
     {
         var addedTypes = net11Types.Keys
             .Except(net10Types.Keys, StringComparer.Ordinal)
             .ToHashSet(StringComparer.Ordinal);
-        var expectedProviders = ExpectedUnionTypes
+        var expectedProviders = expectedUnionTypes
             .Select(name => name + "+IUnionMembers")
             .ToHashSet(StringComparer.Ordinal);
 

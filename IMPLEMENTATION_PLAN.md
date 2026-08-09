@@ -321,6 +321,8 @@ The initial package boundary is:
   combinators.
 - `Reunion.Errors`: reusable error building blocks generalized from Concertable, delivered from a
   separate project and NuGet package.
+- `Reunion.Validation`: focused `Valid | Invalid(ValidationErrors)` results, validation-error
+  accumulation, and explicit Result-family interoperability.
 - `Reunion.AspNetCore`: endpoint-boundary adapters and the optional HTTP mapping for typed error
   definitions.
 
@@ -333,6 +335,28 @@ from the explicit error owner and case type, while strong definition records ret
 policy, the generic `ToResults`/`ToActionResult` terminal adapters, automatic `IError` convenience
 overloads, validation-problem conversion, and integration with ASP.NET Core problem-details
 customization. Arbitrary error types and string errors continue to require an explicit mapper.
+
+`Reunion.Validation` also depends on `Reunion` and `Reunion.Errors`, but remains separate from
+ASP.NET Core. `ValidationResult` is a one-field wrapper over `UnitResult<ValidationErrors>` with the
+fixed cases `Valid` and `Invalid`; it is not a generic replacement for `UnitResult<TError>` and does
+not replace application-owned domain error unions. This boundary keeps structured validation
+accumulation optional while preserving the dependency-free and validation-agnostic core.
+
+Binary and collection `Combine` operations accumulate all validation failures. For repeated
+fields, messages remain in left-to-right encounter order and duplicates are preserved. Inputs are
+never mutated; combining two invalid values creates a new immutable `ValidationErrors` collection.
+Explicit `ToResult` and `TryGetFailure` operations bridge to the existing Result family. Raw
+`ValidationErrors` never converts implicitly to `ValidationResult`.
+
+The shared `Match` API requires both cases on net10 and net11. The net11 asset additionally exposes
+the native custom-union provider so `Valid` and positional `Invalid(var errors)` switches are
+compiler-proven exhaustive. As with the core package, later frameworks rely on NuGet's nearest
+compatible asset selection until Reunion adopts and validates a framework-specific asset.
+
+The representation guarantee is narrow: `ValidationResult` adds no allocation or storage overhead
+relative to `UnitResult<ValidationErrors>`. It contains exactly that one field and has the same
+instance size. Delegate creation and immutable error merging can allocate independently of wrapper
+storage.
 
 The projects, tests, API baselines, package inspection, and clean transitive consumers for these
 boundaries are part of the main solution and CI. Their release cadence must not force unnecessary
