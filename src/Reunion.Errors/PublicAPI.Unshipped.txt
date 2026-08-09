@@ -18,22 +18,6 @@ Reunion.Errors.ErrorDefinition.Code.get -> string!
 Reunion.Errors.ErrorDefinition.Code.init -> void
 Reunion.Errors.ErrorDefinition.Message.get -> string!
 Reunion.Errors.ErrorDefinition.Message.init -> void
-Reunion.Errors.ErrorDefinitions<TError>
-Reunion.Errors.ErrorDefinitions<TError>.Conflict<TCase>() -> Reunion.Errors.ConflictError!
-Reunion.Errors.ErrorDefinitions<TError>.Conflict<TCase>(string! message) -> Reunion.Errors.ConflictError!
-Reunion.Errors.ErrorDefinitions<TError>.ErrorDefinitions() -> void
-Reunion.Errors.ErrorDefinitions<TError>.Forbidden<TCase>() -> Reunion.Errors.ForbiddenError!
-Reunion.Errors.ErrorDefinitions<TError>.Forbidden<TCase>(string! message) -> Reunion.Errors.ForbiddenError!
-Reunion.Errors.ErrorDefinitions<TError>.Invalid<TCase>() -> Reunion.Errors.InvalidError!
-Reunion.Errors.ErrorDefinitions<TError>.Invalid<TCase>(string! message) -> Reunion.Errors.InvalidError!
-Reunion.Errors.ErrorDefinitions<TError>.NotFound<TCase>() -> Reunion.Errors.NotFoundError!
-Reunion.Errors.ErrorDefinitions<TError>.NotFound<TCase>(string! message) -> Reunion.Errors.NotFoundError!
-Reunion.Errors.ErrorDefinitions<TError>.PaymentRequired<TCase>() -> Reunion.Errors.PaymentRequiredError!
-Reunion.Errors.ErrorDefinitions<TError>.PaymentRequired<TCase>(string! message) -> Reunion.Errors.PaymentRequiredError!
-Reunion.Errors.ErrorDefinitions<TError>.Unauthenticated<TCase>() -> Reunion.Errors.UnauthenticatedError!
-Reunion.Errors.ErrorDefinitions<TError>.Unauthenticated<TCase>(string! message) -> Reunion.Errors.UnauthenticatedError!
-Reunion.Errors.ErrorDefinitions<TError>.Validation<TCase>(Reunion.Errors.ValidationErrors! errors) -> Reunion.Errors.ValidationError!
-Reunion.Errors.ErrorDefinitions<TError>.Validation<TCase>(string! message, Reunion.Errors.ValidationErrors! errors) -> Reunion.Errors.ValidationError!
 Reunion.Errors.ErrorKind
 Reunion.Errors.ErrorKind.Conflict = 2 -> Reunion.Errors.ErrorKind
 Reunion.Errors.ErrorKind.Forbidden = 4 -> Reunion.Errors.ErrorKind
@@ -58,10 +42,23 @@ Reunion.Errors.ValidationErrors.ToDictionary() -> System.Collections.Generic.IRe
 Reunion.Errors.ValidationErrors.ValidationErrors(System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string!, string!>>! errors) -> void
 Reunion.Errors.ValidationErrors.ValidationErrors(System.Collections.Generic.IReadOnlyDictionary<string!, string![]!>! errors) -> void
 static Reunion.Errors.ErrorDefinition.Conflict(string! code, string! message) -> Reunion.Errors.ConflictError!
-static Reunion.Errors.ErrorDefinition.For<TError>() -> Reunion.Errors.ErrorDefinitions<TError>
+static Reunion.Errors.ErrorDefinition.Conflict<TCase>() -> Reunion.Errors.ConflictError!
+static Reunion.Errors.ErrorDefinition.Conflict<TCase>(string! message) -> Reunion.Errors.ConflictError!
 static Reunion.Errors.ErrorDefinition.Forbidden(string! code, string! message) -> Reunion.Errors.ForbiddenError!
+static Reunion.Errors.ErrorDefinition.Forbidden<TCase>() -> Reunion.Errors.ForbiddenError!
+static Reunion.Errors.ErrorDefinition.Forbidden<TCase>(string! message) -> Reunion.Errors.ForbiddenError!
 static Reunion.Errors.ErrorDefinition.Invalid(string! code, string! message) -> Reunion.Errors.InvalidError!
+static Reunion.Errors.ErrorDefinition.Invalid<TCase>() -> Reunion.Errors.InvalidError!
+static Reunion.Errors.ErrorDefinition.Invalid<TCase>(string! message) -> Reunion.Errors.InvalidError!
 static Reunion.Errors.ErrorDefinition.NotFound(string! code, string! message) -> Reunion.Errors.NotFoundError!
+static Reunion.Errors.ErrorDefinition.NotFound<TCase>() -> Reunion.Errors.NotFoundError!
+static Reunion.Errors.ErrorDefinition.NotFound<TCase>(string! message) -> Reunion.Errors.NotFoundError!
 static Reunion.Errors.ErrorDefinition.PaymentRequired(string! code, string! message) -> Reunion.Errors.PaymentRequiredError!
+static Reunion.Errors.ErrorDefinition.PaymentRequired<TCase>() -> Reunion.Errors.PaymentRequiredError!
+static Reunion.Errors.ErrorDefinition.PaymentRequired<TCase>(string! message) -> Reunion.Errors.PaymentRequiredError!
 static Reunion.Errors.ErrorDefinition.Unauthenticated(string! code, string! message) -> Reunion.Errors.UnauthenticatedError!
+static Reunion.Errors.ErrorDefinition.Unauthenticated<TCase>() -> Reunion.Errors.UnauthenticatedError!
+static Reunion.Errors.ErrorDefinition.Unauthenticated<TCase>(string! message) -> Reunion.Errors.UnauthenticatedError!
 static Reunion.Errors.ErrorDefinition.Validation(string! code, string! message, Reunion.Errors.ValidationErrors! errors) -> Reunion.Errors.ValidationError!
+static Reunion.Errors.ErrorDefinition.Validation<TCase>(Reunion.Errors.ValidationErrors! errors) -> Reunion.Errors.ValidationError!
+static Reunion.Errors.ErrorDefinition.Validation<TCase>(string! message, Reunion.Errors.ValidationErrors! errors) -> Reunion.Errors.ValidationError!
