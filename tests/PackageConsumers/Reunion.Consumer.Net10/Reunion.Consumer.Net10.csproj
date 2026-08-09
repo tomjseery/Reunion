@@ -12,6 +12,7 @@
 
   <ItemGroup>
     <PackageReference Include="Reunion" Version="$(ReunionPackageVersion)" />
+    <PackageReference Include="Reunion.Errors.Extensions" Version="$(ReunionPackageVersion)" />
   </ItemGroup>
 
 </Project>

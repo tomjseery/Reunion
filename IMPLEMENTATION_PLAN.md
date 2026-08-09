@@ -321,6 +321,8 @@ The initial package boundary is:
   combinators.
 - `Reunion.Errors`: reusable error building blocks generalized from Concertable, delivered from a
   separate project and NuGet package.
+- `Reunion.Errors.Extensions`: optional Option-to-Result conveniences for consumer-owned typed
+  errors, depending only on `Reunion` and `Reunion.Errors`.
 - `Reunion.AspNetCore`: endpoint-boundary adapters and the optional HTTP mapping for typed error
   definitions.
 
@@ -329,14 +331,21 @@ implement `IError` and expose an `ErrorDefinition`; Reunion does not take a depe
 any other union generator. `ErrorDefinitions<TError>` derives stable codes and consistent messages
 from the explicit error owner and case type, while strong definition records retain semantic shape.
 
+`Reunion.Errors.Extensions` bridges the otherwise independent functional and error packages. Its
+`OrNotFound` overloads delegate to the core `OrFailure` implementation for eager and lazy errors,
+task receivers, and asynchronous error factories. The `Result` error remains the consumer-owned
+`TError : IError`; `ErrorDefinition` and its concrete records remain metadata and do not implement
+`IError`. The bridge has no ASP.NET Core dependency and preserves exact net10/net11 API parity.
+
 `Reunion.AspNetCore` depends on `Reunion` and `Reunion.Errors`. It owns the `ErrorKind`-to-status
 policy, the generic `ToResults`/`ToActionResult` terminal adapters, automatic `IError` convenience
 overloads, validation-problem conversion, and integration with ASP.NET Core problem-details
 customization. Arbitrary error types and string errors continue to require an explicit mapper.
 
 The projects, tests, API baselines, package inspection, and clean transitive consumers for these
-boundaries are part of the main solution and CI. Their release cadence must not force unnecessary
-releases of the dependency-free core package.
+boundaries are part of the main solution and CI. The bridge coverage includes eager, lazy,
+task-receiver, asynchronous-factory, null, exception, and cancellation behavior. Their release
+cadence must not force unnecessary releases of the dependency-free core package.
 
 Possible later packages should be created only around similarly clear integration boundaries and
 must not be folded into `Reunion` or `Reunion.Errors`. No companion package is part of the core union

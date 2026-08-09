@@ -114,6 +114,24 @@ public sealed class ErrorDefinitionTests
             ErrorDefinition.PaymentRequired("test.payment_required", "Payment required."));
     }
 
+    [Fact]
+    public void DefinitionTypes_DoNotImplementApplicationErrorContract()
+    {
+        Type[] definitionTypes =
+        [
+            typeof(ErrorDefinition),
+            typeof(InvalidError),
+            typeof(NotFoundError),
+            typeof(ConflictError),
+            typeof(UnauthenticatedError),
+            typeof(ForbiddenError),
+            typeof(PaymentRequiredError),
+            typeof(ValidationError)
+        ];
+
+        Assert.All(definitionTypes, type => Assert.False(typeof(IError).IsAssignableFrom(type)));
+    }
+
     private sealed record PaymentError(ErrorDefinition Definition) : IError;
 
     private sealed record EscrowRefundError(ErrorDefinition Definition) : IError;
