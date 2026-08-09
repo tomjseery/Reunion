@@ -15,12 +15,12 @@
 
   <PropertyGroup>
     <IsPackable>true</IsPackable>
-    <PackageId>Reunion.AspNetCore</PackageId>
+    <PackageId>Reunion.Errors</PackageId>
     <Version>0.1.0-alpha.1</Version>
-    <Description>Strongly typed ASP.NET Core HTTP result mappings for Reunion Result and Option types.</Description>
+    <Description>Transport-neutral, typed application-error definitions for Reunion Results.</Description>
     <Authors>Thomas Seery</Authors>
-    <PackageTags>result;option;aspnetcore;minimal-api;mvc</PackageTags>
-    <PackageReleaseNotes>Initial ASP.NET Core integration for typed HTTP results and MVC action results.</PackageReleaseNotes>
+    <PackageTags>result;errors;discriminated-union;application-errors</PackageTags>
+    <PackageReleaseNotes>Initial prerelease with validated error definitions, derived codes and messages, and structured validation errors.</PackageReleaseNotes>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <RepositoryUrl>https://github.com/ThomasSeery/Reunion</RepositoryUrl>
@@ -28,15 +28,6 @@
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
   </PropertyGroup>
-
-  <ItemGroup>
-    <FrameworkReference Include="Microsoft.AspNetCore.App" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\Reunion.Errors\Reunion.Errors.csproj" />
-    <ProjectReference Include="..\Reunion\Reunion.csproj" />
-  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" Version="3.3.4">

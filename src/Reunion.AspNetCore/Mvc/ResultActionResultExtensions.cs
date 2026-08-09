@@ -1,15 +1,63 @@
 using Microsoft.AspNetCore.Mvc;
+using Reunion.Errors;
 
 namespace Reunion.AspNetCore.Mvc;
 
 /// <summary>Maps result values to ASP.NET Core MVC action results.</summary>
 public static class ResultActionResultExtensions
 {
-    /// <summary>Maps success to OK and a string failure to an Internal Server Error problem.</summary>
-    public static ActionResult ToOkOrProblem(this Result result) =>
-        result.Match<ActionResult>(
-            () => new OkResult(),
-            MvcProblemResults.FromString);
+    /// <summary>Maps success with a caller-supplied action result and a typed error to problem details.</summary>
+    public static ActionResult<TValue> ToActionResult<TValue, TError>(
+        this Result<TValue, TError> result,
+        Func<TValue, ActionResult<TValue>> successMapper)
+        where TValue : notnull
+        where TError : IError
+    {
+        ArgumentNullException.ThrowIfNull(successMapper);
+        return result.Match(
+            value => MapSuccess(value, successMapper),
+            error => MvcProblemResults.FromProblemDetails(ErrorProblemDetails.Create(error)));
+    }
+
+    /// <summary>Maps success with a caller-supplied action result and a typed error to problem details.</summary>
+    public static ActionResult ToActionResult<TError>(
+        this UnitResult<TError> result,
+        Func<ActionResult> successMapper)
+        where TError : IError
+    {
+        ArgumentNullException.ThrowIfNull(successMapper);
+        return result.Match(
+            () => MapSuccess(successMapper),
+            error => MvcProblemResults.FromProblemDetails(ErrorProblemDetails.Create(error)));
+    }
+
+    /// <summary>Maps a successful value to OK and a typed error to problem details.</summary>
+    public static ActionResult<TValue> ToOkOrProblem<TValue, TError>(
+        this Result<TValue, TError> result)
+        where TValue : notnull
+        where TError : IError =>
+        result.ToActionResult(value => new OkObjectResult(value));
+
+    /// <summary>Maps a successful value to Created and a typed error to problem details.</summary>
+    public static ActionResult<TValue> ToCreatedOrProblem<TValue, TError>(
+        this Result<TValue, TError> result,
+        Func<TValue, string> locationSelector)
+        where TValue : notnull
+        where TError : IError
+    {
+        ArgumentNullException.ThrowIfNull(locationSelector);
+        return result.ToActionResult(value => Create(value, locationSelector));
+    }
+
+    /// <summary>Maps success to OK and a typed error to problem details.</summary>
+    public static ActionResult ToOkOrProblem<TError>(this UnitResult<TError> result)
+        where TError : IError =>
+        result.ToActionResult(() => new OkResult());
+
+    /// <summary>Maps success to No Content and a typed error to problem details.</summary>
+    public static ActionResult ToNoContentOrProblem<TError>(this UnitResult<TError> result)
+        where TError : IError =>
+        result.ToActionResult(() => new NoContentResult());
 
     /// <summary>Maps success to OK and failure with a caller-supplied problem mapper.</summary>
     public static ActionResult ToOkOrProblem(
@@ -22,12 +70,6 @@ public static class ResultActionResultExtensions
             error => MvcProblemResults.Map(error, errorMapper));
     }
 
-    /// <summary>Maps success to No Content and a string failure to an Internal Server Error problem.</summary>
-    public static ActionResult ToNoContentOrProblem(this Result result) =>
-        result.Match<ActionResult>(
-            () => new NoContentResult(),
-            MvcProblemResults.FromString);
-
     /// <summary>Maps success to No Content and failure with a caller-supplied problem mapper.</summary>
     public static ActionResult ToNoContentOrProblem(
         this Result result,
@@ -39,13 +81,6 @@ public static class ResultActionResultExtensions
             error => MvcProblemResults.Map(error, errorMapper));
     }
 
-    /// <summary>Maps a successful value to OK and a string failure to an Internal Server Error problem.</summary>
-    public static ActionResult<TValue> ToOkOrProblem<TValue>(this Result<TValue> result)
-        where TValue : notnull =>
-        result.Match<ActionResult<TValue>>(
-            value => new OkObjectResult(value),
-            error => MvcProblemResults.FromString(error));
-
     /// <summary>Maps a successful value to OK and failure with a caller-supplied problem mapper.</summary>
     public static ActionResult<TValue> ToOkOrProblem<TValue>(
         this Result<TValue> result,
@@ -56,18 +91,6 @@ public static class ResultActionResultExtensions
         return result.Match<ActionResult<TValue>>(
             value => new OkObjectResult(value),
             error => MvcProblemResults.Map(error, errorMapper));
-    }
-
-    /// <summary>Maps a successful value to Created and a string failure to an Internal Server Error problem.</summary>
-    public static ActionResult<TValue> ToCreatedOrProblem<TValue>(
-        this Result<TValue> result,
-        Func<TValue, string> locationSelector)
-        where TValue : notnull
-    {
-        ArgumentNullException.ThrowIfNull(locationSelector);
-        return result.Match<ActionResult<TValue>>(
-            value => Create(value, locationSelector),
-            error => MvcProblemResults.FromString(error));
     }
 
     /// <summary>Maps a successful value to Created and failure with a caller-supplied problem mapper.</summary>
@@ -135,6 +158,17 @@ public static class ResultActionResultExtensions
             () => new NoContentResult(),
             error => MvcProblemResults.Map(error, errorMapper));
     }
+
+    private static ActionResult<TValue> MapSuccess<TValue>(
+        TValue value,
+        Func<TValue, ActionResult<TValue>> successMapper)
+        where TValue : notnull =>
+        successMapper(value)
+            ?? throw new InvalidOperationException("The success mapper returned null.");
+
+    private static ActionResult MapSuccess(Func<ActionResult> successMapper) =>
+        successMapper()
+            ?? throw new InvalidOperationException("The success mapper returned null.");
 
     private static CreatedResult Create<TValue>(
         TValue value,

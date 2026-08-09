@@ -310,10 +310,10 @@ Recommended sequence:
 Do not publish a stable package whose `net11.0` asset depends on preview union behavior. Alpha,
 beta, and RC packages may expose it openly with preview-feature metadata.
 
-## Future package family
+## Package family
 
-Reunion is planned as a package family in one repository, not as a single project that accumulates
-unrelated concerns.
+Reunion is organized as a package family in one repository, not as a single project that
+accumulates unrelated concerns.
 
 The initial package boundary is:
 
@@ -321,26 +321,26 @@ The initial package boundary is:
   combinators.
 - `Reunion.Errors`: reusable error building blocks generalized from Concertable, delivered from a
   separate project and NuGet package.
+- `Reunion.AspNetCore`: endpoint-boundary adapters and the optional HTTP mapping for typed error
+  definitions.
 
-`Reunion.Errors` may depend on `Reunion`. A consumer that installs `Reunion.Errors` therefore gets
-the core package transitively, while consumers that only want Result/Option do not inherit an error
-taxonomy they did not choose.
+`Reunion.Errors` is dependency-free and transport-neutral. Application-owned error union/root types
+implement `IError` and expose an `ErrorDefinition`; Reunion does not take a dependency on Dunet or
+any other union generator. `ErrorDefinitions<TError>` derives stable codes and consistent messages
+from the explicit error owner and case type, while strong definition records retain semantic shape.
 
-Before implementing `Reunion.Errors`:
+`Reunion.AspNetCore` depends on `Reunion` and `Reunion.Errors`. It owns the `ErrorKind`-to-status
+policy, the generic `ToResults`/`ToActionResult` terminal adapters, automatic `IError` convenience
+overloads, validation-problem conversion, and integration with ASP.NET Core problem-details
+customization. Arbitrary error types and string errors continue to require an explicit mapper.
 
-1. Inventory the Concertable error source separately from the functional-core migration.
-2. Remove application, transport, UI, persistence, ASP.NET, and Concertable-specific assumptions.
-3. Separate universally reusable error primitives from Concertable domain errors.
-4. Define the minimum integration surface with `Result<TValue, TError>`; the core Result types must
-   continue to accept arbitrary user-defined error types.
-5. Add a dedicated `src/Reunion.Errors` project and `tests/Reunion.Errors.Tests` project to the
-   existing solution.
-6. Give `Reunion.Errors` its own version, package metadata, API baseline, documentation, and release
-   notes. Its release cadence must not force unnecessary releases of `Reunion`.
+The projects, tests, API baselines, package inspection, and clean transitive consumers for these
+boundaries are part of the main solution and CI. Their release cadence must not force unnecessary
+releases of the dependency-free core package.
 
-Possible later packages should be created only around clear integration boundaries—for example an
-ASP.NET integration package—not folded into `Reunion` or `Reunion.Errors`. No future package is part
-of the core union implementation's critical path.
+Possible later packages should be created only around similarly clear integration boundaries and
+must not be folded into `Reunion` or `Reunion.Errors`. No companion package is part of the core union
+implementation's critical path.
 
 If a one-reference “full Reunion stack” becomes useful, provide a small metapackage such as
 `Reunion.All` that depends on the selected Reunion packages. Do not turn the existing `Reunion`

@@ -1,4 +1,3 @@
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Reunion;
 using Reunion.AspNetCore.Mvc;
@@ -13,11 +12,5 @@ public sealed class MvcEndpoints : ControllerBase
 
     [HttpPost]
     public ActionResult<User> Create(Result<User, DomainError> result) =>
-        result.ToCreatedOrProblem(
-            user => $"/users/{user.Id}",
-            error => new ProblemDetails
-            {
-                Status = StatusCodes.Status400BadRequest,
-                Detail = error.Code
-            });
+        result.ToActionResult(user => new CreatedResult($"/users/{user.Id}", user));
 }

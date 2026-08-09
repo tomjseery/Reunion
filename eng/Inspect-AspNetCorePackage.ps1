@@ -75,12 +75,16 @@ try {
 
     foreach ($group in $dependencyGroups) {
         $dependencies = @($group.SelectNodes("*[local-name()='dependency']"))
-        if ($dependencies.Count -ne 1 -or $dependencies[0].id -ne 'Reunion') {
-            throw "The $($group.targetFramework) group must contain only the Reunion dependency."
+        $expectedDependencies = @('Reunion', 'Reunion.Errors')
+        $actualDependencies = @($dependencies | ForEach-Object id)
+        if ($dependencies.Count -ne $expectedDependencies.Count -or
+            @($expectedDependencies | Where-Object { $_ -notin $actualDependencies }).Count -ne 0 -or
+            @($actualDependencies | Where-Object { $_ -notin $expectedDependencies }).Count -ne 0) {
+            throw "The $($group.targetFramework) group must contain only Reunion and Reunion.Errors dependencies."
         }
 
-        if ($ExpectedVersion -and $dependencies[0].version -ne $ExpectedVersion) {
-            throw "The Reunion dependency for $($group.targetFramework) must be $ExpectedVersion."
+        if ($ExpectedVersion -and @($dependencies | Where-Object version -NE $ExpectedVersion).Count -ne 0) {
+            throw "The Reunion dependencies for $($group.targetFramework) must be $ExpectedVersion."
         }
     }
 
@@ -98,7 +102,7 @@ try {
         }
     }
 
-    Write-Host "Package $packageId $packageVersion contains the expected metadata, assets, Reunion dependencies, and ASP.NET Core framework references."
+    Write-Host "Package $packageId $packageVersion contains the expected metadata, assets, Reunion package dependencies, and ASP.NET Core framework references."
 }
 finally {
     $archive.Dispose()

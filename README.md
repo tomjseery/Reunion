@@ -1,7 +1,11 @@
 # Reunion
 
-Reunion is a dependency-free Result and Option library for modern .NET, designed around C# native
-union cases before its public API is frozen.
+Reunion is a dependency-free, union-first Result and Option library for modern .NET.
+
+Result libraries have traditionally been designed as runtime encodings of discriminated unions
+because C# did not have native union support. Reunion starts from the union design itself: its
+cases, invariants, and public shape are designed as a native discriminated union first, then exposed
+through the same functional API on targets where native unions are unavailable.
 
 The same functional type family ships in both package assets:
 
@@ -10,7 +14,8 @@ The same functional type family ships in both package assets:
   the compiler recognizes their named cases and can check exhaustive matches.
 
 The public family is `Result`, `Result<TValue>`, `Result<TValue, TError>`,
-`UnitResult<TError>`, and `Option<T>`. Reunion has no runtime or transitive package dependencies.
+`UnitResult<TError>`, and `Option<T>`. The `Reunion` core package has no runtime or transitive package
+dependencies; optional error and ASP.NET Core concerns live in companion packages.
 
 > [!IMPORTANT]
 > The .NET 11 custom-union support currently depends on preview language and runtime features. It is
@@ -36,9 +41,9 @@ Reunion is deliberately strict at the boundaries of the type system:
   Option is `None`.
 - The functional and native-union views use the same storage, validation, cases, and semantics.
 
-These are intentional tradeoffs rather than claims that another Result library cannot technically
-implement custom unions. Reunion can make them foundational guarantees because its API was designed
-with the union model in mind, before compatibility constraints accumulated.
+These are foundational guarantees because Reunion's API was designed from the union model outward,
+before compatibility constraints accumulated. Native matching is therefore another view of the
+same Result and Option types, not a second implementation layered over a conventional Result API.
 
 ## Conventional API on .NET 10 and .NET 11
 
@@ -103,9 +108,8 @@ provided by compatibility operators on .NET 10. Distinct wrappers keep
 `TryGetValue(out var value)` API remains unambiguous. Compiler-generated matching uses strongly
 typed case accessors rather than the boxing `IUnion.Value` fallback.
 
-Reunion is not the first Result library. Its focus is a ready-made, validated Result pattern whose
-case model works with native C# unions without introducing a second Result implementation or
-breaking the same-payload-type scenario.
+Its focus is a ready-made, validated Result pattern whose case model works with native C# unions
+without introducing a second Result implementation or breaking the same-payload-type scenario.
 
 ## Development status
 
@@ -123,8 +127,74 @@ comparison tool. The projects under `tests/PackageConsumers` are intentionally e
 restores them only after packing, with a run-unique Reunion version and isolated package caches.
 NuGet.org remains available for SDK reference packs needed by clean or split SDK installations;
 the restore check proves Reunion itself came from the generated package source.
-`eng/Inspect-Package.ps1` verifies the package identity, metadata, framework assets, and empty
-dependency groups before either consumer runs.
+The package inspection scripts verify each package's identity, metadata, framework assets, and
+dependency groups before the clean consumers run.
+
+## Typed application errors
+
+`Reunion.Errors` is an optional, transport-neutral companion package. It does not define an
+application's error union and does not depend on a union generator. Instead, a manual closed
+hierarchy, a generated discriminated union, or a native C# union can implement the same small
+`IError` contract and expose a safe `ErrorDefinition`:
+
+```xml
+<PackageReference Include="Reunion.Errors" />
+```
+
+```csharp
+using Reunion.Errors;
+
+public abstract record UserLookupError : IError
+{
+    private static readonly ErrorDefinitions<UserLookupError> Definitions =
+        ErrorDefinition.For<UserLookupError>();
+
+    private UserLookupError()
+    {
+    }
+
+    public ErrorDefinition Definition => this switch
+    {
+        UserNotFound => Definitions.NotFound<UserNotFound>(),
+        EmailInvalid => Definitions.Invalid<EmailInvalid>("The email address is invalid."),
+        _ => throw new InvalidOperationException("Unknown error case.")
+    };
+
+    public sealed record UserNotFound : UserLookupError;
+    public sealed record EmailInvalid : UserLookupError;
+}
+```
+
+The defensive arm is needed for an inheritance-based model because the C# compiler does not prove
+that hierarchy exhaustive. A generated or native union can keep the same `IError`/definition body
+while retaining compiler-checked exhaustiveness.
+
+The definition factories derive stable codes and default public messages from the error owner and
+case types. The examples above produce `user.lookup_not_found` / `User not found.` and
+`user.lookup_email_invalid` / the explicit message. Use `[ErrorCode("user.lookup_missing")]` on a
+case only when a published code intentionally differs from the convention.
+
+Definitions are strong records—`NotFoundError`, `ConflictError`, `UnauthenticatedError`,
+`ForbiddenError`, `PaymentRequiredError`, `InvalidError`, and `ValidationError`—so callers can
+pattern-match the specific definition when useful. `ErrorKind` supplies the corresponding compact
+semantic classification. `Unauthenticated` deliberately represents a missing/invalid identity
+(HTTP 401 at that boundary); `Forbidden` represents an authenticated caller without permission.
+Structured validation uses immutable, non-empty `ValidationErrors` rather than flattening field
+errors into a message:
+
+```csharp
+var errors = new ValidationErrors(new Dictionary<string, string[]>
+{
+    ["email"] = ["The email address is invalid."]
+});
+
+var definition = ErrorDefinition.For<UserLookupError>()
+    .Validation<UserLookupError.EmailInvalid>(errors);
+```
+
+`IError` belongs on the application's union/root value, not on each definition as a replacement for
+that union. This keeps `Result<TValue, TError>` strongly typed while avoiding repeated codes,
+classifications, and consistent messages at every return site.
 
 ## ASP.NET Core integration
 
@@ -146,13 +216,18 @@ The dependency-free functional types and the optional endpoint adapters are sepa
 <!-- Core Result and Option types only -->
 <PackageReference Include="Reunion" />
 
+<!-- Optional transport-neutral typed error definitions -->
+<PackageReference Include="Reunion.Errors" />
+
 <!-- Optional ASP.NET Core endpoint integration -->
 <PackageReference Include="Reunion.AspNetCore" />
 ```
 
-`Reunion.AspNetCore` depends on `Reunion`; the core package never depends on ASP.NET Core. The
-integration package supports two deliberately separate programming models with the same semantic
-method names. Import exactly one mapping namespace in a source file:
+`Reunion.Errors` is independent of the core functional types. `Reunion.AspNetCore` depends on both
+`Reunion` and `Reunion.Errors` and supplies the optional bridge between them; the core package never
+depends on either integration. The ASP.NET Core package supports two deliberately separate
+programming models with the same semantic method names. Import exactly one mapping namespace in a
+source file:
 
 ```csharp
 // Concrete TypedResults and Results<T1, T2> unions.
@@ -209,24 +284,67 @@ app.MapDelete("/users/{id:int}", async (int id, UserService service) =>
 The application owns the mapping from its error type to HTTP semantics:
 
 ```csharp
-static ProblemHttpResult ToProblem(DomainError error) => error switch
+static ProblemDetails ToProblem(DomainError error) => error switch
 {
-    { Code: "not_found" } => TypedResults.Problem(
-        detail: error.Message,
-        statusCode: StatusCodes.Status404NotFound),
-    { Code: "conflict" } => TypedResults.Problem(
-        detail: error.Message,
-        statusCode: StatusCodes.Status409Conflict),
-    _ => TypedResults.Problem(
-        detail: error.Message,
-        statusCode: StatusCodes.Status500InternalServerError)
+    { Code: "not_found" } => new ProblemDetails
+    {
+        Detail = error.Message,
+        Status = StatusCodes.Status404NotFound
+    },
+    { Code: "conflict" } => new ProblemDetails
+    {
+        Detail = error.Message,
+        Status = StatusCodes.Status409Conflict
+    },
+    _ => new ProblemDetails
+    {
+        Detail = error.Message,
+        Status = StatusCodes.Status500InternalServerError
+    }
 };
 ```
 
-The string-error `Result` families also have parameterless overloads. Because a string contains no
-reliable status classification, those overloads produce an explicit `500 Internal Server Error`
-problem with the string as its detail. Use the mapper overload whenever the string represents an
-expected client error.
+String-error Results always require an explicit problem mapper. Reunion cannot know whether an
+arbitrary error string is safe to disclose or which HTTP status it represents, so it never writes
+that string to a response automatically. Caller-supplied mappers return `ProblemDetails` and must
+set its `Status` in both programming models.
+
+For `TError : IError`, the mapper can be omitted. The integration derives a `ProblemDetails` from
+the error definition, includes its stable code in the `code` extension, and applies this boundary
+policy:
+
+| Error kind | HTTP status |
+|---|---:|
+| `Invalid` | 400 |
+| `NotFound` | 404 |
+| `Conflict` | 409 |
+| `Unauthenticated` | 401 |
+| `Forbidden` | 403 |
+| `PaymentRequired` | 402 |
+
+```csharp
+app.MapGet("/users/{id:int}", async (int id, UserService service) =>
+    (await service.GetUser(id)).ToOkOrProblem());
+```
+
+A `ValidationError` becomes `ValidationProblemDetails` and preserves its field-indexed errors.
+Minimal API results and MVC results also participate in ASP.NET Core's optional
+`IProblemDetailsService`, so an application's configured problem-details customization is applied;
+both programming models retain a problem-details fallback when that service or a writer is
+unavailable. MVC problem responses also include the request path as `instance` and the current
+activity or HTTP trace identifier as `traceId`.
+
+For other success statuses, `ToResults` keeps the concrete Minimal/API-controller result union while
+using the same automatic typed-error dispatch:
+
+```csharp
+app.MapPost("/jobs", async (JobRequest request, JobService service) =>
+    (await service.Start(request)).ToResults(
+        job => TypedResults.Accepted($"/jobs/{job.Id}", job)));
+```
+
+The MVC equivalent is `ToActionResult(successMapper)`. `ToOkOrProblem`,
+`ToCreatedOrProblem`, and the unit-result conveniences delegate to these generic terminal adapters.
 
 ### MVC controller example
 

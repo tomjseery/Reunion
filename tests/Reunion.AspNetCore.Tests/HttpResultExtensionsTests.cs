@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using Reunion.AspNetCore.HttpResults;
+using Reunion.Errors;
 
 namespace Reunion.AspNetCore.Tests;
 
@@ -26,44 +27,63 @@ public sealed class HttpResultExtensionsTests
     }
 
     [Fact]
-    public void StringResultMappings_EveryCase_ReturnsExpectedStatusAndBody()
+    public void StringResultMappings_RequireMapperAndDoNotExposeError()
     {
-        Results<Ok, ProblemHttpResult> ok = Result.Success().ToOkOrProblem();
-        Results<Ok, ProblemHttpResult> failed = Result.Failure("operation failed").ToOkOrProblem();
-        Results<NoContent, ProblemHttpResult> noContent = Result.Success().ToNoContentOrProblem();
+        Results<Ok, ProblemHttpResult> ok = Result.Success().ToOkOrProblem(ToInternalServerProblem);
+        Results<Ok, ProblemHttpResult> failed = Result.Failure("operation failed")
+            .ToOkOrProblem(ToInternalServerProblem);
+        Results<NoContent, ProblemHttpResult> noContent = Result.Success()
+            .ToNoContentOrProblem(ToInternalServerProblem);
         Results<NoContent, ProblemHttpResult> noContentFailed =
-            Result.Failure("delete failed").ToNoContentOrProblem();
+            Result.Failure("delete failed").ToNoContentOrProblem(ToInternalServerProblem);
 
         Assert.Equal(StatusCodes.Status200OK, Assert.IsType<Ok>(ok.Result).StatusCode);
-        AssertProblem(failed.Result, StatusCodes.Status500InternalServerError, "operation failed");
+        AssertProblem(
+            failed.Result,
+            StatusCodes.Status500InternalServerError,
+            "An unexpected error occurred.");
         Assert.Equal(
             StatusCodes.Status204NoContent,
             Assert.IsType<NoContent>(noContent.Result).StatusCode);
-        AssertProblem(noContentFailed.Result, StatusCodes.Status500InternalServerError, "delete failed");
+        AssertProblem(
+            noContentFailed.Result,
+            StatusCodes.Status500InternalServerError,
+            "An unexpected error occurred.");
     }
 
     [Fact]
     public void ValueResultMappings_EveryCase_ReturnsExpectedStatusBodyAndLocation()
     {
         var user = new User(42);
-        Results<Ok<User>, ProblemHttpResult> ok = Result.Success(user).ToOkOrProblem();
+        Results<Ok<User>, ProblemHttpResult> ok = Result.Success(user)
+            .ToOkOrProblem(ToInternalServerProblem);
         Results<Ok<User>, ProblemHttpResult> failed =
-            Result.Failure<User>("missing").ToOkOrProblem();
+            Result.Failure<User>("missing").ToOkOrProblem(ToInternalServerProblem);
         Results<Created<User>, ProblemHttpResult> created =
-            Result.Success(user).ToCreatedOrProblem(value => $"/users/{value.Id}");
+            Result.Success(user).ToCreatedOrProblem(
+                value => $"/users/{value.Id}",
+                ToInternalServerProblem);
         Results<Created<User>, ProblemHttpResult> createFailed =
-            Result.Failure<User>("invalid").ToCreatedOrProblem(value => $"/users/{value.Id}");
+            Result.Failure<User>("invalid").ToCreatedOrProblem(
+                value => $"/users/{value.Id}",
+                ToInternalServerProblem);
 
         var okResult = Assert.IsType<Ok<User>>(ok.Result);
         Assert.Equal(StatusCodes.Status200OK, okResult.StatusCode);
         Assert.Same(user, okResult.Value);
-        AssertProblem(failed.Result, StatusCodes.Status500InternalServerError, "missing");
+        AssertProblem(
+            failed.Result,
+            StatusCodes.Status500InternalServerError,
+            "An unexpected error occurred.");
 
         var createdResult = Assert.IsType<Created<User>>(created.Result);
         Assert.Equal(StatusCodes.Status201Created, createdResult.StatusCode);
         Assert.Equal("/users/42", createdResult.Location);
         Assert.Same(user, createdResult.Value);
-        AssertProblem(createFailed.Result, StatusCodes.Status500InternalServerError, "invalid");
+        AssertProblem(
+            createFailed.Result,
+            StatusCodes.Status500InternalServerError,
+            "An unexpected error occurred.");
     }
 
     [Fact]
@@ -71,14 +91,14 @@ public sealed class HttpResultExtensionsTests
     {
         var user = new User(42);
         var error = new DomainError("user.missing");
-        var mappedProblem = TypedResults.Problem(new ProblemDetails
+        var mappedDetails = new ProblemDetails
         {
             Status = StatusCodes.Status404NotFound,
             Title = "User not found",
             Detail = "The requested user does not exist.",
             Extensions = { ["code"] = error.Code }
-        });
-        Func<DomainError, ProblemHttpResult> mapper = _ => mappedProblem;
+        };
+        Func<DomainError, ProblemDetails> mapper = _ => mappedDetails;
 
         Results<Ok<User>, ProblemHttpResult> ok =
             Result.Success<User, DomainError>(user).ToOkOrProblem(mapper);
@@ -92,20 +112,25 @@ public sealed class HttpResultExtensionsTests
                 .ToCreatedOrProblem(value => $"/users/{value.Id}", mapper);
 
         Assert.Same(user, Assert.IsType<Ok<User>>(ok.Result).Value);
-        Assert.Same(mappedProblem, failed.Result);
-        Assert.Equal("user.missing", mappedProblem.ProblemDetails.Extensions["code"]);
+        var failedProblem = Assert.IsType<ProblemHttpResult>(failed.Result);
+        Assert.Same(mappedDetails, failedProblem.ProblemDetails);
+        Assert.Equal("user.missing", mappedDetails.Extensions["code"]);
         Assert.Equal("/users/42", Assert.IsType<Created<User>>(created.Result).Location);
-        Assert.Same(mappedProblem, createFailed.Result);
+        Assert.Same(
+            mappedDetails,
+            Assert.IsType<ProblemHttpResult>(createFailed.Result).ProblemDetails);
     }
 
     [Fact]
     public void UnitResultMappings_EveryCase_ReturnsExpectedTypedResult()
     {
         var error = new DomainError("delete.denied");
-        var problem = TypedResults.Problem(
-            detail: "Delete denied.",
-            statusCode: StatusCodes.Status403Forbidden);
-        Func<DomainError, ProblemHttpResult> mapper = _ => problem;
+        var problem = new ProblemDetails
+        {
+            Detail = "Delete denied.",
+            Status = StatusCodes.Status403Forbidden
+        };
+        Func<DomainError, ProblemDetails> mapper = _ => problem;
 
         Results<Ok, ProblemHttpResult> ok = UnitResult.Success<DomainError>().ToOkOrProblem(mapper);
         Results<Ok, ProblemHttpResult> failed = UnitResult.Failure(error).ToOkOrProblem(mapper);
@@ -115,15 +140,72 @@ public sealed class HttpResultExtensionsTests
             UnitResult.Failure(error).ToNoContentOrProblem(mapper);
 
         Assert.IsType<Ok>(ok.Result);
-        Assert.Same(problem, failed.Result);
+        Assert.Same(
+            problem,
+            Assert.IsType<ProblemHttpResult>(failed.Result).ProblemDetails);
         Assert.IsType<NoContent>(noContent.Result);
-        Assert.Same(problem, noContentFailed.Result);
+        Assert.Same(
+            problem,
+            Assert.IsType<ProblemHttpResult>(noContentFailed.Result).ProblemDetails);
+    }
+
+    [Fact]
+    public void TypedApplicationErrors_MapWithoutCallerMapper()
+    {
+        var error = new ApplicationError(
+            ErrorDefinition.NotFound("user.not_found", "User not found."));
+
+        var result = Result.Failure<User, ApplicationError>(error).ToOkOrProblem();
+
+        var problem = Assert.IsType<ProblemHttpResult>(result.Result);
+        Assert.Equal(StatusCodes.Status404NotFound, problem.StatusCode);
+        Assert.Equal("User not found.", problem.ProblemDetails.Detail);
+        Assert.Equal("user.not_found", problem.ProblemDetails.Extensions["code"]);
+    }
+
+    [Fact]
+    public void TypedApplicationErrors_ToResults_DispatchesCustomSuccessAndFailure()
+    {
+        var user = new User(42);
+        var error = new ApplicationError(
+            ErrorDefinition.Conflict("user.conflict", "User conflict."));
+
+        Results<Accepted<User>, ProblemHttpResult> accepted =
+            Result.Success<User, ApplicationError>(user)
+                .ToResults(value => TypedResults.Accepted($"/jobs/{value.Id}", value));
+        Results<Accepted<User>, ProblemHttpResult> failed =
+            Result.Failure<User, ApplicationError>(error)
+                .ToResults(value => TypedResults.Accepted($"/jobs/{value.Id}", value));
+        Results<Accepted, ProblemHttpResult> completed =
+            UnitResult.Success<ApplicationError>().ToResults(() => TypedResults.Accepted("/jobs"));
+        Results<Accepted, ProblemHttpResult> completionFailed =
+            UnitResult.Failure(error).ToResults(() => TypedResults.Accepted("/jobs"));
+
+        Assert.Equal("/jobs/42", Assert.IsType<Accepted<User>>(accepted.Result).Location);
+        Assert.Equal(
+            StatusCodes.Status409Conflict,
+            Assert.IsType<ProblemHttpResult>(failed.Result).StatusCode);
+        Assert.IsType<Accepted>(completed.Result);
+        Assert.Equal(
+            StatusCodes.Status409Conflict,
+            Assert.IsType<ProblemHttpResult>(completionFailed.Result).StatusCode);
+    }
+
+    [Fact]
+    public void TypedApplicationErrors_ToResults_RejectsNullSuccessResults()
+    {
+        Assert.Throws<InvalidOperationException>(() =>
+            Result.Success<User, ApplicationError>(new User(42))
+                .ToResults<User, ApplicationError, IResult>(_ => null!));
+        Assert.Throws<InvalidOperationException>(() =>
+            UnitResult.Success<ApplicationError>()
+                .ToResults<ApplicationError, IResult>(() => null!));
     }
 
     [Fact]
     public void CustomStringErrorMapper_PreservesCallerProblem()
     {
-        var problem = TypedResults.Problem(new ValidationProblemDetails(
+        var problem = new ValidationProblemDetails(
             new Dictionary<string, string[]>
             {
                 ["name"] = ["Name is required."]
@@ -132,12 +214,12 @@ public sealed class HttpResultExtensionsTests
             Status = StatusCodes.Status400BadRequest,
             Title = "Validation failed",
             Extensions = { ["code"] = "validation" }
-        });
+        };
 
         var result = Result.Failure<User>("invalid").ToOkOrProblem(_ => problem);
 
         var actual = Assert.IsType<ProblemHttpResult>(result.Result);
-        Assert.Same(problem, actual);
+        Assert.Same(problem, actual.ProblemDetails);
         var details = Assert.IsType<ValidationProblemDetails>(actual.ProblemDetails);
         Assert.Equal("Name is required.", Assert.Single(details.Errors["name"]));
         Assert.Equal("validation", details.Extensions["code"]);
@@ -149,10 +231,10 @@ public sealed class HttpResultExtensionsTests
         var user = new User(42);
         var mapperInvocations = 0;
         var selectorInvocations = 0;
-        Func<DomainError, ProblemHttpResult> mapper = error =>
+        Func<DomainError, ProblemDetails> mapper = error =>
         {
             mapperInvocations++;
-            return TypedResults.Problem(detail: error.Code, statusCode: 409);
+            return new ProblemDetails { Detail = error.Code, Status = 409 };
         };
         Func<User, string> selector = value =>
         {
@@ -185,11 +267,13 @@ public sealed class HttpResultExtensionsTests
     [Fact]
     public void UninitializedResults_FailThroughSafeMatching()
     {
-        Func<DomainError, ProblemHttpResult> mapper = _ =>
-            TypedResults.Problem(statusCode: StatusCodes.Status500InternalServerError);
+        Func<DomainError, ProblemDetails> mapper = _ =>
+            new() { Status = StatusCodes.Status500InternalServerError };
 
-        Assert.Throws<InvalidOperationException>(() => default(Result).ToOkOrProblem());
-        Assert.Throws<InvalidOperationException>(() => default(Result<User>).ToOkOrProblem());
+        Assert.Throws<InvalidOperationException>(() =>
+            default(Result).ToOkOrProblem(ToInternalServerProblem));
+        Assert.Throws<InvalidOperationException>(() =>
+            default(Result<User>).ToOkOrProblem(ToInternalServerProblem));
         Assert.Throws<InvalidOperationException>(() =>
             default(Result<User, DomainError>).ToOkOrProblem(mapper));
         Assert.Throws<InvalidOperationException>(() =>
@@ -209,7 +293,9 @@ public sealed class HttpResultExtensionsTests
         }
 
         var created = Result.Success(new User(43))
-            .ToCreatedOrProblem(user => $"/users/{user.Id}");
+            .ToCreatedOrProblem(
+                user => $"/users/{user.Id}",
+                ToInternalServerProblem);
         var createdResponse = await ExecuteAsync(created);
         Assert.Equal(StatusCodes.Status201Created, createdResponse.StatusCode);
         Assert.Equal("/users/43", createdResponse.Location);
@@ -218,14 +304,24 @@ public sealed class HttpResultExtensionsTests
             Assert.Equal(43, document.RootElement.GetProperty("id").GetInt32());
         }
 
-        var problem = Result.Failure<User>("missing").ToOkOrProblem();
+        var problem = Result.Failure<User>("missing").ToOkOrProblem(ToInternalServerProblem);
         var problemResponse = await ExecuteAsync(problem);
         Assert.Equal(StatusCodes.Status500InternalServerError, problemResponse.StatusCode);
         Assert.Equal("application/problem+json", problemResponse.ContentType);
         using var problemDocument = JsonDocument.Parse(problemResponse.Body);
-        Assert.Equal("missing", problemDocument.RootElement.GetProperty("detail").GetString());
+        Assert.Equal(
+            "An unexpected error occurred.",
+            problemDocument.RootElement.GetProperty("detail").GetString());
         Assert.Equal(500, problemDocument.RootElement.GetProperty("status").GetInt32());
     }
+
+    private static ProblemDetails ToInternalServerProblem(string _) =>
+        new()
+        {
+            Detail = "An unexpected error occurred.",
+            Status = StatusCodes.Status500InternalServerError,
+            Title = "Internal Server Error"
+        };
 
     private static void AssertProblem(IResult actual, int status, string detail)
     {
@@ -262,6 +358,8 @@ public sealed class HttpResultExtensionsTests
     private sealed record User(int Id);
 
     private sealed record DomainError(string Code);
+
+    private sealed record ApplicationError(ErrorDefinition Definition) : IError;
 
     private sealed record ResponseSnapshot(
         int StatusCode,

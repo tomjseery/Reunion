@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc.Abstractions;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Reunion.AspNetCore.Mvc;
+using Reunion.Errors;
 
 namespace Reunion.AspNetCore.Tests;
 
@@ -27,38 +28,53 @@ public sealed class MvcResultExtensionsTests
     }
 
     [Fact]
-    public void StringResultMappings_EveryCase_ReturnsExpectedMvcResult()
+    public void StringResultMappings_RequireMapperAndDoNotExposeError()
     {
-        ActionResult ok = Result.Success().ToOkOrProblem();
-        ActionResult failed = Result.Failure("operation failed").ToOkOrProblem();
-        ActionResult noContent = Result.Success().ToNoContentOrProblem();
-        ActionResult noContentFailed = Result.Failure("delete failed").ToNoContentOrProblem();
+        ActionResult ok = Result.Success().ToOkOrProblem(ToInternalServerProblem);
+        ActionResult failed = Result.Failure("operation failed").ToOkOrProblem(ToInternalServerProblem);
+        ActionResult noContent = Result.Success().ToNoContentOrProblem(ToInternalServerProblem);
+        ActionResult noContentFailed = Result.Failure("delete failed")
+            .ToNoContentOrProblem(ToInternalServerProblem);
 
         Assert.IsType<OkResult>(ok);
-        AssertMvcProblem(failed, StatusCodes.Status500InternalServerError, "operation failed");
+        AssertMvcProblem(failed, StatusCodes.Status500InternalServerError, "An unexpected error occurred.");
         Assert.IsType<NoContentResult>(noContent);
-        AssertMvcProblem(noContentFailed, StatusCodes.Status500InternalServerError, "delete failed");
+        AssertMvcProblem(
+            noContentFailed,
+            StatusCodes.Status500InternalServerError,
+            "An unexpected error occurred.");
     }
 
     [Fact]
     public void ValueResultMappings_EveryCase_ReturnsExpectedMvcResult()
     {
         var user = new User(42);
-        ActionResult<User> ok = Result.Success(user).ToOkOrProblem();
-        ActionResult<User> failed = Result.Failure<User>("missing").ToOkOrProblem();
+        ActionResult<User> ok = Result.Success(user).ToOkOrProblem(ToInternalServerProblem);
+        ActionResult<User> failed = Result.Failure<User>("missing")
+            .ToOkOrProblem(ToInternalServerProblem);
         ActionResult<User> created =
-            Result.Success(user).ToCreatedOrProblem(value => $"/users/{value.Id}");
+            Result.Success(user).ToCreatedOrProblem(
+                value => $"/users/{value.Id}",
+                ToInternalServerProblem);
         ActionResult<User> createFailed =
-            Result.Failure<User>("invalid").ToCreatedOrProblem(value => $"/users/{value.Id}");
+            Result.Failure<User>("invalid").ToCreatedOrProblem(
+                value => $"/users/{value.Id}",
+                ToInternalServerProblem);
 
         Assert.Same(user, Assert.IsType<OkObjectResult>(ok.Result).Value);
-        AssertMvcProblem(failed.Result!, StatusCodes.Status500InternalServerError, "missing");
+        AssertMvcProblem(
+            failed.Result!,
+            StatusCodes.Status500InternalServerError,
+            "An unexpected error occurred.");
 
         var createdResult = Assert.IsType<CreatedResult>(created.Result);
         Assert.Equal(StatusCodes.Status201Created, createdResult.StatusCode);
         Assert.Equal("/users/42", createdResult.Location);
         Assert.Same(user, createdResult.Value);
-        AssertMvcProblem(createFailed.Result!, StatusCodes.Status500InternalServerError, "invalid");
+        AssertMvcProblem(
+            createFailed.Result!,
+            StatusCodes.Status500InternalServerError,
+            "An unexpected error occurred.");
     }
 
     [Fact]
@@ -115,6 +131,82 @@ public sealed class MvcResultExtensionsTests
     }
 
     [Fact]
+    public void TypedApplicationErrors_MapWithoutCallerMapper()
+    {
+        var error = new ApplicationError(
+            ErrorDefinition.NotFound("user.not_found", "User not found."));
+
+        var result = Result.Failure<User, ApplicationError>(error).ToOkOrProblem();
+
+        var objectResult = Assert.IsAssignableFrom<ObjectResult>(result.Result);
+        var details = Assert.IsType<ProblemDetails>(objectResult.Value);
+        Assert.Equal(StatusCodes.Status404NotFound, objectResult.StatusCode);
+        Assert.Equal("User not found.", details.Detail);
+        Assert.Equal("user.not_found", details.Extensions["code"]);
+    }
+
+    [Fact]
+    public void TypedApplicationErrors_ToActionResult_DispatchesCustomSuccessAndFailure()
+    {
+        var user = new User(42);
+        var error = new ApplicationError(
+            ErrorDefinition.Conflict("user.conflict", "User conflict."));
+        Func<User, ActionResult<User>> successMapper = value =>
+            new AcceptedResult($"/jobs/{value.Id}", value);
+
+        var accepted = Result.Success<User, ApplicationError>(user)
+            .ToActionResult(successMapper);
+        var failed = Result.Failure<User, ApplicationError>(error)
+            .ToActionResult(successMapper);
+        var completed = UnitResult.Success<ApplicationError>()
+            .ToActionResult(() => new AcceptedResult());
+        var completionFailed = UnitResult.Failure(error)
+            .ToActionResult(() => new AcceptedResult());
+
+        Assert.Equal("/jobs/42", Assert.IsType<AcceptedResult>(accepted.Result).Location);
+        Assert.Equal(
+            StatusCodes.Status409Conflict,
+            Assert.IsAssignableFrom<ObjectResult>(failed.Result).StatusCode);
+        Assert.IsType<AcceptedResult>(completed);
+        Assert.Equal(
+            StatusCodes.Status409Conflict,
+            Assert.IsAssignableFrom<ObjectResult>(completionFailed).StatusCode);
+    }
+
+    [Fact]
+    public void TypedApplicationErrors_ToActionResult_RejectsNullSuccessResults()
+    {
+        Assert.Throws<InvalidOperationException>(() =>
+            Result.Success<User, ApplicationError>(new User(42))
+                .ToActionResult(_ => null!));
+        Assert.Throws<InvalidOperationException>(() =>
+            UnitResult.Success<ApplicationError>()
+                .ToActionResult(() => null!));
+    }
+
+    [Fact]
+    public async Task TypedApplicationErrorExecution_AppliesProblemDetailsServiceCustomization()
+    {
+        var error = new ApplicationError(
+            ErrorDefinition.Forbidden("user.forbidden", "Access is forbidden."));
+        var result = Result.Failure<User, ApplicationError>(error).ToOkOrProblem();
+
+        var response = await ExecuteAsync(
+            result.Result!,
+            services => services.AddProblemDetails(
+                options => options.CustomizeProblemDetails = context =>
+                    context.ProblemDetails.Extensions["customized"] = true));
+
+        using var document = JsonDocument.Parse(response.Body);
+        Assert.Equal(StatusCodes.Status403Forbidden, response.StatusCode);
+        Assert.True(document.RootElement.GetProperty("customized").GetBoolean());
+        Assert.Equal("user.forbidden", document.RootElement.GetProperty("code").GetString());
+        Assert.Equal("/api/tests", document.RootElement.GetProperty("instance").GetString());
+        Assert.False(string.IsNullOrWhiteSpace(
+            document.RootElement.GetProperty("traceId").GetString()));
+    }
+
+    [Fact]
     public void Delegates_AreValidatedAndOnlySelectedDelegateRuns()
     {
         var user = new User(42);
@@ -161,8 +253,10 @@ public sealed class MvcResultExtensionsTests
         Func<DomainError, ProblemDetails> mapper = _ =>
             new ProblemDetails { Status = StatusCodes.Status500InternalServerError };
 
-        Assert.Throws<InvalidOperationException>(() => default(Result).ToOkOrProblem());
-        Assert.Throws<InvalidOperationException>(() => default(Result<User>).ToOkOrProblem());
+        Assert.Throws<InvalidOperationException>(() =>
+            default(Result).ToOkOrProblem(ToInternalServerProblem));
+        Assert.Throws<InvalidOperationException>(() =>
+            default(Result<User>).ToOkOrProblem(ToInternalServerProblem));
         Assert.Throws<InvalidOperationException>(() =>
             default(Result<User, DomainError>).ToOkOrProblem(mapper));
         Assert.Throws<InvalidOperationException>(() =>
@@ -182,7 +276,9 @@ public sealed class MvcResultExtensionsTests
         }
 
         var created = Result.Success(new User(43))
-            .ToCreatedOrProblem(user => $"/users/{user.Id}");
+            .ToCreatedOrProblem(
+                user => $"/users/{user.Id}",
+                ToInternalServerProblem);
         var createdResponse = await ExecuteAsync(created.Result!);
         Assert.Equal(StatusCodes.Status201Created, createdResponse.StatusCode);
         Assert.Equal("/users/43", createdResponse.Location);
@@ -191,18 +287,33 @@ public sealed class MvcResultExtensionsTests
             Assert.Equal(43, document.RootElement.GetProperty("id").GetInt32());
         }
 
-        var problem = Result.Failure<User>("missing").ToOkOrProblem();
+        var problem = Result.Failure<User>("missing").ToOkOrProblem(ToInternalServerProblem);
         var problemResponse = await ExecuteAsync(problem.Result!);
         Assert.Equal(StatusCodes.Status500InternalServerError, problemResponse.StatusCode);
-        Assert.Equal("application/problem+json; charset=utf-8", problemResponse.ContentType);
+        Assert.Equal("application/problem+json", problemResponse.ContentType);
         using var problemDocument = JsonDocument.Parse(problemResponse.Body);
-        Assert.Equal("missing", problemDocument.RootElement.GetProperty("detail").GetString());
+        Assert.Equal(
+            "An unexpected error occurred.",
+            problemDocument.RootElement.GetProperty("detail").GetString());
         Assert.Equal(500, problemDocument.RootElement.GetProperty("status").GetInt32());
+        Assert.Equal(
+            "/api/tests",
+            problemDocument.RootElement.GetProperty("instance").GetString());
+        Assert.False(string.IsNullOrWhiteSpace(
+            problemDocument.RootElement.GetProperty("traceId").GetString()));
     }
+
+    private static ProblemDetails ToInternalServerProblem(string _) =>
+        new()
+        {
+            Status = StatusCodes.Status500InternalServerError,
+            Title = "Internal Server Error",
+            Detail = "An unexpected error occurred."
+        };
 
     private static void AssertMvcProblem(ActionResult actual, int status, string detail)
     {
-        var objectResult = Assert.IsType<ObjectResult>(actual);
+        var objectResult = Assert.IsAssignableFrom<ObjectResult>(actual);
         var problem = Assert.IsType<ProblemDetails>(objectResult.Value);
         Assert.Equal(status, objectResult.StatusCode);
         Assert.Equal(status, problem.Status);
@@ -212,22 +323,27 @@ public sealed class MvcResultExtensionsTests
 
     private static void AssertSameProblem(ProblemDetails expected, ActionResult? actual)
     {
-        var objectResult = Assert.IsType<ObjectResult>(actual);
+        var objectResult = Assert.IsAssignableFrom<ObjectResult>(actual);
         Assert.Same(expected, objectResult.Value);
         Assert.Equal(expected.Status, objectResult.StatusCode);
         Assert.Contains("application/problem+json", objectResult.ContentTypes);
     }
 
-    private static async Task<ResponseSnapshot> ExecuteAsync(ActionResult result)
+    private static async Task<ResponseSnapshot> ExecuteAsync(
+        ActionResult result,
+        Action<IServiceCollection>? configureServices = null)
     {
         var services = new ServiceCollection();
         services.AddLogging();
         services.AddControllers();
+        configureServices?.Invoke(services);
         await using var provider = services.BuildServiceProvider();
         var httpContext = new DefaultHttpContext
         {
             RequestServices = provider
         };
+        httpContext.Request.PathBase = "/api";
+        httpContext.Request.Path = "/tests";
         await using var body = new MemoryStream();
         httpContext.Response.Body = body;
         var actionContext = new ActionContext(
@@ -248,6 +364,8 @@ public sealed class MvcResultExtensionsTests
     private sealed record User(int Id);
 
     private sealed record DomainError(string Code);
+
+    private sealed record ApplicationError(ErrorDefinition Definition) : IError;
 
     private sealed record ResponseSnapshot(
         int StatusCode,
