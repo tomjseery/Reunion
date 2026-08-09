@@ -13,9 +13,9 @@ The same functional type family ships in both package assets:
 - On .NET 11, the same types additionally implement the preview C# 15 custom-union contract, so
   the compiler recognizes their named cases and can check exhaustive matches.
 
-The public family is `Result`, `Result<TValue>`, `Result<TValue, TError>`,
+The core family is `Result`, `Result<TValue>`, `Result<TValue, TError>`,
 `UnitResult<TError>`, and `Option<T>`. The `Reunion` core package has no runtime or transitive package
-dependencies; optional error and ASP.NET Core concerns live in companion packages.
+dependencies; optional error, validation, and ASP.NET Core concerns live in companion packages.
 
 > [!IMPORTANT]
 > The .NET 11 custom-union support currently depends on preview language and runtime features. It is
@@ -130,6 +130,10 @@ the restore check proves Reunion itself came from the generated package source.
 The package inspection scripts verify each package's identity, metadata, framework assets, and
 dependency groups before the clean consumers run.
 
+Future .NET target frameworks consume the nearest compatible package asset selected by NuGet. A
+future framework may therefore use the `net11.0` asset, but Reunion will validate each new SDK and
+compiler contract explicitly before claiming native-union compatibility for that framework.
+
 ## Typed application errors
 
 `Reunion.Errors` is an optional, transport-neutral companion package. It does not define an
@@ -196,6 +200,79 @@ var definition = ErrorDefinition.For<UserLookupError>()
 that union. This keeps `Result<TValue, TError>` strongly typed while avoiding repeated codes,
 classifications, and consistent messages at every return site.
 
+## Structured validation results
+
+`Reunion.Validation` is an optional union-first package for validators that return structured
+field errors without a success payload:
+
+```xml
+<PackageReference Include="Reunion.Validation" />
+```
+
+It depends on `Reunion` and `Reunion.Errors`; neither dependency points back to validation. Its
+closed case model is deliberately fixed:
+
+```text
+ValidationResult = Valid | Invalid(ValidationErrors)
+```
+
+`ValidationResult` is distinct from the general-purpose `UnitResult<TError>`. It gives validation a
+specific vocabulary, permanently fixes the invalid payload to non-empty `ValidationErrors`, and
+adds accumulation semantics for independent validators. It does not replace application-owned
+domain errors; applications can map validation errors into their own typed error union at a
+boundary.
+
+`Combine` accumulates every invalid input. Distinct fields are preserved, and messages for the same
+field stay in left-to-right order with duplicates retained. The inputs remain unchanged; combining
+two invalid values creates a new immutable `ValidationErrors` collection.
+
+Validation converts explicitly to the Result family. There is no implicit conversion from raw
+`ValidationErrors`; only `Valid` and `Invalid` convert to `ValidationResult`:
+
+```csharp
+ValidationResult validation = validator.Validate(request);
+
+if (validation.IsInvalid)
+    return validation.ToResult();
+```
+
+Value-bearing methods can use the named failure returned by `TryGetFailure` for an early return:
+
+```csharp
+if (validation.TryGetFailure(out var failure))
+    return failure;
+
+if (validation.TryGetFailure(
+    errors => new CommandError.ValidationFailed(errors),
+    out var domainFailure))
+{
+    return domainFailure;
+}
+```
+
+`Match` is the portable, branch-complete API on both target frameworks:
+
+```csharp
+string message = validation.Match(
+    valid: () => "valid",
+    invalid: FormatErrors);
+```
+
+The net11 asset also supports compiler-proven exhaustive matching:
+
+```csharp
+string message = validation switch
+{
+    Valid => "valid",
+    Invalid(var errors) => FormatErrors(errors)
+};
+```
+
+`ValidationResult` contains exactly one `UnitResult<ValidationErrors>` field. It adds no allocation
+or storage overhead relative to `UnitResult<ValidationErrors>`. Delegate creation and immutable
+error accumulation may still allocate depending on the operation and call site; combining two
+invalid values necessarily creates the new immutable error collection described above.
+
 ## ASP.NET Core integration
 
 An `Option<T>` can already cross a domain boundary without knowing anything about HTTP by using
@@ -220,12 +297,17 @@ The dependency-free functional types and the optional endpoint adapters are sepa
 <!-- Optional transport-neutral typed error definitions -->
 <PackageReference Include="Reunion.Errors" />
 
+<!-- Optional structured validation results and accumulation -->
+<PackageReference Include="Reunion.Validation" />
+
 <!-- Optional ASP.NET Core endpoint integration -->
 <PackageReference Include="Reunion.AspNetCore" />
 ```
 
-`Reunion.Errors` is independent of the core functional types. `Reunion.AspNetCore` depends outward
-on both `Reunion` and `Reunion.Errors`; neither dependency points back to the endpoint integration.
+`Reunion.Errors` is independent of the core functional types. `Reunion.Validation` depends outward
+on `Reunion` and `Reunion.Errors`, while `Reunion.AspNetCore` continues to depend only on those same
+two lower-level packages and does not depend on validation. No dependency points back to an
+integration package.
 The ASP.NET Core package supports two deliberately separate programming models with the same
 semantic method names. Import exactly one mapping namespace in a source file:
 
