@@ -1,0 +1,3 @@
+#nullable enable
+static Reunion.Validation.ValidationResult.implicit operator Reunion.Validation.ValidationResult(Reunion.Validation.Invalid invalid) -> Reunion.Validation.ValidationResult
+static Reunion.Validation.ValidationResult.implicit operator Reunion.Validation.ValidationResult(Reunion.Validation.Valid valid) -> Reunion.Validation.ValidationResult

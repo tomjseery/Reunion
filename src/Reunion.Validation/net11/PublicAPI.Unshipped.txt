@@ -1,0 +1,8 @@
+#nullable enable
+Reunion.Validation.ValidationResult.IUnionMembers
+Reunion.Validation.ValidationResult.IUnionMembers.Create(Reunion.Validation.Invalid invalid) -> Reunion.Validation.ValidationResult
+Reunion.Validation.ValidationResult.IUnionMembers.Create(Reunion.Validation.Valid valid) -> Reunion.Validation.ValidationResult
+Reunion.Validation.ValidationResult.IUnionMembers.HasValue.get -> bool
+Reunion.Validation.ValidationResult.IUnionMembers.TryGetValue(out Reunion.Validation.Invalid value) -> bool
+Reunion.Validation.ValidationResult.IUnionMembers.TryGetValue(out Reunion.Validation.Valid value) -> bool
+Reunion.Validation.ValidationResult.IUnionMembers.Value.get -> object?
