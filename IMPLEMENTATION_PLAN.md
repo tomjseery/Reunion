@@ -328,8 +328,9 @@ The initial package boundary is:
 
 `Reunion.Errors` is dependency-free and transport-neutral. Application-owned error union/root types
 implement `IError` and expose an `ErrorDefinition`; Reunion does not take a dependency on Dunet or
-any other union generator. `ErrorDefinitions<TError>` derives stable codes and consistent messages
-from the explicit error owner and case type, while strong definition records retain semantic shape.
+any other union generator. Direct static generic factories derive stable codes and consistent
+messages from a case nested inside its immediate `IError` owner, while strong definition records
+retain semantic shape.
 
 `Reunion.AspNetCore` depends on `Reunion` and `Reunion.Errors`. It owns the `ErrorKind`-to-status
 policy, the generic `ToResults`/`ToActionResult` terminal adapters, automatic `IError` convenience

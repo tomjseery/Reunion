@@ -11,6 +11,6 @@ public sealed class MvcEndpoints : ControllerBase
         result.ToOkOrNotFound();
 
     [HttpPost]
-    public ActionResult<User> Create(Result<User, DomainError> result) =>
+    public ActionResult<User> Create(Result<User, UserError> result) =>
         result.ToActionResult(user => new CreatedResult($"/users/{user.Id}", user));
 }
