@@ -1,0 +1,36 @@
+#nullable enable
+Reunion.Option<T>.IUnionMembers
+Reunion.Option<T>.IUnionMembers.Create(Reunion.None none) -> Reunion.Option<T>
+Reunion.Option<T>.IUnionMembers.Create(Reunion.Some<T> some) -> Reunion.Option<T>
+Reunion.Option<T>.IUnionMembers.HasValue.get -> bool
+Reunion.Option<T>.IUnionMembers.TryGetValue(out Reunion.None value) -> bool
+Reunion.Option<T>.IUnionMembers.TryGetValue(out Reunion.Some<T> value) -> bool
+Reunion.Option<T>.IUnionMembers.Value.get -> object?
+Reunion.Result.IUnionMembers
+Reunion.Result.IUnionMembers.Create(Reunion.Failure<string!> failure) -> Reunion.Result
+Reunion.Result.IUnionMembers.Create(Reunion.Success success) -> Reunion.Result
+Reunion.Result.IUnionMembers.HasValue.get -> bool
+Reunion.Result.IUnionMembers.TryGetValue(out Reunion.Failure<string!> value) -> bool
+Reunion.Result.IUnionMembers.TryGetValue(out Reunion.Success value) -> bool
+Reunion.Result.IUnionMembers.Value.get -> object?
+Reunion.Result<TValue, TError>.IUnionMembers
+Reunion.Result<TValue, TError>.IUnionMembers.Create(Reunion.Failure<TError> failure) -> Reunion.Result<TValue, TError>
+Reunion.Result<TValue, TError>.IUnionMembers.Create(Reunion.Success<TValue> success) -> Reunion.Result<TValue, TError>
+Reunion.Result<TValue, TError>.IUnionMembers.HasValue.get -> bool
+Reunion.Result<TValue, TError>.IUnionMembers.TryGetValue(out Reunion.Failure<TError> value) -> bool
+Reunion.Result<TValue, TError>.IUnionMembers.TryGetValue(out Reunion.Success<TValue> value) -> bool
+Reunion.Result<TValue, TError>.IUnionMembers.Value.get -> object?
+Reunion.Result<TValue>.IUnionMembers
+Reunion.Result<TValue>.IUnionMembers.Create(Reunion.Failure<string!> failure) -> Reunion.Result<TValue>
+Reunion.Result<TValue>.IUnionMembers.Create(Reunion.Success<TValue> success) -> Reunion.Result<TValue>
+Reunion.Result<TValue>.IUnionMembers.HasValue.get -> bool
+Reunion.Result<TValue>.IUnionMembers.TryGetValue(out Reunion.Failure<string!> value) -> bool
+Reunion.Result<TValue>.IUnionMembers.TryGetValue(out Reunion.Success<TValue> value) -> bool
+Reunion.Result<TValue>.IUnionMembers.Value.get -> object?
+Reunion.UnitResult<TError>.IUnionMembers
+Reunion.UnitResult<TError>.IUnionMembers.Create(Reunion.Failure<TError> failure) -> Reunion.UnitResult<TError>
+Reunion.UnitResult<TError>.IUnionMembers.Create(Reunion.Success success) -> Reunion.UnitResult<TError>
+Reunion.UnitResult<TError>.IUnionMembers.HasValue.get -> bool
+Reunion.UnitResult<TError>.IUnionMembers.TryGetValue(out Reunion.Failure<TError> value) -> bool
+Reunion.UnitResult<TError>.IUnionMembers.TryGetValue(out Reunion.Success value) -> bool
+Reunion.UnitResult<TError>.IUnionMembers.Value.get -> object?

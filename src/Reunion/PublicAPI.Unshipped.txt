@@ -1,0 +1,360 @@
+#nullable enable
+override Reunion.Option<T>.Equals(object? obj) -> bool
+override Reunion.Option<T>.GetHashCode() -> int
+override Reunion.Option<T>.ToString() -> string!
+override Reunion.Failure<TError>.Equals(object? obj) -> bool
+override Reunion.Failure<TError>.GetHashCode() -> int
+override Reunion.Failure<TError>.ToString() -> string!
+override Reunion.None.Equals(object? obj) -> bool
+override Reunion.None.GetHashCode() -> int
+override Reunion.None.ToString() -> string!
+override Reunion.Some<T>.Equals(object? obj) -> bool
+override Reunion.Some<T>.GetHashCode() -> int
+override Reunion.Some<T>.ToString() -> string!
+override Reunion.Success.Equals(object? obj) -> bool
+override Reunion.Success.GetHashCode() -> int
+override Reunion.Success.ToString() -> string!
+override Reunion.Success<TValue>.Equals(object? obj) -> bool
+override Reunion.Success<TValue>.GetHashCode() -> int
+override Reunion.Success<TValue>.ToString() -> string!
+override Reunion.Result.Equals(object? obj) -> bool
+override Reunion.Result.GetHashCode() -> int
+override Reunion.Result.ToString() -> string!
+override Reunion.Result<TValue, TError>.Equals(object? obj) -> bool
+override Reunion.Result<TValue, TError>.GetHashCode() -> int
+override Reunion.Result<TValue, TError>.ToString() -> string!
+override Reunion.Result<TValue>.Equals(object? obj) -> bool
+override Reunion.Result<TValue>.GetHashCode() -> int
+override Reunion.Result<TValue>.ToString() -> string!
+override Reunion.UnitResult<TError>.Equals(object? obj) -> bool
+override Reunion.UnitResult<TError>.GetHashCode() -> int
+override Reunion.UnitResult<TError>.ToString() -> string!
+Reunion.Failure<TError>
+Reunion.Failure<TError>.Error.get -> TError
+Reunion.Failure<TError>.Deconstruct(out TError error) -> void
+Reunion.Failure<TError>.Equals(Reunion.Failure<TError> other) -> bool
+Reunion.Failure<TError>.Failure() -> void
+Reunion.Failure<TError>.Failure(TError error) -> void
+static Reunion.Failure<TError>.operator !=(Reunion.Failure<TError> left, Reunion.Failure<TError> right) -> bool
+static Reunion.Failure<TError>.operator ==(Reunion.Failure<TError> left, Reunion.Failure<TError> right) -> bool
+Reunion.None
+Reunion.None.Equals(Reunion.None other) -> bool
+Reunion.None.None() -> void
+static Reunion.None.operator !=(Reunion.None left, Reunion.None right) -> bool
+static Reunion.None.operator ==(Reunion.None left, Reunion.None right) -> bool
+Reunion.Option
+Reunion.Option<T>
+Reunion.Option<T>.Bind<TResult>(System.Func<T, Reunion.Option<TResult>>! bind) -> Reunion.Option<TResult>
+Reunion.Option<T>.Equals(Reunion.Option<T> other) -> bool
+Reunion.Option<T>.IsNone.get -> bool
+Reunion.Option<T>.IsSome.get -> bool
+Reunion.Option<T>.Map<TResult>(System.Func<T, TResult>! map) -> Reunion.Option<TResult>
+Reunion.Option<T>.Match(System.Action<T>! some, System.Action! none) -> void
+Reunion.Option<T>.Match<TResult>(System.Func<T, TResult>! some, System.Func<TResult>! none) -> TResult
+Reunion.Option<T>.Option() -> void
+Reunion.Option<T>.OrElse(System.Func<Reunion.Option<T>>! fallback) -> Reunion.Option<T>
+Reunion.Option<T>.OrFailure<TError>(System.Func<TError>! errorFactory) -> Reunion.Result<T, TError>
+Reunion.Option<T>.OrFailure<TError>(TError error) -> Reunion.Result<T, TError>
+Reunion.Option<T>.Select<TResult>(System.Func<T, TResult>! selector) -> Reunion.Option<TResult>
+Reunion.Option<T>.SelectMany<TIntermediate, TResult>(System.Func<T, Reunion.Option<TIntermediate>>! bind, System.Func<T, TIntermediate, TResult>! project) -> Reunion.Option<TResult>
+Reunion.Option<T>.TryGetValue(out T value) -> bool
+Reunion.Option<T>.ValueOr(T fallback) -> T
+Reunion.Option<T>.ValueOrElse(System.Func<T>! fallback) -> T
+Reunion.OptionExtensions
+Reunion.Some<T>
+Reunion.Some<T>.Deconstruct(out T value) -> void
+Reunion.Some<T>.Equals(Reunion.Some<T> other) -> bool
+Reunion.Some<T>.Some() -> void
+Reunion.Some<T>.Some(T value) -> void
+Reunion.Some<T>.Value.get -> T
+static Reunion.Some<T>.operator !=(Reunion.Some<T> left, Reunion.Some<T> right) -> bool
+static Reunion.Some<T>.operator ==(Reunion.Some<T> left, Reunion.Some<T> right) -> bool
+Reunion.Success
+Reunion.Success.Equals(Reunion.Success other) -> bool
+Reunion.Success.Success() -> void
+static Reunion.Success.operator !=(Reunion.Success left, Reunion.Success right) -> bool
+static Reunion.Success.operator ==(Reunion.Success left, Reunion.Success right) -> bool
+Reunion.Success<TValue>
+Reunion.Success<TValue>.Deconstruct(out TValue value) -> void
+Reunion.Success<TValue>.Equals(Reunion.Success<TValue> other) -> bool
+Reunion.Success<TValue>.Success() -> void
+Reunion.Success<TValue>.Success(TValue value) -> void
+Reunion.Success<TValue>.Value.get -> TValue
+static Reunion.Success<TValue>.operator !=(Reunion.Success<TValue> left, Reunion.Success<TValue> right) -> bool
+static Reunion.Success<TValue>.operator ==(Reunion.Success<TValue> left, Reunion.Success<TValue> right) -> bool
+Reunion.Result
+Reunion.Result.Bind(System.Func<Reunion.Result>! bind) -> Reunion.Result
+Reunion.Result.Bind<TError>(System.Func<Reunion.UnitResult<TError>>! bind, System.Func<string!, TError>! mapError) -> Reunion.UnitResult<TError>
+Reunion.Result.Bind<TValue, TError>(System.Func<Reunion.Result<TValue, TError>>! bind, System.Func<string!, TError>! mapError) -> Reunion.Result<TValue, TError>
+Reunion.Result.Bind<TValue>(System.Func<Reunion.Result<TValue>>! bind) -> Reunion.Result<TValue>
+Reunion.Result.Equals(Reunion.Result other) -> bool
+Reunion.Result.IsFailure.get -> bool
+Reunion.Result.IsSuccess.get -> bool
+Reunion.Result.MapError<TError>(System.Func<string!, TError>! map) -> Reunion.UnitResult<TError>
+Reunion.Result.Match(System.Action! success, System.Action<string!>! failure) -> void
+Reunion.Result.Match<TResult>(System.Func<TResult>! success, System.Func<string!, TResult>! failure) -> TResult
+Reunion.Result.Recover(System.Action<string!>! fallback) -> Reunion.Result
+Reunion.Result.RecoverWith(System.Func<string!, Reunion.Result>! fallback) -> Reunion.Result
+Reunion.Result.Result() -> void
+Reunion.Result.Tap(System.Action! action) -> Reunion.Result
+Reunion.Result.TapError(System.Action<string!>! action) -> Reunion.Result
+Reunion.Result.TryGetError(out string? error) -> bool
+Reunion.Result<TValue, TError>
+Reunion.Result<TValue, TError>.Bind(System.Func<TValue, Reunion.Result>! bind, System.Func<TError, string!>! mapError) -> Reunion.Result
+Reunion.Result<TValue, TError>.Bind(System.Func<TValue, Reunion.UnitResult<TError>>! bind) -> Reunion.UnitResult<TError>
+Reunion.Result<TValue, TError>.Bind<TNext>(System.Func<TValue, Reunion.Result<TNext, TError>>! bind) -> Reunion.Result<TNext, TError>
+Reunion.Result<TValue, TError>.Bind<TNext>(System.Func<TValue, Reunion.Result<TNext>>! bind, System.Func<TError, string!>! mapError) -> Reunion.Result<TNext>
+Reunion.Result<TValue, TError>.Ensure(System.Func<TValue, bool>! predicate, System.Func<TError>! errorFactory) -> Reunion.Result<TValue, TError>
+Reunion.Result<TValue, TError>.Equals(Reunion.Result<TValue, TError> other) -> bool
+Reunion.Result<TValue, TError>.IsFailure.get -> bool
+Reunion.Result<TValue, TError>.IsSuccess.get -> bool
+Reunion.Result<TValue, TError>.Map<TNext>(System.Func<TValue, TNext>! map) -> Reunion.Result<TNext, TError>
+Reunion.Result<TValue, TError>.MapError<TNextError>(System.Func<TError, TNextError>! map) -> Reunion.Result<TValue, TNextError>
+Reunion.Result<TValue, TError>.Match(System.Action<TValue>! success, System.Action<TError>! failure) -> void
+Reunion.Result<TValue, TError>.Match<TResult>(System.Func<TValue, TResult>! success, System.Func<TError, TResult>! failure) -> TResult
+Reunion.Result<TValue, TError>.Recover(System.Func<TError, TValue>! fallback) -> Reunion.Result<TValue, TError>
+Reunion.Result<TValue, TError>.RecoverWith(System.Func<TError, Reunion.Result<TValue, TError>>! fallback) -> Reunion.Result<TValue, TError>
+Reunion.Result<TValue, TError>.Select<TNext>(System.Func<TValue, TNext>! selector) -> Reunion.Result<TNext, TError>
+Reunion.Result<TValue, TError>.SelectMany<TIntermediate, TResult>(System.Func<TValue, Reunion.Result<TIntermediate, TError>>! bind, System.Func<TValue, TIntermediate, TResult>! project) -> Reunion.Result<TResult, TError>
+Reunion.Result<TValue, TError>.Result() -> void
+Reunion.Result<TValue, TError>.Tap(System.Action<TValue>! action) -> Reunion.Result<TValue, TError>
+Reunion.Result<TValue, TError>.TapError(System.Action<TError>! action) -> Reunion.Result<TValue, TError>
+Reunion.Result<TValue, TError>.TryGetError(out TError error) -> bool
+Reunion.Result<TValue, TError>.TryGetValue(out TValue value) -> bool
+Reunion.Result<TValue>
+Reunion.Result<TValue>.Bind(System.Func<TValue, Reunion.Result>! bind) -> Reunion.Result
+Reunion.Result<TValue>.Bind<TNext>(System.Func<TValue, Reunion.Result<TNext>>! bind) -> Reunion.Result<TNext>
+Reunion.Result<TValue>.Ensure(System.Func<TValue, bool>! predicate, System.Func<string!>! errorFactory) -> Reunion.Result<TValue>
+Reunion.Result<TValue>.Equals(Reunion.Result<TValue> other) -> bool
+Reunion.Result<TValue>.IsFailure.get -> bool
+Reunion.Result<TValue>.IsSuccess.get -> bool
+Reunion.Result<TValue>.Map<TNext>(System.Func<TValue, TNext>! map) -> Reunion.Result<TNext>
+Reunion.Result<TValue>.MapError<TError>(System.Func<string!, TError>! map) -> Reunion.Result<TValue, TError>
+Reunion.Result<TValue>.Match(System.Action<TValue>! success, System.Action<string!>! failure) -> void
+Reunion.Result<TValue>.Match<TResult>(System.Func<TValue, TResult>! success, System.Func<string!, TResult>! failure) -> TResult
+Reunion.Result<TValue>.Recover(System.Func<string!, TValue>! fallback) -> Reunion.Result<TValue>
+Reunion.Result<TValue>.RecoverWith(System.Func<string!, Reunion.Result<TValue>>! fallback) -> Reunion.Result<TValue>
+Reunion.Result<TValue>.Select<TNext>(System.Func<TValue, TNext>! selector) -> Reunion.Result<TNext>
+Reunion.Result<TValue>.SelectMany<TIntermediate, TResult>(System.Func<TValue, Reunion.Result<TIntermediate>>! bind, System.Func<TValue, TIntermediate, TResult>! project) -> Reunion.Result<TResult>
+Reunion.Result<TValue>.Result() -> void
+Reunion.Result<TValue>.Tap(System.Action<TValue>! action) -> Reunion.Result<TValue>
+Reunion.Result<TValue>.TapError(System.Action<string!>! action) -> Reunion.Result<TValue>
+Reunion.Result<TValue>.TryGetError(out string? error) -> bool
+Reunion.Result<TValue>.TryGetValue(out TValue value) -> bool
+Reunion.ResultCollectionExtensions
+Reunion.TaskOptionExtensions
+Reunion.TaskResultExtensions
+Reunion.UnitResult
+Reunion.UnitResult<TError>
+Reunion.UnitResult<TError>.Bind(System.Func<Reunion.Result>! bind, System.Func<TError, string!>! mapError) -> Reunion.Result
+Reunion.UnitResult<TError>.Bind(System.Func<Reunion.UnitResult<TError>>! bind) -> Reunion.UnitResult<TError>
+Reunion.UnitResult<TError>.Bind<TValue>(System.Func<Reunion.Result<TValue, TError>>! bind) -> Reunion.Result<TValue, TError>
+Reunion.UnitResult<TError>.Bind<TValue>(System.Func<Reunion.Result<TValue>>! bind, System.Func<TError, string!>! mapError) -> Reunion.Result<TValue>
+Reunion.UnitResult<TError>.Equals(Reunion.UnitResult<TError> other) -> bool
+Reunion.UnitResult<TError>.IsFailure.get -> bool
+Reunion.UnitResult<TError>.IsSuccess.get -> bool
+Reunion.UnitResult<TError>.MapError<TNextError>(System.Func<TError, TNextError>! map) -> Reunion.UnitResult<TNextError>
+Reunion.UnitResult<TError>.Match(System.Action! success, System.Action<TError>! failure) -> void
+Reunion.UnitResult<TError>.Match<TResult>(System.Func<TResult>! success, System.Func<TError, TResult>! failure) -> TResult
+Reunion.UnitResult<TError>.Recover(System.Action<TError>! fallback) -> Reunion.UnitResult<TError>
+Reunion.UnitResult<TError>.RecoverWith(System.Func<TError, Reunion.UnitResult<TError>>! fallback) -> Reunion.UnitResult<TError>
+Reunion.UnitResult<TError>.Tap(System.Action! action) -> Reunion.UnitResult<TError>
+Reunion.UnitResult<TError>.TapError(System.Action<TError>! action) -> Reunion.UnitResult<TError>
+Reunion.UnitResult<TError>.TryGetError(out TError error) -> bool
+Reunion.UnitResult<TError>.UnitResult() -> void
+static Reunion.Option.FromNullable<T>(T? value) -> Reunion.Option<T!>
+static Reunion.Option.FromNullable<T>(T? value) -> Reunion.Option<T>
+static Reunion.Option.None<T>() -> Reunion.Option<T>
+static Reunion.Option.Some<T>(T value) -> Reunion.Option<T>
+static Reunion.Option<T>.operator !=(Reunion.Option<T> left, Reunion.Option<T> right) -> bool
+static Reunion.Option<T>.operator ==(Reunion.Option<T> left, Reunion.Option<T> right) -> bool
+static Reunion.OptionExtensions.ToOption<T>(this System.Threading.Tasks.Task<T?>! source) -> System.Threading.Tasks.Task<Reunion.Option<T!>>!
+static Reunion.OptionExtensions.ToOption<T>(this T? value) -> Reunion.Option<T!>
+static Reunion.OptionExtensions.ToOption<T>(this T? value) -> Reunion.Option<T>
+static Reunion.Result.Failure(string! error) -> Reunion.Result
+static Reunion.Result.Failure<TValue, TError>(TError error) -> Reunion.Result<TValue, TError>
+static Reunion.Result.Failure<TValue>(string! error) -> Reunion.Result<TValue>
+static Reunion.Result.operator !=(Reunion.Result left, Reunion.Result right) -> bool
+static Reunion.Result.operator ==(Reunion.Result left, Reunion.Result right) -> bool
+static Reunion.Result.Success() -> Reunion.Result
+static Reunion.Result.Success<TValue, TError>(TValue value) -> Reunion.Result<TValue, TError>
+static Reunion.Result.Success<TValue>(TValue value) -> Reunion.Result<TValue>
+static Reunion.Result<TValue, TError>.Failure(TError error) -> Reunion.Result<TValue, TError>
+static Reunion.Result<TValue, TError>.operator !=(Reunion.Result<TValue, TError> left, Reunion.Result<TValue, TError> right) -> bool
+static Reunion.Result<TValue, TError>.operator ==(Reunion.Result<TValue, TError> left, Reunion.Result<TValue, TError> right) -> bool
+static Reunion.Result<TValue, TError>.Success(TValue value) -> Reunion.Result<TValue, TError>
+static Reunion.Result<TValue>.Failure(string! error) -> Reunion.Result<TValue>
+static Reunion.Result<TValue>.operator !=(Reunion.Result<TValue> left, Reunion.Result<TValue> right) -> bool
+static Reunion.Result<TValue>.operator ==(Reunion.Result<TValue> left, Reunion.Result<TValue> right) -> bool
+static Reunion.Result<TValue>.Success(TValue value) -> Reunion.Result<TValue>
+static Reunion.ResultCollectionExtensions.Combine<TError>(this System.Collections.Generic.IEnumerable<Reunion.UnitResult<TError>>! source) -> Reunion.UnitResult<TError>
+static Reunion.ResultCollectionExtensions.Sequence<TValue, TError>(this System.Collections.Generic.IEnumerable<Reunion.Result<TValue, TError>>! source) -> Reunion.Result<System.Collections.Generic.IReadOnlyList<TValue>!, TError>
+static Reunion.ResultCollectionExtensions.Traverse<TSource, TValue, TError>(this System.Collections.Generic.IEnumerable<TSource>! source, System.Func<TSource, Reunion.Result<TValue, TError>>! selector) -> Reunion.Result<System.Collections.Generic.IReadOnlyList<TValue>!, TError>
+static Reunion.ResultCollectionExtensions.TraverseAsync<TSource, TValue, TError>(this System.Collections.Generic.IEnumerable<TSource>! source, System.Func<TSource, System.Threading.CancellationToken, System.Threading.Tasks.Task<Reunion.Result<TValue, TError>>!>! selector, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<Reunion.Result<System.Collections.Generic.IReadOnlyList<TValue>!, TError>>!
+static Reunion.TaskOptionExtensions.Bind<T, TResult>(this System.Threading.Tasks.Task<Reunion.Option<T>>! source, System.Func<T, Reunion.Option<TResult>>! bind) -> System.Threading.Tasks.Task<Reunion.Option<TResult>>!
+static Reunion.TaskOptionExtensions.BindAsync<T, TResult>(this Reunion.Option<T> option, System.Func<T, System.Threading.Tasks.Task<Reunion.Option<TResult>>!>! bind) -> System.Threading.Tasks.Task<Reunion.Option<TResult>>!
+static Reunion.TaskOptionExtensions.BindAsync<T, TResult>(this System.Threading.Tasks.Task<Reunion.Option<T>>! source, System.Func<T, System.Threading.Tasks.Task<Reunion.Option<TResult>>!>! bind) -> System.Threading.Tasks.Task<Reunion.Option<TResult>>!
+static Reunion.TaskOptionExtensions.Map<T, TResult>(this System.Threading.Tasks.Task<Reunion.Option<T>>! source, System.Func<T, TResult>! map) -> System.Threading.Tasks.Task<Reunion.Option<TResult>>!
+static Reunion.TaskOptionExtensions.MapAsync<T, TResult>(this Reunion.Option<T> option, System.Func<T, System.Threading.Tasks.Task<TResult>!>! map) -> System.Threading.Tasks.Task<Reunion.Option<TResult>>!
+static Reunion.TaskOptionExtensions.MapAsync<T, TResult>(this System.Threading.Tasks.Task<Reunion.Option<T>>! source, System.Func<T, System.Threading.Tasks.Task<TResult>!>! map) -> System.Threading.Tasks.Task<Reunion.Option<TResult>>!
+static Reunion.TaskOptionExtensions.Match<T, TResult>(this System.Threading.Tasks.Task<Reunion.Option<T>>! source, System.Func<T, TResult>! some, System.Func<TResult>! none) -> System.Threading.Tasks.Task<TResult>!
+static Reunion.TaskOptionExtensions.Match<T>(this System.Threading.Tasks.Task<Reunion.Option<T>>! source, System.Action<T>! some, System.Action! none) -> System.Threading.Tasks.Task!
+static Reunion.TaskOptionExtensions.MatchAsync<T, TResult>(this Reunion.Option<T> option, System.Func<T, System.Threading.Tasks.Task<TResult>!>! some, System.Func<System.Threading.Tasks.Task<TResult>!>! none) -> System.Threading.Tasks.Task<TResult>!
+static Reunion.TaskOptionExtensions.MatchAsync<T, TResult>(this System.Threading.Tasks.Task<Reunion.Option<T>>! source, System.Func<T, System.Threading.Tasks.Task<TResult>!>! some, System.Func<System.Threading.Tasks.Task<TResult>!>! none) -> System.Threading.Tasks.Task<TResult>!
+static Reunion.TaskOptionExtensions.MatchAsync<T>(this Reunion.Option<T> option, System.Func<T, System.Threading.Tasks.Task!>! some, System.Func<System.Threading.Tasks.Task!>! none) -> System.Threading.Tasks.Task!
+static Reunion.TaskOptionExtensions.MatchAsync<T>(this System.Threading.Tasks.Task<Reunion.Option<T>>! source, System.Func<T, System.Threading.Tasks.Task!>! some, System.Func<System.Threading.Tasks.Task!>! none) -> System.Threading.Tasks.Task!
+static Reunion.TaskOptionExtensions.OrElse<T>(this System.Threading.Tasks.Task<Reunion.Option<T>>! source, System.Func<Reunion.Option<T>>! fallback) -> System.Threading.Tasks.Task<Reunion.Option<T>>!
+static Reunion.TaskOptionExtensions.OrElseAsync<T>(this Reunion.Option<T> option, System.Func<System.Threading.Tasks.Task<Reunion.Option<T>>!>! fallback) -> System.Threading.Tasks.Task<Reunion.Option<T>>!
+static Reunion.TaskOptionExtensions.OrElseAsync<T>(this System.Threading.Tasks.Task<Reunion.Option<T>>! source, System.Func<System.Threading.Tasks.Task<Reunion.Option<T>>!>! fallback) -> System.Threading.Tasks.Task<Reunion.Option<T>>!
+static Reunion.TaskOptionExtensions.OrFailure<T, TError>(this System.Threading.Tasks.Task<Reunion.Option<T>>! source, System.Func<TError>! errorFactory) -> System.Threading.Tasks.Task<Reunion.Result<T, TError>>!
+static Reunion.TaskOptionExtensions.OrFailure<T, TError>(this System.Threading.Tasks.Task<Reunion.Option<T>>! source, TError error) -> System.Threading.Tasks.Task<Reunion.Result<T, TError>>!
+static Reunion.TaskOptionExtensions.OrFailureAsync<T, TError>(this Reunion.Option<T> option, System.Func<System.Threading.Tasks.Task<TError>!>! errorFactory) -> System.Threading.Tasks.Task<Reunion.Result<T, TError>>!
+static Reunion.TaskOptionExtensions.OrFailureAsync<T, TError>(this System.Threading.Tasks.Task<Reunion.Option<T>>! source, System.Func<System.Threading.Tasks.Task<TError>!>! errorFactory) -> System.Threading.Tasks.Task<Reunion.Result<T, TError>>!
+static Reunion.TaskOptionExtensions.ValueOr<T>(this System.Threading.Tasks.Task<Reunion.Option<T>>! source, T fallback) -> System.Threading.Tasks.Task<T>!
+static Reunion.TaskOptionExtensions.ValueOrElse<T>(this System.Threading.Tasks.Task<Reunion.Option<T>>! source, System.Func<T>! fallback) -> System.Threading.Tasks.Task<T>!
+static Reunion.TaskOptionExtensions.ValueOrElseAsync<T>(this Reunion.Option<T> option, System.Func<System.Threading.Tasks.Task<T>!>! fallback) -> System.Threading.Tasks.Task<T>!
+static Reunion.TaskOptionExtensions.ValueOrElseAsync<T>(this System.Threading.Tasks.Task<Reunion.Option<T>>! source, System.Func<System.Threading.Tasks.Task<T>!>! fallback) -> System.Threading.Tasks.Task<T>!
+static Reunion.TaskResultExtensions.Bind(this System.Threading.Tasks.Task<Reunion.Result>! source, System.Func<Reunion.Result>! bind) -> System.Threading.Tasks.Task<Reunion.Result>!
+static Reunion.TaskResultExtensions.Bind<TError>(this System.Threading.Tasks.Task<Reunion.Result>! source, System.Func<Reunion.UnitResult<TError>>! bind, System.Func<string!, TError>! mapError) -> System.Threading.Tasks.Task<Reunion.UnitResult<TError>>!
+static Reunion.TaskResultExtensions.Bind<TError>(this System.Threading.Tasks.Task<Reunion.UnitResult<TError>>! source, System.Func<Reunion.UnitResult<TError>>! bind) -> System.Threading.Tasks.Task<Reunion.UnitResult<TError>>!
+static Reunion.TaskResultExtensions.Bind<TValue, TError, TNext>(this System.Threading.Tasks.Task<Reunion.Result<TValue, TError>>! source, System.Func<TValue, Reunion.Result<TNext, TError>>! bind) -> System.Threading.Tasks.Task<Reunion.Result<TNext, TError>>!
+static Reunion.TaskResultExtensions.Bind<TValue, TError>(this System.Threading.Tasks.Task<Reunion.Result<TValue, TError>>! source, System.Func<TValue, Reunion.UnitResult<TError>>! bind) -> System.Threading.Tasks.Task<Reunion.UnitResult<TError>>!
+static Reunion.TaskResultExtensions.Bind<TValue, TError>(this System.Threading.Tasks.Task<Reunion.Result>! source, System.Func<Reunion.Result<TValue, TError>>! bind, System.Func<string!, TError>! mapError) -> System.Threading.Tasks.Task<Reunion.Result<TValue, TError>>!
+static Reunion.TaskResultExtensions.Bind<TValue, TError>(this System.Threading.Tasks.Task<Reunion.UnitResult<TError>>! source, System.Func<Reunion.Result<TValue, TError>>! bind) -> System.Threading.Tasks.Task<Reunion.Result<TValue, TError>>!
+static Reunion.TaskResultExtensions.Bind<TValue, TNext>(this System.Threading.Tasks.Task<Reunion.Result<TValue>>! source, System.Func<TValue, Reunion.Result<TNext>>! bind) -> System.Threading.Tasks.Task<Reunion.Result<TNext>>!
+static Reunion.TaskResultExtensions.Bind<TValue>(this System.Threading.Tasks.Task<Reunion.Result<TValue>>! source, System.Func<TValue, Reunion.Result>! bind) -> System.Threading.Tasks.Task<Reunion.Result>!
+static Reunion.TaskResultExtensions.Bind<TValue>(this System.Threading.Tasks.Task<Reunion.Result>! source, System.Func<Reunion.Result<TValue>>! bind) -> System.Threading.Tasks.Task<Reunion.Result<TValue>>!
+static Reunion.TaskResultExtensions.Bind<TValue, TError, TNext>(this System.Threading.Tasks.Task<Reunion.Result<TValue, TError>>! source, System.Func<TValue, Reunion.Result<TNext>>! bind, System.Func<TError, string!>! mapError) -> System.Threading.Tasks.Task<Reunion.Result<TNext>>!
+static Reunion.TaskResultExtensions.Bind<TValue, TError>(this System.Threading.Tasks.Task<Reunion.Result<TValue, TError>>! source, System.Func<TValue, Reunion.Result>! bind, System.Func<TError, string!>! mapError) -> System.Threading.Tasks.Task<Reunion.Result>!
+static Reunion.TaskResultExtensions.Bind<TError>(this System.Threading.Tasks.Task<Reunion.UnitResult<TError>>! source, System.Func<Reunion.Result>! bind, System.Func<TError, string!>! mapError) -> System.Threading.Tasks.Task<Reunion.Result>!
+static Reunion.TaskResultExtensions.Bind<TValue, TError>(this System.Threading.Tasks.Task<Reunion.UnitResult<TError>>! source, System.Func<Reunion.Result<TValue>>! bind, System.Func<TError, string!>! mapError) -> System.Threading.Tasks.Task<Reunion.Result<TValue>>!
+static Reunion.TaskResultExtensions.BindAsync(this Reunion.Result result, System.Func<System.Threading.Tasks.Task<Reunion.Result>!>! bind) -> System.Threading.Tasks.Task<Reunion.Result>!
+static Reunion.TaskResultExtensions.BindAsync(this System.Threading.Tasks.Task<Reunion.Result>! source, System.Func<System.Threading.Tasks.Task<Reunion.Result>!>! bind) -> System.Threading.Tasks.Task<Reunion.Result>!
+static Reunion.TaskResultExtensions.BindAsync<TError>(this Reunion.UnitResult<TError> result, System.Func<System.Threading.Tasks.Task<Reunion.UnitResult<TError>>!>! bind) -> System.Threading.Tasks.Task<Reunion.UnitResult<TError>>!
+static Reunion.TaskResultExtensions.BindAsync<TValue, TError, TNext>(this Reunion.Result<TValue, TError> result, System.Func<TValue, System.Threading.Tasks.Task<Reunion.Result<TNext, TError>>!>! bind) -> System.Threading.Tasks.Task<Reunion.Result<TNext, TError>>!
+static Reunion.TaskResultExtensions.BindAsync<TValue, TError, TNext>(this System.Threading.Tasks.Task<Reunion.Result<TValue, TError>>! source, System.Func<TValue, System.Threading.Tasks.Task<Reunion.Result<TNext, TError>>!>! bind) -> System.Threading.Tasks.Task<Reunion.Result<TNext, TError>>!
+static Reunion.TaskResultExtensions.BindAsync<TValue, TError>(this System.Threading.Tasks.Task<Reunion.Result<TValue, TError>>! source, System.Func<TValue, System.Threading.Tasks.Task<Reunion.UnitResult<TError>>!>! bind) -> System.Threading.Tasks.Task<Reunion.UnitResult<TError>>!
+static Reunion.TaskResultExtensions.BindAsync<TValue, TError>(this Reunion.Result<TValue, TError> result, System.Func<TValue, System.Threading.Tasks.Task<Reunion.UnitResult<TError>>!>! bind) -> System.Threading.Tasks.Task<Reunion.UnitResult<TError>>!
+static Reunion.TaskResultExtensions.BindAsync<TError>(this System.Threading.Tasks.Task<Reunion.UnitResult<TError>>! source, System.Func<System.Threading.Tasks.Task<Reunion.UnitResult<TError>>!>! bind) -> System.Threading.Tasks.Task<Reunion.UnitResult<TError>>!
+static Reunion.TaskResultExtensions.BindAsync<TValue, TError>(this Reunion.UnitResult<TError> result, System.Func<System.Threading.Tasks.Task<Reunion.Result<TValue, TError>>!>! bind) -> System.Threading.Tasks.Task<Reunion.Result<TValue, TError>>!
+static Reunion.TaskResultExtensions.BindAsync<TValue, TError>(this System.Threading.Tasks.Task<Reunion.UnitResult<TError>>! source, System.Func<System.Threading.Tasks.Task<Reunion.Result<TValue, TError>>!>! bind) -> System.Threading.Tasks.Task<Reunion.Result<TValue, TError>>!
+static Reunion.TaskResultExtensions.BindAsync<TValue, TNext>(this Reunion.Result<TValue> result, System.Func<TValue, System.Threading.Tasks.Task<Reunion.Result<TNext>>!>! bind) -> System.Threading.Tasks.Task<Reunion.Result<TNext>>!
+static Reunion.TaskResultExtensions.BindAsync<TValue, TNext>(this System.Threading.Tasks.Task<Reunion.Result<TValue>>! source, System.Func<TValue, System.Threading.Tasks.Task<Reunion.Result<TNext>>!>! bind) -> System.Threading.Tasks.Task<Reunion.Result<TNext>>!
+static Reunion.TaskResultExtensions.BindAsync<TValue>(this Reunion.Result result, System.Func<System.Threading.Tasks.Task<Reunion.Result<TValue>>!>! bind) -> System.Threading.Tasks.Task<Reunion.Result<TValue>>!
+static Reunion.TaskResultExtensions.BindAsync<TValue>(this System.Threading.Tasks.Task<Reunion.Result>! source, System.Func<System.Threading.Tasks.Task<Reunion.Result<TValue>>!>! bind) -> System.Threading.Tasks.Task<Reunion.Result<TValue>>!
+static Reunion.TaskResultExtensions.BindAsync<TError>(this Reunion.Result result, System.Func<System.Threading.Tasks.Task<Reunion.UnitResult<TError>>!>! bind, System.Func<string!, TError>! mapError) -> System.Threading.Tasks.Task<Reunion.UnitResult<TError>>!
+static Reunion.TaskResultExtensions.BindAsync<TError>(this System.Threading.Tasks.Task<Reunion.Result>! source, System.Func<System.Threading.Tasks.Task<Reunion.UnitResult<TError>>!>! bind, System.Func<string!, TError>! mapError) -> System.Threading.Tasks.Task<Reunion.UnitResult<TError>>!
+static Reunion.TaskResultExtensions.BindAsync<TValue, TError>(this Reunion.Result result, System.Func<System.Threading.Tasks.Task<Reunion.Result<TValue, TError>>!>! bind, System.Func<string!, TError>! mapError) -> System.Threading.Tasks.Task<Reunion.Result<TValue, TError>>!
+static Reunion.TaskResultExtensions.BindAsync<TValue, TError>(this System.Threading.Tasks.Task<Reunion.Result>! source, System.Func<System.Threading.Tasks.Task<Reunion.Result<TValue, TError>>!>! bind, System.Func<string!, TError>! mapError) -> System.Threading.Tasks.Task<Reunion.Result<TValue, TError>>!
+static Reunion.TaskResultExtensions.BindAsync<TValue>(this Reunion.Result<TValue> result, System.Func<TValue, System.Threading.Tasks.Task<Reunion.Result>!>! bind) -> System.Threading.Tasks.Task<Reunion.Result>!
+static Reunion.TaskResultExtensions.BindAsync<TValue>(this System.Threading.Tasks.Task<Reunion.Result<TValue>>! source, System.Func<TValue, System.Threading.Tasks.Task<Reunion.Result>!>! bind) -> System.Threading.Tasks.Task<Reunion.Result>!
+static Reunion.TaskResultExtensions.BindAsync<TValue, TError>(this Reunion.Result<TValue, TError> result, System.Func<TValue, System.Threading.Tasks.Task<Reunion.Result>!>! bind, System.Func<TError, string!>! mapError) -> System.Threading.Tasks.Task<Reunion.Result>!
+static Reunion.TaskResultExtensions.BindAsync<TValue, TError>(this System.Threading.Tasks.Task<Reunion.Result<TValue, TError>>! source, System.Func<TValue, System.Threading.Tasks.Task<Reunion.Result>!>! bind, System.Func<TError, string!>! mapError) -> System.Threading.Tasks.Task<Reunion.Result>!
+static Reunion.TaskResultExtensions.BindAsync<TValue, TError, TNext>(this Reunion.Result<TValue, TError> result, System.Func<TValue, System.Threading.Tasks.Task<Reunion.Result<TNext>>!>! bind, System.Func<TError, string!>! mapError) -> System.Threading.Tasks.Task<Reunion.Result<TNext>>!
+static Reunion.TaskResultExtensions.BindAsync<TValue, TError, TNext>(this System.Threading.Tasks.Task<Reunion.Result<TValue, TError>>! source, System.Func<TValue, System.Threading.Tasks.Task<Reunion.Result<TNext>>!>! bind, System.Func<TError, string!>! mapError) -> System.Threading.Tasks.Task<Reunion.Result<TNext>>!
+static Reunion.TaskResultExtensions.BindAsync<TError>(this Reunion.UnitResult<TError> result, System.Func<System.Threading.Tasks.Task<Reunion.Result>!>! bind, System.Func<TError, string!>! mapError) -> System.Threading.Tasks.Task<Reunion.Result>!
+static Reunion.TaskResultExtensions.BindAsync<TError>(this System.Threading.Tasks.Task<Reunion.UnitResult<TError>>! source, System.Func<System.Threading.Tasks.Task<Reunion.Result>!>! bind, System.Func<TError, string!>! mapError) -> System.Threading.Tasks.Task<Reunion.Result>!
+static Reunion.TaskResultExtensions.BindAsync<TValue, TError>(this Reunion.UnitResult<TError> result, System.Func<System.Threading.Tasks.Task<Reunion.Result<TValue>>!>! bind, System.Func<TError, string!>! mapError) -> System.Threading.Tasks.Task<Reunion.Result<TValue>>!
+static Reunion.TaskResultExtensions.BindAsync<TValue, TError>(this System.Threading.Tasks.Task<Reunion.UnitResult<TError>>! source, System.Func<System.Threading.Tasks.Task<Reunion.Result<TValue>>!>! bind, System.Func<TError, string!>! mapError) -> System.Threading.Tasks.Task<Reunion.Result<TValue>>!
+static Reunion.TaskResultExtensions.Ensure<TValue, TError>(this System.Threading.Tasks.Task<Reunion.Result<TValue, TError>>! source, System.Func<TValue, bool>! predicate, System.Func<TError>! errorFactory) -> System.Threading.Tasks.Task<Reunion.Result<TValue, TError>>!
+static Reunion.TaskResultExtensions.Ensure<TValue>(this System.Threading.Tasks.Task<Reunion.Result<TValue>>! source, System.Func<TValue, bool>! predicate, System.Func<string!>! errorFactory) -> System.Threading.Tasks.Task<Reunion.Result<TValue>>!
+static Reunion.TaskResultExtensions.EnsureAsync<TValue, TError>(this Reunion.Result<TValue, TError> result, System.Func<TValue, System.Threading.Tasks.Task<bool>!>! predicate, System.Func<TError>! errorFactory) -> System.Threading.Tasks.Task<Reunion.Result<TValue, TError>>!
+static Reunion.TaskResultExtensions.EnsureAsync<TValue, TError>(this System.Threading.Tasks.Task<Reunion.Result<TValue, TError>>! source, System.Func<TValue, System.Threading.Tasks.Task<bool>!>! predicate, System.Func<TError>! errorFactory) -> System.Threading.Tasks.Task<Reunion.Result<TValue, TError>>!
+static Reunion.TaskResultExtensions.EnsureAsync<TValue>(this Reunion.Result<TValue> result, System.Func<TValue, System.Threading.Tasks.Task<bool>!>! predicate, System.Func<string!>! errorFactory) -> System.Threading.Tasks.Task<Reunion.Result<TValue>>!
+static Reunion.TaskResultExtensions.EnsureAsync<TValue>(this System.Threading.Tasks.Task<Reunion.Result<TValue>>! source, System.Func<TValue, System.Threading.Tasks.Task<bool>!>! predicate, System.Func<string!>! errorFactory) -> System.Threading.Tasks.Task<Reunion.Result<TValue>>!
+static Reunion.TaskResultExtensions.Map<TValue, TError, TNext>(this System.Threading.Tasks.Task<Reunion.Result<TValue, TError>>! source, System.Func<TValue, TNext>! map) -> System.Threading.Tasks.Task<Reunion.Result<TNext, TError>>!
+static Reunion.TaskResultExtensions.Map<TValue, TNext>(this System.Threading.Tasks.Task<Reunion.Result<TValue>>! source, System.Func<TValue, TNext>! map) -> System.Threading.Tasks.Task<Reunion.Result<TNext>>!
+static Reunion.TaskResultExtensions.MapAsync<TValue, TError, TNext>(this Reunion.Result<TValue, TError> result, System.Func<TValue, System.Threading.Tasks.Task<TNext>!>! map) -> System.Threading.Tasks.Task<Reunion.Result<TNext, TError>>!
+static Reunion.TaskResultExtensions.MapAsync<TValue, TError, TNext>(this System.Threading.Tasks.Task<Reunion.Result<TValue, TError>>! source, System.Func<TValue, System.Threading.Tasks.Task<TNext>!>! map) -> System.Threading.Tasks.Task<Reunion.Result<TNext, TError>>!
+static Reunion.TaskResultExtensions.MapAsync<TValue, TNext>(this Reunion.Result<TValue> result, System.Func<TValue, System.Threading.Tasks.Task<TNext>!>! map) -> System.Threading.Tasks.Task<Reunion.Result<TNext>>!
+static Reunion.TaskResultExtensions.MapAsync<TValue, TNext>(this System.Threading.Tasks.Task<Reunion.Result<TValue>>! source, System.Func<TValue, System.Threading.Tasks.Task<TNext>!>! map) -> System.Threading.Tasks.Task<Reunion.Result<TNext>>!
+static Reunion.TaskResultExtensions.MapError<TError, TNextError>(this System.Threading.Tasks.Task<Reunion.UnitResult<TError>>! source, System.Func<TError, TNextError>! map) -> System.Threading.Tasks.Task<Reunion.UnitResult<TNextError>>!
+static Reunion.TaskResultExtensions.MapError<TError>(this System.Threading.Tasks.Task<Reunion.Result>! source, System.Func<string!, TError>! map) -> System.Threading.Tasks.Task<Reunion.UnitResult<TError>>!
+static Reunion.TaskResultExtensions.MapError<TValue, TError, TNextError>(this System.Threading.Tasks.Task<Reunion.Result<TValue, TError>>! source, System.Func<TError, TNextError>! map) -> System.Threading.Tasks.Task<Reunion.Result<TValue, TNextError>>!
+static Reunion.TaskResultExtensions.MapError<TValue, TError>(this System.Threading.Tasks.Task<Reunion.Result<TValue>>! source, System.Func<string!, TError>! map) -> System.Threading.Tasks.Task<Reunion.Result<TValue, TError>>!
+static Reunion.TaskResultExtensions.MapErrorAsync<TError>(this Reunion.Result result, System.Func<string!, System.Threading.Tasks.Task<TError>!>! map) -> System.Threading.Tasks.Task<Reunion.UnitResult<TError>>!
+static Reunion.TaskResultExtensions.MapErrorAsync<TError>(this System.Threading.Tasks.Task<Reunion.Result>! source, System.Func<string!, System.Threading.Tasks.Task<TError>!>! map) -> System.Threading.Tasks.Task<Reunion.UnitResult<TError>>!
+static Reunion.TaskResultExtensions.MapErrorAsync<TValue, TError>(this Reunion.Result<TValue> result, System.Func<string!, System.Threading.Tasks.Task<TError>!>! map) -> System.Threading.Tasks.Task<Reunion.Result<TValue, TError>>!
+static Reunion.TaskResultExtensions.MapErrorAsync<TValue, TError>(this System.Threading.Tasks.Task<Reunion.Result<TValue>>! source, System.Func<string!, System.Threading.Tasks.Task<TError>!>! map) -> System.Threading.Tasks.Task<Reunion.Result<TValue, TError>>!
+static Reunion.TaskResultExtensions.MapErrorAsync<TValue, TError, TNextError>(this Reunion.Result<TValue, TError> result, System.Func<TError, System.Threading.Tasks.Task<TNextError>!>! map) -> System.Threading.Tasks.Task<Reunion.Result<TValue, TNextError>>!
+static Reunion.TaskResultExtensions.MapErrorAsync<TValue, TError, TNextError>(this System.Threading.Tasks.Task<Reunion.Result<TValue, TError>>! source, System.Func<TError, System.Threading.Tasks.Task<TNextError>!>! map) -> System.Threading.Tasks.Task<Reunion.Result<TValue, TNextError>>!
+static Reunion.TaskResultExtensions.MapErrorAsync<TError, TNextError>(this Reunion.UnitResult<TError> result, System.Func<TError, System.Threading.Tasks.Task<TNextError>!>! map) -> System.Threading.Tasks.Task<Reunion.UnitResult<TNextError>>!
+static Reunion.TaskResultExtensions.MapErrorAsync<TError, TNextError>(this System.Threading.Tasks.Task<Reunion.UnitResult<TError>>! source, System.Func<TError, System.Threading.Tasks.Task<TNextError>!>! map) -> System.Threading.Tasks.Task<Reunion.UnitResult<TNextError>>!
+static Reunion.TaskResultExtensions.Match(this System.Threading.Tasks.Task<Reunion.Result>! source, System.Action! success, System.Action<string!>! failure) -> System.Threading.Tasks.Task!
+static Reunion.TaskResultExtensions.Match<TError, TResult>(this System.Threading.Tasks.Task<Reunion.UnitResult<TError>>! source, System.Func<TResult>! success, System.Func<TError, TResult>! failure) -> System.Threading.Tasks.Task<TResult>!
+static Reunion.TaskResultExtensions.Match<TError>(this System.Threading.Tasks.Task<Reunion.UnitResult<TError>>! source, System.Action! success, System.Action<TError>! failure) -> System.Threading.Tasks.Task!
+static Reunion.TaskResultExtensions.Match<TResult>(this System.Threading.Tasks.Task<Reunion.Result>! source, System.Func<TResult>! success, System.Func<string!, TResult>! failure) -> System.Threading.Tasks.Task<TResult>!
+static Reunion.TaskResultExtensions.Match<TValue, TError, TResult>(this System.Threading.Tasks.Task<Reunion.Result<TValue, TError>>! source, System.Func<TValue, TResult>! success, System.Func<TError, TResult>! failure) -> System.Threading.Tasks.Task<TResult>!
+static Reunion.TaskResultExtensions.Match<TValue, TError>(this System.Threading.Tasks.Task<Reunion.Result<TValue, TError>>! source, System.Action<TValue>! success, System.Action<TError>! failure) -> System.Threading.Tasks.Task!
+static Reunion.TaskResultExtensions.Match<TValue, TResult>(this System.Threading.Tasks.Task<Reunion.Result<TValue>>! source, System.Func<TValue, TResult>! success, System.Func<string!, TResult>! failure) -> System.Threading.Tasks.Task<TResult>!
+static Reunion.TaskResultExtensions.Match<TValue>(this System.Threading.Tasks.Task<Reunion.Result<TValue>>! source, System.Action<TValue>! success, System.Action<string!>! failure) -> System.Threading.Tasks.Task!
+static Reunion.TaskResultExtensions.MatchAsync(this Reunion.Result result, System.Func<System.Threading.Tasks.Task!>! success, System.Func<string!, System.Threading.Tasks.Task!>! failure) -> System.Threading.Tasks.Task!
+static Reunion.TaskResultExtensions.MatchAsync(this System.Threading.Tasks.Task<Reunion.Result>! source, System.Func<System.Threading.Tasks.Task!>! success, System.Func<string!, System.Threading.Tasks.Task!>! failure) -> System.Threading.Tasks.Task!
+static Reunion.TaskResultExtensions.MatchAsync<TError, TResult>(this Reunion.UnitResult<TError> result, System.Func<System.Threading.Tasks.Task<TResult>!>! success, System.Func<TError, System.Threading.Tasks.Task<TResult>!>! failure) -> System.Threading.Tasks.Task<TResult>!
+static Reunion.TaskResultExtensions.MatchAsync<TError, TResult>(this System.Threading.Tasks.Task<Reunion.UnitResult<TError>>! source, System.Func<System.Threading.Tasks.Task<TResult>!>! success, System.Func<TError, System.Threading.Tasks.Task<TResult>!>! failure) -> System.Threading.Tasks.Task<TResult>!
+static Reunion.TaskResultExtensions.MatchAsync<TError>(this Reunion.UnitResult<TError> result, System.Func<System.Threading.Tasks.Task!>! success, System.Func<TError, System.Threading.Tasks.Task!>! failure) -> System.Threading.Tasks.Task!
+static Reunion.TaskResultExtensions.MatchAsync<TError>(this System.Threading.Tasks.Task<Reunion.UnitResult<TError>>! source, System.Func<System.Threading.Tasks.Task!>! success, System.Func<TError, System.Threading.Tasks.Task!>! failure) -> System.Threading.Tasks.Task!
+static Reunion.TaskResultExtensions.MatchAsync<TResult>(this Reunion.Result result, System.Func<System.Threading.Tasks.Task<TResult>!>! success, System.Func<string!, System.Threading.Tasks.Task<TResult>!>! failure) -> System.Threading.Tasks.Task<TResult>!
+static Reunion.TaskResultExtensions.MatchAsync<TResult>(this System.Threading.Tasks.Task<Reunion.Result>! source, System.Func<System.Threading.Tasks.Task<TResult>!>! success, System.Func<string!, System.Threading.Tasks.Task<TResult>!>! failure) -> System.Threading.Tasks.Task<TResult>!
+static Reunion.TaskResultExtensions.MatchAsync<TValue, TError, TResult>(this Reunion.Result<TValue, TError> result, System.Func<TValue, System.Threading.Tasks.Task<TResult>!>! success, System.Func<TError, System.Threading.Tasks.Task<TResult>!>! failure) -> System.Threading.Tasks.Task<TResult>!
+static Reunion.TaskResultExtensions.MatchAsync<TValue, TError, TResult>(this System.Threading.Tasks.Task<Reunion.Result<TValue, TError>>! source, System.Func<TValue, System.Threading.Tasks.Task<TResult>!>! success, System.Func<TError, System.Threading.Tasks.Task<TResult>!>! failure) -> System.Threading.Tasks.Task<TResult>!
+static Reunion.TaskResultExtensions.MatchAsync<TValue, TError>(this Reunion.Result<TValue, TError> result, System.Func<TValue, System.Threading.Tasks.Task!>! success, System.Func<TError, System.Threading.Tasks.Task!>! failure) -> System.Threading.Tasks.Task!
+static Reunion.TaskResultExtensions.MatchAsync<TValue, TError>(this System.Threading.Tasks.Task<Reunion.Result<TValue, TError>>! source, System.Func<TValue, System.Threading.Tasks.Task!>! success, System.Func<TError, System.Threading.Tasks.Task!>! failure) -> System.Threading.Tasks.Task!
+static Reunion.TaskResultExtensions.MatchAsync<TValue, TResult>(this Reunion.Result<TValue> result, System.Func<TValue, System.Threading.Tasks.Task<TResult>!>! success, System.Func<string!, System.Threading.Tasks.Task<TResult>!>! failure) -> System.Threading.Tasks.Task<TResult>!
+static Reunion.TaskResultExtensions.MatchAsync<TValue, TResult>(this System.Threading.Tasks.Task<Reunion.Result<TValue>>! source, System.Func<TValue, System.Threading.Tasks.Task<TResult>!>! success, System.Func<string!, System.Threading.Tasks.Task<TResult>!>! failure) -> System.Threading.Tasks.Task<TResult>!
+static Reunion.TaskResultExtensions.MatchAsync<TValue>(this Reunion.Result<TValue> result, System.Func<TValue, System.Threading.Tasks.Task!>! success, System.Func<string!, System.Threading.Tasks.Task!>! failure) -> System.Threading.Tasks.Task!
+static Reunion.TaskResultExtensions.MatchAsync<TValue>(this System.Threading.Tasks.Task<Reunion.Result<TValue>>! source, System.Func<TValue, System.Threading.Tasks.Task!>! success, System.Func<string!, System.Threading.Tasks.Task!>! failure) -> System.Threading.Tasks.Task!
+static Reunion.TaskResultExtensions.Recover(this System.Threading.Tasks.Task<Reunion.Result>! source, System.Action<string!>! fallback) -> System.Threading.Tasks.Task<Reunion.Result>!
+static Reunion.TaskResultExtensions.Recover<TError>(this System.Threading.Tasks.Task<Reunion.UnitResult<TError>>! source, System.Action<TError>! fallback) -> System.Threading.Tasks.Task<Reunion.UnitResult<TError>>!
+static Reunion.TaskResultExtensions.Recover<TValue, TError>(this System.Threading.Tasks.Task<Reunion.Result<TValue, TError>>! source, System.Func<TError, TValue>! fallback) -> System.Threading.Tasks.Task<Reunion.Result<TValue, TError>>!
+static Reunion.TaskResultExtensions.Recover<TValue>(this System.Threading.Tasks.Task<Reunion.Result<TValue>>! source, System.Func<string!, TValue>! fallback) -> System.Threading.Tasks.Task<Reunion.Result<TValue>>!
+static Reunion.TaskResultExtensions.RecoverAsync(this Reunion.Result result, System.Func<string!, System.Threading.Tasks.Task!>! fallback) -> System.Threading.Tasks.Task<Reunion.Result>!
+static Reunion.TaskResultExtensions.RecoverAsync(this System.Threading.Tasks.Task<Reunion.Result>! source, System.Func<string!, System.Threading.Tasks.Task!>! fallback) -> System.Threading.Tasks.Task<Reunion.Result>!
+static Reunion.TaskResultExtensions.RecoverAsync<TValue>(this Reunion.Result<TValue> result, System.Func<string!, System.Threading.Tasks.Task<TValue>!>! fallback) -> System.Threading.Tasks.Task<Reunion.Result<TValue>>!
+static Reunion.TaskResultExtensions.RecoverAsync<TValue>(this System.Threading.Tasks.Task<Reunion.Result<TValue>>! source, System.Func<string!, System.Threading.Tasks.Task<TValue>!>! fallback) -> System.Threading.Tasks.Task<Reunion.Result<TValue>>!
+static Reunion.TaskResultExtensions.RecoverAsync<TValue, TError>(this Reunion.Result<TValue, TError> result, System.Func<TError, System.Threading.Tasks.Task<TValue>!>! fallback) -> System.Threading.Tasks.Task<Reunion.Result<TValue, TError>>!
+static Reunion.TaskResultExtensions.RecoverAsync<TValue, TError>(this System.Threading.Tasks.Task<Reunion.Result<TValue, TError>>! source, System.Func<TError, System.Threading.Tasks.Task<TValue>!>! fallback) -> System.Threading.Tasks.Task<Reunion.Result<TValue, TError>>!
+static Reunion.TaskResultExtensions.RecoverAsync<TError>(this Reunion.UnitResult<TError> result, System.Func<TError, System.Threading.Tasks.Task!>! fallback) -> System.Threading.Tasks.Task<Reunion.UnitResult<TError>>!
+static Reunion.TaskResultExtensions.RecoverAsync<TError>(this System.Threading.Tasks.Task<Reunion.UnitResult<TError>>! source, System.Func<TError, System.Threading.Tasks.Task!>! fallback) -> System.Threading.Tasks.Task<Reunion.UnitResult<TError>>!
+static Reunion.TaskResultExtensions.RecoverWith(this System.Threading.Tasks.Task<Reunion.Result>! source, System.Func<string!, Reunion.Result>! fallback) -> System.Threading.Tasks.Task<Reunion.Result>!
+static Reunion.TaskResultExtensions.RecoverWith<TError>(this System.Threading.Tasks.Task<Reunion.UnitResult<TError>>! source, System.Func<TError, Reunion.UnitResult<TError>>! fallback) -> System.Threading.Tasks.Task<Reunion.UnitResult<TError>>!
+static Reunion.TaskResultExtensions.RecoverWith<TValue, TError>(this System.Threading.Tasks.Task<Reunion.Result<TValue, TError>>! source, System.Func<TError, Reunion.Result<TValue, TError>>! fallback) -> System.Threading.Tasks.Task<Reunion.Result<TValue, TError>>!
+static Reunion.TaskResultExtensions.RecoverWith<TValue>(this System.Threading.Tasks.Task<Reunion.Result<TValue>>! source, System.Func<string!, Reunion.Result<TValue>>! fallback) -> System.Threading.Tasks.Task<Reunion.Result<TValue>>!
+static Reunion.TaskResultExtensions.RecoverWithAsync(this Reunion.Result result, System.Func<string!, System.Threading.Tasks.Task<Reunion.Result>!>! fallback) -> System.Threading.Tasks.Task<Reunion.Result>!
+static Reunion.TaskResultExtensions.RecoverWithAsync(this System.Threading.Tasks.Task<Reunion.Result>! source, System.Func<string!, System.Threading.Tasks.Task<Reunion.Result>!>! fallback) -> System.Threading.Tasks.Task<Reunion.Result>!
+static Reunion.TaskResultExtensions.RecoverWithAsync<TError>(this Reunion.UnitResult<TError> result, System.Func<TError, System.Threading.Tasks.Task<Reunion.UnitResult<TError>>!>! fallback) -> System.Threading.Tasks.Task<Reunion.UnitResult<TError>>!
+static Reunion.TaskResultExtensions.RecoverWithAsync<TError>(this System.Threading.Tasks.Task<Reunion.UnitResult<TError>>! source, System.Func<TError, System.Threading.Tasks.Task<Reunion.UnitResult<TError>>!>! fallback) -> System.Threading.Tasks.Task<Reunion.UnitResult<TError>>!
+static Reunion.TaskResultExtensions.RecoverWithAsync<TValue, TError>(this Reunion.Result<TValue, TError> result, System.Func<TError, System.Threading.Tasks.Task<Reunion.Result<TValue, TError>>!>! fallback) -> System.Threading.Tasks.Task<Reunion.Result<TValue, TError>>!
+static Reunion.TaskResultExtensions.RecoverWithAsync<TValue, TError>(this System.Threading.Tasks.Task<Reunion.Result<TValue, TError>>! source, System.Func<TError, System.Threading.Tasks.Task<Reunion.Result<TValue, TError>>!>! fallback) -> System.Threading.Tasks.Task<Reunion.Result<TValue, TError>>!
+static Reunion.TaskResultExtensions.RecoverWithAsync<TValue>(this Reunion.Result<TValue> result, System.Func<string!, System.Threading.Tasks.Task<Reunion.Result<TValue>>!>! fallback) -> System.Threading.Tasks.Task<Reunion.Result<TValue>>!
+static Reunion.TaskResultExtensions.RecoverWithAsync<TValue>(this System.Threading.Tasks.Task<Reunion.Result<TValue>>! source, System.Func<string!, System.Threading.Tasks.Task<Reunion.Result<TValue>>!>! fallback) -> System.Threading.Tasks.Task<Reunion.Result<TValue>>!
+static Reunion.TaskResultExtensions.Tap(this System.Threading.Tasks.Task<Reunion.Result>! source, System.Action! action) -> System.Threading.Tasks.Task<Reunion.Result>!
+static Reunion.TaskResultExtensions.Tap<TError>(this System.Threading.Tasks.Task<Reunion.UnitResult<TError>>! source, System.Action! action) -> System.Threading.Tasks.Task<Reunion.UnitResult<TError>>!
+static Reunion.TaskResultExtensions.Tap<TValue, TError>(this System.Threading.Tasks.Task<Reunion.Result<TValue, TError>>! source, System.Action<TValue>! action) -> System.Threading.Tasks.Task<Reunion.Result<TValue, TError>>!
+static Reunion.TaskResultExtensions.Tap<TValue>(this System.Threading.Tasks.Task<Reunion.Result<TValue>>! source, System.Action<TValue>! action) -> System.Threading.Tasks.Task<Reunion.Result<TValue>>!
+static Reunion.TaskResultExtensions.TapAsync(this Reunion.Result result, System.Func<System.Threading.Tasks.Task!>! action) -> System.Threading.Tasks.Task<Reunion.Result>!
+static Reunion.TaskResultExtensions.TapAsync(this System.Threading.Tasks.Task<Reunion.Result>! source, System.Func<System.Threading.Tasks.Task!>! action) -> System.Threading.Tasks.Task<Reunion.Result>!
+static Reunion.TaskResultExtensions.TapAsync<TError>(this Reunion.UnitResult<TError> result, System.Func<System.Threading.Tasks.Task!>! action) -> System.Threading.Tasks.Task<Reunion.UnitResult<TError>>!
+static Reunion.TaskResultExtensions.TapAsync<TError>(this System.Threading.Tasks.Task<Reunion.UnitResult<TError>>! source, System.Func<System.Threading.Tasks.Task!>! action) -> System.Threading.Tasks.Task<Reunion.UnitResult<TError>>!
+static Reunion.TaskResultExtensions.TapAsync<TValue, TError>(this Reunion.Result<TValue, TError> result, System.Func<TValue, System.Threading.Tasks.Task!>! action) -> System.Threading.Tasks.Task<Reunion.Result<TValue, TError>>!
+static Reunion.TaskResultExtensions.TapAsync<TValue, TError>(this System.Threading.Tasks.Task<Reunion.Result<TValue, TError>>! source, System.Func<TValue, System.Threading.Tasks.Task!>! action) -> System.Threading.Tasks.Task<Reunion.Result<TValue, TError>>!
+static Reunion.TaskResultExtensions.TapAsync<TValue>(this Reunion.Result<TValue> result, System.Func<TValue, System.Threading.Tasks.Task!>! action) -> System.Threading.Tasks.Task<Reunion.Result<TValue>>!
+static Reunion.TaskResultExtensions.TapAsync<TValue>(this System.Threading.Tasks.Task<Reunion.Result<TValue>>! source, System.Func<TValue, System.Threading.Tasks.Task!>! action) -> System.Threading.Tasks.Task<Reunion.Result<TValue>>!
+static Reunion.TaskResultExtensions.TapError(this System.Threading.Tasks.Task<Reunion.Result>! source, System.Action<string!>! action) -> System.Threading.Tasks.Task<Reunion.Result>!
+static Reunion.TaskResultExtensions.TapError<TError>(this System.Threading.Tasks.Task<Reunion.UnitResult<TError>>! source, System.Action<TError>! action) -> System.Threading.Tasks.Task<Reunion.UnitResult<TError>>!
+static Reunion.TaskResultExtensions.TapError<TValue, TError>(this System.Threading.Tasks.Task<Reunion.Result<TValue, TError>>! source, System.Action<TError>! action) -> System.Threading.Tasks.Task<Reunion.Result<TValue, TError>>!
+static Reunion.TaskResultExtensions.TapError<TValue>(this System.Threading.Tasks.Task<Reunion.Result<TValue>>! source, System.Action<string!>! action) -> System.Threading.Tasks.Task<Reunion.Result<TValue>>!
+static Reunion.TaskResultExtensions.TapErrorAsync(this Reunion.Result result, System.Func<string!, System.Threading.Tasks.Task!>! action) -> System.Threading.Tasks.Task<Reunion.Result>!
+static Reunion.TaskResultExtensions.TapErrorAsync(this System.Threading.Tasks.Task<Reunion.Result>! source, System.Func<string!, System.Threading.Tasks.Task!>! action) -> System.Threading.Tasks.Task<Reunion.Result>!
+static Reunion.TaskResultExtensions.TapErrorAsync<TError>(this Reunion.UnitResult<TError> result, System.Func<TError, System.Threading.Tasks.Task!>! action) -> System.Threading.Tasks.Task<Reunion.UnitResult<TError>>!
+static Reunion.TaskResultExtensions.TapErrorAsync<TError>(this System.Threading.Tasks.Task<Reunion.UnitResult<TError>>! source, System.Func<TError, System.Threading.Tasks.Task!>! action) -> System.Threading.Tasks.Task<Reunion.UnitResult<TError>>!
+static Reunion.TaskResultExtensions.TapErrorAsync<TValue, TError>(this Reunion.Result<TValue, TError> result, System.Func<TError, System.Threading.Tasks.Task!>! action) -> System.Threading.Tasks.Task<Reunion.Result<TValue, TError>>!
+static Reunion.TaskResultExtensions.TapErrorAsync<TValue, TError>(this System.Threading.Tasks.Task<Reunion.Result<TValue, TError>>! source, System.Func<TError, System.Threading.Tasks.Task!>! action) -> System.Threading.Tasks.Task<Reunion.Result<TValue, TError>>!
+static Reunion.TaskResultExtensions.TapErrorAsync<TValue>(this Reunion.Result<TValue> result, System.Func<string!, System.Threading.Tasks.Task!>! action) -> System.Threading.Tasks.Task<Reunion.Result<TValue>>!
+static Reunion.TaskResultExtensions.TapErrorAsync<TValue>(this System.Threading.Tasks.Task<Reunion.Result<TValue>>! source, System.Func<string!, System.Threading.Tasks.Task!>! action) -> System.Threading.Tasks.Task<Reunion.Result<TValue>>!
+static Reunion.UnitResult.Failure<TError>(TError error) -> Reunion.UnitResult<TError>
+static Reunion.UnitResult.Success<TError>() -> Reunion.UnitResult<TError>
+static Reunion.UnitResult<TError>.Failure(TError error) -> Reunion.UnitResult<TError>
+static Reunion.UnitResult<TError>.operator !=(Reunion.UnitResult<TError> left, Reunion.UnitResult<TError> right) -> bool
+static Reunion.UnitResult<TError>.operator ==(Reunion.UnitResult<TError> left, Reunion.UnitResult<TError> right) -> bool
+static Reunion.UnitResult<TError>.Success() -> Reunion.UnitResult<TError>

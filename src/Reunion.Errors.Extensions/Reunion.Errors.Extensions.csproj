@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFrameworks>net10.0;net11.0</TargetFrameworks>
@@ -15,12 +15,12 @@
 
   <PropertyGroup>
     <IsPackable>true</IsPackable>
-    <PackageId>Reunion</PackageId>
+    <PackageId>Reunion.Errors.Extensions</PackageId>
     <Version>0.1.0-alpha.1</Version>
-    <Description>A dependency-free Result and Option library for .NET 10 with preview C# custom-union support on .NET 11.</Description>
+    <Description>Option-to-Result conveniences for Reunion typed application errors.</Description>
     <Authors>Thomas Seery</Authors>
-    <PackageTags>result;option;functional;discriminated-union</PackageTags>
-    <PackageReleaseNotes>Initial prerelease with the migrated functional core, shared named cases, and preview .NET 11 custom-union support.</PackageReleaseNotes>
+    <PackageTags>result;option;errors;functional;application-errors</PackageTags>
+    <PackageReleaseNotes>Initial prerelease with typed OrNotFound conversions and task-aware parity.</PackageReleaseNotes>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <RepositoryUrl>https://github.com/ThomasSeery/Reunion</RepositoryUrl>
@@ -30,18 +30,15 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Reunion.Errors\Reunion.Errors.csproj" />
+    <ProjectReference Include="..\Reunion\Reunion.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" Version="3.3.4">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-  </ItemGroup>
-
-  <ItemGroup Condition="'$(TargetFramework)' == 'net11.0'">
-    <AdditionalFiles Include="net11\PublicAPI.Unshipped.txt" />
-  </ItemGroup>
-
-  <ItemGroup Condition="'$(TargetFramework)' == 'net10.0'">
-    <AdditionalFiles Include="net10\PublicAPI.Unshipped.txt" />
   </ItemGroup>
 
   <ItemGroup>

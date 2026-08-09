@@ -2,6 +2,7 @@
 bin/
 obj/
 nupkgs/
+artifacts/
 *.user
 *.suo
 

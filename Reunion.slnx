@@ -1,5 +1,17 @@
 <Solution>
   <Folder Name="/src/">
     <Project Path="src/Reunion/Reunion.csproj" />
+    <Project Path="src/Reunion.AspNetCore/Reunion.AspNetCore.csproj" />
+    <Project Path="src/Reunion.Errors/Reunion.Errors.csproj" />
+    <Project Path="src/Reunion.Errors.Extensions/Reunion.Errors.Extensions.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Reunion.AspNetCore.Tests/Reunion.AspNetCore.Tests.csproj" />
+    <Project Path="tests/Reunion.Errors.Extensions.Tests/Reunion.Errors.Extensions.Tests.csproj" />
+    <Project Path="tests/Reunion.Errors.Tests/Reunion.Errors.Tests.csproj" />
+    <Project Path="tests/Reunion.Tests/Reunion.Tests.csproj" />
+  </Folder>
+  <Folder Name="/eng/">
+    <Project Path="eng/Reunion.ApiComparison/Reunion.ApiComparison.csproj" />
   </Folder>
 </Solution>

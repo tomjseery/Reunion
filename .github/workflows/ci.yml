@@ -1,0 +1,111 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build-test-pack:
+    runs-on: windows-latest
+    env:
+      REUNION_PACKAGE_VERSION: 0.1.0-ci.${{ github.run_id }}.${{ github.run_attempt }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install .NET 10 and pinned .NET 11 preview
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            10.0.302
+            11.0.100-preview.6.26359.118
+
+      - name: Restore
+        run: dotnet restore Reunion.slnx
+
+      - name: Build and test net10
+        run: |
+          dotnet build tests/Reunion.Tests/Reunion.Tests.csproj --configuration Release --framework net10.0 --no-restore
+          dotnet test tests/Reunion.Tests/Reunion.Tests.csproj --configuration Release --framework net10.0 --no-build --no-restore
+          dotnet build tests/Reunion.AspNetCore.Tests/Reunion.AspNetCore.Tests.csproj --configuration Release --framework net10.0 --no-restore
+          dotnet test tests/Reunion.AspNetCore.Tests/Reunion.AspNetCore.Tests.csproj --configuration Release --framework net10.0 --no-build --no-restore
+          dotnet build tests/Reunion.Errors.Tests/Reunion.Errors.Tests.csproj --configuration Release --framework net10.0 --no-restore
+          dotnet test tests/Reunion.Errors.Tests/Reunion.Errors.Tests.csproj --configuration Release --framework net10.0 --no-build --no-restore
+          dotnet build tests/Reunion.Errors.Extensions.Tests/Reunion.Errors.Extensions.Tests.csproj --configuration Release --framework net10.0 --no-restore
+          dotnet test tests/Reunion.Errors.Extensions.Tests/Reunion.Errors.Extensions.Tests.csproj --configuration Release --framework net10.0 --no-build --no-restore
+
+      - name: Build and test net11 preview
+        run: |
+          dotnet build tests/Reunion.Tests/Reunion.Tests.csproj --configuration Release --framework net11.0 --no-restore
+          dotnet build eng/Reunion.ApiComparison/Reunion.ApiComparison.csproj --configuration Release --framework net11.0 --no-restore
+          dotnet test tests/Reunion.Tests/Reunion.Tests.csproj --configuration Release --framework net11.0 --no-build --no-restore
+          dotnet build tests/Reunion.AspNetCore.Tests/Reunion.AspNetCore.Tests.csproj --configuration Release --framework net11.0 --no-restore
+          dotnet test tests/Reunion.AspNetCore.Tests/Reunion.AspNetCore.Tests.csproj --configuration Release --framework net11.0 --no-build --no-restore
+          dotnet build tests/Reunion.Errors.Tests/Reunion.Errors.Tests.csproj --configuration Release --framework net11.0 --no-restore
+          dotnet test tests/Reunion.Errors.Tests/Reunion.Errors.Tests.csproj --configuration Release --framework net11.0 --no-build --no-restore
+          dotnet build tests/Reunion.Errors.Extensions.Tests/Reunion.Errors.Extensions.Tests.csproj --configuration Release --framework net11.0 --no-restore
+          dotnet test tests/Reunion.Errors.Extensions.Tests/Reunion.Errors.Extensions.Tests.csproj --configuration Release --framework net11.0 --no-build --no-restore
+
+      - name: Compare target-framework public APIs
+        run: |
+          dotnet run --project eng/Reunion.ApiComparison/Reunion.ApiComparison.csproj --configuration Release --framework net11.0 --no-build --no-restore -- src/Reunion/bin/Release/net10.0/Reunion.dll src/Reunion/bin/Release/net11.0/Reunion.dll
+          dotnet run --project eng/Reunion.ApiComparison/Reunion.ApiComparison.csproj --configuration Release --framework net11.0 --no-build --no-restore -- --exact src/Reunion.AspNetCore/bin/Release/net10.0/Reunion.AspNetCore.dll src/Reunion.AspNetCore/bin/Release/net11.0/Reunion.AspNetCore.dll
+          dotnet run --project eng/Reunion.ApiComparison/Reunion.ApiComparison.csproj --configuration Release --framework net11.0 --no-build --no-restore -- --exact src/Reunion.Errors/bin/Release/net10.0/Reunion.Errors.dll src/Reunion.Errors/bin/Release/net11.0/Reunion.Errors.dll
+          dotnet run --project eng/Reunion.ApiComparison/Reunion.ApiComparison.csproj --configuration Release --framework net11.0 --no-build --no-restore -- --exact src/Reunion.Errors.Extensions/bin/Release/net10.0/Reunion.Errors.Extensions.dll src/Reunion.Errors.Extensions/bin/Release/net11.0/Reunion.Errors.Extensions.dll
+
+      - name: Check formatting and whitespace
+        run: |
+          dotnet format Reunion.slnx --verify-no-changes --no-restore
+          git diff --check
+
+      - name: Pack and inspect packages
+        shell: pwsh
+        run: |
+          dotnet pack src/Reunion/Reunion.csproj --configuration Release --no-restore --output artifacts/packages -p:PackageVersion=$env:REUNION_PACKAGE_VERSION
+          dotnet pack src/Reunion.Errors/Reunion.Errors.csproj --configuration Release --no-restore --output artifacts/packages -p:PackageVersion=$env:REUNION_PACKAGE_VERSION
+          dotnet pack src/Reunion.Errors.Extensions/Reunion.Errors.Extensions.csproj --configuration Release --no-restore --output artifacts/packages -p:PackageVersion=$env:REUNION_PACKAGE_VERSION
+          dotnet pack src/Reunion.AspNetCore/Reunion.AspNetCore.csproj --configuration Release --no-restore --output artifacts/packages -p:PackageVersion=$env:REUNION_PACKAGE_VERSION
+          $packagePath = Join-Path artifacts/packages "Reunion.$env:REUNION_PACKAGE_VERSION.nupkg"
+          $errorsPackagePath = Join-Path artifacts/packages "Reunion.Errors.$env:REUNION_PACKAGE_VERSION.nupkg"
+          $errorsExtensionsPackagePath = Join-Path artifacts/packages "Reunion.Errors.Extensions.$env:REUNION_PACKAGE_VERSION.nupkg"
+          $aspNetCorePackagePath = Join-Path artifacts/packages "Reunion.AspNetCore.$env:REUNION_PACKAGE_VERSION.nupkg"
+          ./eng/Inspect-Package.ps1 -PackagePath $packagePath -ExpectedVersion $env:REUNION_PACKAGE_VERSION
+          ./eng/Inspect-ErrorsPackage.ps1 -PackagePath $errorsPackagePath -ExpectedVersion $env:REUNION_PACKAGE_VERSION
+          ./eng/Inspect-ErrorsExtensionsPackage.ps1 -PackagePath $errorsExtensionsPackagePath -ExpectedVersion $env:REUNION_PACKAGE_VERSION
+          ./eng/Inspect-AspNetCorePackage.ps1 -PackagePath $aspNetCorePackagePath -ExpectedVersion $env:REUNION_PACKAGE_VERSION
+
+      - name: Restore clean package consumers
+        run: |
+          $packageSource = (Resolve-Path -LiteralPath artifacts/packages).Path
+          dotnet restore tests/PackageConsumers/Reunion.Consumer.Net10/Reunion.Consumer.Net10.csproj --force --no-cache --packages artifacts/consumer-packages/net10 -p:ReunionPackageVersion=$env:REUNION_PACKAGE_VERSION -p:RestoreAdditionalProjectSources=$packageSource
+          dotnet restore tests/PackageConsumers/Reunion.Consumer.Net11/Reunion.Consumer.Net11.csproj --force --no-cache --packages artifacts/consumer-packages/net11 -p:ReunionPackageVersion=$env:REUNION_PACKAGE_VERSION -p:RestoreAdditionalProjectSources=$packageSource
+          dotnet restore tests/PackageConsumers/Reunion.AspNetCore.Consumer.Net10/Reunion.AspNetCore.Consumer.Net10.csproj --force --no-cache --packages artifacts/consumer-packages/aspnetcore-net10 -p:ReunionPackageVersion=$env:REUNION_PACKAGE_VERSION -p:RestoreAdditionalProjectSources=$packageSource
+          dotnet restore tests/PackageConsumers/Reunion.AspNetCore.Consumer.Net11/Reunion.AspNetCore.Consumer.Net11.csproj --force --no-cache --packages artifacts/consumer-packages/aspnetcore-net11 -p:ReunionPackageVersion=$env:REUNION_PACKAGE_VERSION -p:RestoreAdditionalProjectSources=$packageSource
+          ./eng/Assert-PackageConsumerRestore.ps1 -ProjectPath tests/PackageConsumers/Reunion.Consumer.Net10/Reunion.Consumer.Net10.csproj -PackagesPath artifacts/consumer-packages/net10 -ExpectedVersion $env:REUNION_PACKAGE_VERSION -ExpectedPackageSource artifacts/packages
+          ./eng/Assert-PackageConsumerRestore.ps1 -ProjectPath tests/PackageConsumers/Reunion.Consumer.Net10/Reunion.Consumer.Net10.csproj -PackagesPath artifacts/consumer-packages/net10 -ExpectedVersion $env:REUNION_PACKAGE_VERSION -ExpectedPackageSource artifacts/packages -PackageId Reunion.Errors
+          ./eng/Assert-PackageConsumerRestore.ps1 -ProjectPath tests/PackageConsumers/Reunion.Consumer.Net10/Reunion.Consumer.Net10.csproj -PackagesPath artifacts/consumer-packages/net10 -ExpectedVersion $env:REUNION_PACKAGE_VERSION -ExpectedPackageSource artifacts/packages -PackageId Reunion.Errors.Extensions
+          ./eng/Assert-PackageConsumerRestore.ps1 -ProjectPath tests/PackageConsumers/Reunion.Consumer.Net11/Reunion.Consumer.Net11.csproj -PackagesPath artifacts/consumer-packages/net11 -ExpectedVersion $env:REUNION_PACKAGE_VERSION -ExpectedPackageSource artifacts/packages
+          ./eng/Assert-PackageConsumerRestore.ps1 -ProjectPath tests/PackageConsumers/Reunion.Consumer.Net11/Reunion.Consumer.Net11.csproj -PackagesPath artifacts/consumer-packages/net11 -ExpectedVersion $env:REUNION_PACKAGE_VERSION -ExpectedPackageSource artifacts/packages -PackageId Reunion.Errors
+          ./eng/Assert-PackageConsumerRestore.ps1 -ProjectPath tests/PackageConsumers/Reunion.Consumer.Net11/Reunion.Consumer.Net11.csproj -PackagesPath artifacts/consumer-packages/net11 -ExpectedVersion $env:REUNION_PACKAGE_VERSION -ExpectedPackageSource artifacts/packages -PackageId Reunion.Errors.Extensions
+          ./eng/Assert-PackageConsumerRestore.ps1 -ProjectPath tests/PackageConsumers/Reunion.AspNetCore.Consumer.Net10/Reunion.AspNetCore.Consumer.Net10.csproj -PackagesPath artifacts/consumer-packages/aspnetcore-net10 -ExpectedVersion $env:REUNION_PACKAGE_VERSION -ExpectedPackageSource artifacts/packages -PackageId Reunion.AspNetCore
+          ./eng/Assert-PackageConsumerRestore.ps1 -ProjectPath tests/PackageConsumers/Reunion.AspNetCore.Consumer.Net10/Reunion.AspNetCore.Consumer.Net10.csproj -PackagesPath artifacts/consumer-packages/aspnetcore-net10 -ExpectedVersion $env:REUNION_PACKAGE_VERSION -ExpectedPackageSource artifacts/packages -PackageId Reunion.Errors
+          ./eng/Assert-PackageConsumerRestore.ps1 -ProjectPath tests/PackageConsumers/Reunion.AspNetCore.Consumer.Net10/Reunion.AspNetCore.Consumer.Net10.csproj -PackagesPath artifacts/consumer-packages/aspnetcore-net10 -ExpectedVersion $env:REUNION_PACKAGE_VERSION -ExpectedPackageSource artifacts/packages
+          ./eng/Assert-PackageConsumerRestore.ps1 -ProjectPath tests/PackageConsumers/Reunion.AspNetCore.Consumer.Net11/Reunion.AspNetCore.Consumer.Net11.csproj -PackagesPath artifacts/consumer-packages/aspnetcore-net11 -ExpectedVersion $env:REUNION_PACKAGE_VERSION -ExpectedPackageSource artifacts/packages -PackageId Reunion.AspNetCore
+          ./eng/Assert-PackageConsumerRestore.ps1 -ProjectPath tests/PackageConsumers/Reunion.AspNetCore.Consumer.Net11/Reunion.AspNetCore.Consumer.Net11.csproj -PackagesPath artifacts/consumer-packages/aspnetcore-net11 -ExpectedVersion $env:REUNION_PACKAGE_VERSION -ExpectedPackageSource artifacts/packages -PackageId Reunion.Errors
+          ./eng/Assert-PackageConsumerRestore.ps1 -ProjectPath tests/PackageConsumers/Reunion.AspNetCore.Consumer.Net11/Reunion.AspNetCore.Consumer.Net11.csproj -PackagesPath artifacts/consumer-packages/aspnetcore-net11 -ExpectedVersion $env:REUNION_PACKAGE_VERSION -ExpectedPackageSource artifacts/packages
+          dotnet format tests/PackageConsumers/Reunion.Consumer.Net10/Reunion.Consumer.Net10.csproj --verify-no-changes --no-restore
+          dotnet format tests/PackageConsumers/Reunion.Consumer.Net11/Reunion.Consumer.Net11.csproj --verify-no-changes --no-restore
+          dotnet format tests/PackageConsumers/Reunion.AspNetCore.Consumer.Net10/Reunion.AspNetCore.Consumer.Net10.csproj --verify-no-changes --no-restore
+          dotnet format tests/PackageConsumers/Reunion.AspNetCore.Consumer.Net11/Reunion.AspNetCore.Consumer.Net11.csproj --verify-no-changes --no-restore
+
+      - name: Build and run net10 package consumer
+        run: dotnet run --project tests/PackageConsumers/Reunion.Consumer.Net10/Reunion.Consumer.Net10.csproj --configuration Release --no-restore -p:ReunionPackageVersion=$env:REUNION_PACKAGE_VERSION
+
+      - name: Build and run net11 package consumer
+        run: dotnet run --project tests/PackageConsumers/Reunion.Consumer.Net11/Reunion.Consumer.Net11.csproj --configuration Release --no-restore -p:ReunionPackageVersion=$env:REUNION_PACKAGE_VERSION
+
+      - name: Build and run net10 ASP.NET Core package consumer
+        run: dotnet run --project tests/PackageConsumers/Reunion.AspNetCore.Consumer.Net10/Reunion.AspNetCore.Consumer.Net10.csproj --configuration Release --no-restore -p:ReunionPackageVersion=$env:REUNION_PACKAGE_VERSION
+
+      - name: Build and run net11 ASP.NET Core package consumer
+        run: dotnet run --project tests/PackageConsumers/Reunion.AspNetCore.Consumer.Net11/Reunion.AspNetCore.Consumer.Net11.csproj --configuration Release --no-restore -p:ReunionPackageVersion=$env:REUNION_PACKAGE_VERSION

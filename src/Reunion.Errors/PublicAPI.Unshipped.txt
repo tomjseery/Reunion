@@ -1,0 +1,67 @@
+#nullable enable
+abstract Reunion.Errors.ErrorDefinition.Kind.get -> Reunion.Errors.ErrorKind
+override Reunion.Errors.ConflictError.Kind.get -> Reunion.Errors.ErrorKind
+override Reunion.Errors.ForbiddenError.Kind.get -> Reunion.Errors.ErrorKind
+override Reunion.Errors.InvalidError.Kind.get -> Reunion.Errors.ErrorKind
+override Reunion.Errors.NotFoundError.Kind.get -> Reunion.Errors.ErrorKind
+override Reunion.Errors.PaymentRequiredError.Kind.get -> Reunion.Errors.ErrorKind
+override Reunion.Errors.UnauthenticatedError.Kind.get -> Reunion.Errors.ErrorKind
+override Reunion.Errors.ValidationError.Kind.get -> Reunion.Errors.ErrorKind
+override Reunion.Errors.ValidationErrors.Equals(object? obj) -> bool
+override Reunion.Errors.ValidationErrors.GetHashCode() -> int
+Reunion.Errors.ConflictError
+Reunion.Errors.ErrorCodeAttribute
+Reunion.Errors.ErrorCodeAttribute.Code.get -> string!
+Reunion.Errors.ErrorCodeAttribute.ErrorCodeAttribute(string! code) -> void
+Reunion.Errors.ErrorDefinition
+Reunion.Errors.ErrorDefinition.Code.get -> string!
+Reunion.Errors.ErrorDefinition.Code.init -> void
+Reunion.Errors.ErrorDefinition.Message.get -> string!
+Reunion.Errors.ErrorDefinition.Message.init -> void
+Reunion.Errors.ErrorDefinitions<TError>
+Reunion.Errors.ErrorDefinitions<TError>.Conflict<TCase>() -> Reunion.Errors.ConflictError!
+Reunion.Errors.ErrorDefinitions<TError>.Conflict<TCase>(string! message) -> Reunion.Errors.ConflictError!
+Reunion.Errors.ErrorDefinitions<TError>.ErrorDefinitions() -> void
+Reunion.Errors.ErrorDefinitions<TError>.Forbidden<TCase>() -> Reunion.Errors.ForbiddenError!
+Reunion.Errors.ErrorDefinitions<TError>.Forbidden<TCase>(string! message) -> Reunion.Errors.ForbiddenError!
+Reunion.Errors.ErrorDefinitions<TError>.Invalid<TCase>() -> Reunion.Errors.InvalidError!
+Reunion.Errors.ErrorDefinitions<TError>.Invalid<TCase>(string! message) -> Reunion.Errors.InvalidError!
+Reunion.Errors.ErrorDefinitions<TError>.NotFound<TCase>() -> Reunion.Errors.NotFoundError!
+Reunion.Errors.ErrorDefinitions<TError>.NotFound<TCase>(string! message) -> Reunion.Errors.NotFoundError!
+Reunion.Errors.ErrorDefinitions<TError>.PaymentRequired<TCase>() -> Reunion.Errors.PaymentRequiredError!
+Reunion.Errors.ErrorDefinitions<TError>.PaymentRequired<TCase>(string! message) -> Reunion.Errors.PaymentRequiredError!
+Reunion.Errors.ErrorDefinitions<TError>.Unauthenticated<TCase>() -> Reunion.Errors.UnauthenticatedError!
+Reunion.Errors.ErrorDefinitions<TError>.Unauthenticated<TCase>(string! message) -> Reunion.Errors.UnauthenticatedError!
+Reunion.Errors.ErrorDefinitions<TError>.Validation<TCase>(Reunion.Errors.ValidationErrors! errors) -> Reunion.Errors.ValidationError!
+Reunion.Errors.ErrorDefinitions<TError>.Validation<TCase>(string! message, Reunion.Errors.ValidationErrors! errors) -> Reunion.Errors.ValidationError!
+Reunion.Errors.ErrorKind
+Reunion.Errors.ErrorKind.Conflict = 2 -> Reunion.Errors.ErrorKind
+Reunion.Errors.ErrorKind.Forbidden = 4 -> Reunion.Errors.ErrorKind
+Reunion.Errors.ErrorKind.Invalid = 0 -> Reunion.Errors.ErrorKind
+Reunion.Errors.ErrorKind.NotFound = 1 -> Reunion.Errors.ErrorKind
+Reunion.Errors.ErrorKind.PaymentRequired = 5 -> Reunion.Errors.ErrorKind
+Reunion.Errors.ErrorKind.Unauthenticated = 3 -> Reunion.Errors.ErrorKind
+Reunion.Errors.ForbiddenError
+Reunion.Errors.IError
+Reunion.Errors.IError.Definition.get -> Reunion.Errors.ErrorDefinition!
+Reunion.Errors.InvalidError
+Reunion.Errors.NotFoundError
+Reunion.Errors.PaymentRequiredError
+Reunion.Errors.UnauthenticatedError
+Reunion.Errors.ValidationError
+Reunion.Errors.ValidationError.Errors.get -> Reunion.Errors.ValidationErrors!
+Reunion.Errors.ValidationError.Errors.init -> void
+Reunion.Errors.ValidationErrors
+Reunion.Errors.ValidationErrors.Equals(Reunion.Errors.ValidationErrors? other) -> bool
+Reunion.Errors.ValidationErrors.Errors.get -> System.Collections.Generic.IReadOnlyDictionary<string!, System.Collections.Generic.IReadOnlyList<string!>!>!
+Reunion.Errors.ValidationErrors.ToDictionary() -> System.Collections.Generic.IReadOnlyDictionary<string!, string![]!>!
+Reunion.Errors.ValidationErrors.ValidationErrors(System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string!, string!>>! errors) -> void
+Reunion.Errors.ValidationErrors.ValidationErrors(System.Collections.Generic.IReadOnlyDictionary<string!, string![]!>! errors) -> void
+static Reunion.Errors.ErrorDefinition.Conflict(string! code, string! message) -> Reunion.Errors.ConflictError!
+static Reunion.Errors.ErrorDefinition.For<TError>() -> Reunion.Errors.ErrorDefinitions<TError>
+static Reunion.Errors.ErrorDefinition.Forbidden(string! code, string! message) -> Reunion.Errors.ForbiddenError!
+static Reunion.Errors.ErrorDefinition.Invalid(string! code, string! message) -> Reunion.Errors.InvalidError!
+static Reunion.Errors.ErrorDefinition.NotFound(string! code, string! message) -> Reunion.Errors.NotFoundError!
+static Reunion.Errors.ErrorDefinition.PaymentRequired(string! code, string! message) -> Reunion.Errors.PaymentRequiredError!
+static Reunion.Errors.ErrorDefinition.Unauthenticated(string! code, string! message) -> Reunion.Errors.UnauthenticatedError!
+static Reunion.Errors.ErrorDefinition.Validation(string! code, string! message, Reunion.Errors.ValidationErrors! errors) -> Reunion.Errors.ValidationError!
