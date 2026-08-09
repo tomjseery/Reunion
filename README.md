@@ -145,22 +145,21 @@ hierarchy, a generated discriminated union, or a native C# union can implement t
 <PackageReference Include="Reunion.Errors" />
 ```
 
+On .NET 10, the portable manual-hierarchy form is:
+
 ```csharp
 using Reunion.Errors;
 
 public abstract record UserLookupError : IError
 {
-    private static readonly ErrorDefinitions<UserLookupError> Definitions =
-        ErrorDefinition.For<UserLookupError>();
-
     private UserLookupError()
     {
     }
 
     public ErrorDefinition Definition => this switch
     {
-        UserNotFound => Definitions.NotFound<UserNotFound>(),
-        EmailInvalid => Definitions.Invalid<EmailInvalid>("The email address is invalid."),
+        UserNotFound => ErrorDefinition.NotFound<UserNotFound>(),
+        EmailInvalid => ErrorDefinition.Invalid<EmailInvalid>("The email address is invalid."),
         _ => throw new InvalidOperationException("Unknown error case.")
     };
 
@@ -169,14 +168,25 @@ public abstract record UserLookupError : IError
 }
 ```
 
-The defensive arm is needed for an inheritance-based model because the C# compiler does not prove
-that hierarchy exhaustive. A generated or native union can keep the same `IError`/definition body
-while retaining compiler-checked exhaustiveness.
+The defensive arm belongs to this .NET 10 manual inheritance example because the compiler does not
+prove that hierarchy exhaustive. A generated union, or a native C# union on .NET 11, can keep the
+same direct factory calls while omitting that arm when its compiler-checked match is exhaustive.
 
-The definition factories derive stable codes and default public messages from the error owner and
-case types. The examples above produce `user.lookup_not_found` / `User not found.` and
-`user.lookup_email_invalid` / the explicit message. Use `[ErrorCode("user.lookup_missing")]` on a
-case only when a published code intentionally differs from the convention.
+The direct generic factories derive the owning error type from each case's immediate declaring
+type, which must implement `IError`. Nesting cases directly inside their owner makes that
+relationship unambiguous. The examples above produce `user.lookup_not_found` / `User not found.`
+and `user.lookup_email_invalid` / the explicit message. Use
+`[ErrorCode("user.lookup_missing")]` on a case only when a published code intentionally differs
+from the convention.
+
+Free-standing cases cannot encode their owning error type. Use the explicit code/message factories
+for them instead:
+
+```csharp
+var definition = ErrorDefinition.NotFound(
+    "payment.payer_not_found",
+    "Payer not found.");
+```
 
 Definitions are strong records—`NotFoundError`, `ConflictError`, `UnauthenticatedError`,
 `ForbiddenError`, `PaymentRequiredError`, `InvalidError`, and `ValidationError`—so callers can
@@ -192,8 +202,7 @@ var errors = new ValidationErrors(new Dictionary<string, string[]>
     ["email"] = ["The email address is invalid."]
 });
 
-var definition = ErrorDefinition.For<UserLookupError>()
-    .Validation<UserLookupError.EmailInvalid>(errors);
+var definition = ErrorDefinition.Validation<UserLookupError.EmailInvalid>(errors);
 ```
 
 `IError` belongs on the application's union/root value, not on each definition as a replacement for

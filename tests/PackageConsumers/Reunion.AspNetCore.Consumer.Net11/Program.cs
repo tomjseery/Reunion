@@ -6,10 +6,9 @@ using Reunion.Errors;
 
 var user = new User(42);
 Option<User> found = new Some<User>(user);
-Result<User, DomainError> created = new Success<User>(user);
-var missingError = new DomainError(
-    ErrorDefinition.NotFound("user.not_found", "User not found."));
-Result<User, DomainError> missing = new Failure<DomainError>(missingError);
+Result<User, UserError> created = new Success<User>(user);
+var missingError = new UserError(ErrorDefinition.NotFound<UserError.UserNotFound>());
+Result<User, UserError> missing = new Failure<UserError>(missingError);
 
 var httpController = new HttpResultEndpoints();
 var mvcController = new MvcEndpoints();
@@ -45,10 +44,10 @@ Require(Match(created) == 42, "The transitive Reunion net11 asset did not retain
 
 Console.WriteLine("Reunion.AspNetCore net11 package consumer passed.");
 
-static int Match(Result<User, DomainError> result) => result switch
+static int Match(Result<User, UserError> result) => result switch
 {
     Success<User>(var value) => value.Id,
-    Failure<DomainError> _ => -1
+    Failure<UserError> _ => -1
 };
 
 static void Require(bool condition, string message)
@@ -59,4 +58,7 @@ static void Require(bool condition, string message)
 
 public sealed record User(int Id);
 
-public sealed record DomainError(ErrorDefinition Definition) : IError;
+public sealed record UserError(ErrorDefinition Definition) : IError
+{
+    public sealed record UserNotFound;
+}

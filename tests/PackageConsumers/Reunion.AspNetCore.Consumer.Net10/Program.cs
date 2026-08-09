@@ -6,10 +6,9 @@ using Reunion.Errors;
 
 var user = new User(42);
 Option<User> found = Option.Some(user);
-Result<User, DomainError> created = Result.Success<User, DomainError>(user);
-var missingError = new DomainError(
-    ErrorDefinition.NotFound("user.not_found", "User not found."));
-Result<User, DomainError> missing = Result.Failure<User, DomainError>(missingError);
+Result<User, UserError> created = Result.Success<User, UserError>(user);
+var missingError = new UserError(ErrorDefinition.NotFound<UserError.UserNotFound>());
+Result<User, UserError> missing = Result.Failure<User, UserError>(missingError);
 
 var httpController = new HttpResultEndpoints();
 var mvcController = new MvcEndpoints();
@@ -52,4 +51,7 @@ static void Require(bool condition, string message)
 
 public sealed record User(int Id);
 
-public sealed record DomainError(ErrorDefinition Definition) : IError;
+public sealed record UserError(ErrorDefinition Definition) : IError
+{
+    public sealed record UserNotFound;
+}

@@ -8,10 +8,10 @@ internal static partial class ErrorCodeResolver
 {
     private static readonly ConcurrentDictionary<(Type Error, Type Case), string> Cache = new();
 
-    internal static string Of(Type errorType, Type caseType) =>
-        Cache.GetOrAdd((errorType, caseType), static types => Resolve(types.Error, types.Case));
+    internal static string Resolve(Type errorType, Type caseType) =>
+        Cache.GetOrAdd((errorType, caseType), static types => ResolveUncached(types.Error, types.Case));
 
-    private static string Resolve(Type errorType, Type caseType)
+    private static string ResolveUncached(Type errorType, Type caseType)
     {
         var errorWords = SplitWords(RemoveErrorSuffix(errorType.Name, errorType), errorType);
         var caseWords = SplitWords(RemoveCaseSuffix(caseType.Name), caseType);
