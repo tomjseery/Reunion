@@ -13,6 +13,6 @@ public sealed class HttpResultEndpoints : ControllerBase
 
     [HttpPost]
     public Results<Created<User>, ProblemHttpResult> Create(
-        Result<User, DomainError> result) =>
+        Result<User, UserError> result) =>
         result.ToResults(user => TypedResults.Created($"/users/{user.Id}", user));
 }
