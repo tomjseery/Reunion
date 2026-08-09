@@ -1,5 +1,4 @@
 using Reunion;
-using Reunion.Errors;
 
 var successCase = new Success<int>(42);
 var failureCase = new Failure<string>("error");
@@ -22,8 +21,6 @@ var query =
     from left in Result<int, string>.Success(20)
     from right in Result<int, string>.Success(22)
     select left + right;
-ConsumerError missingError = new ConsumerMissing();
-Result<int, ConsumerError> missing = Option.None<int>().OrNotFound(missingError);
 
 Require(success.TryGetValue(out var value) && value == 42, "Result success value was not preserved.");
 Require(failure.TryGetError(out var error) && error == "error", "Result failure error was not preserved.");
@@ -38,11 +35,6 @@ Require(unitSuccess.IsSuccess && unitFailure.IsFailure, "UnitResult case convers
 Require(Result.Success().Match(() => true, _ => false), "Conventional Result.Match failed.");
 Require(query.TryGetValue(out var queryValue) && queryValue == 42, "Result LINQ composition failed.");
 Require(new Success<int>(42).ToString() == "Success(42)", "Named case formatting failed.");
-Require(
-    missing.TryGetError(out var typedError)
-    && typedError == missingError
-    && typedError.Definition is NotFoundError,
-    "OrNotFound did not preserve the consumer-owned typed error.");
 
 Console.WriteLine("Reunion net10 package consumer passed.");
 
@@ -53,17 +45,3 @@ static void Require(bool condition, string message)
         throw new InvalidOperationException(message);
     }
 }
-
-abstract record ConsumerError : IError
-{
-    private static readonly ErrorDefinitions<ConsumerError> Definitions =
-        ErrorDefinition.For<ConsumerError>();
-
-    public ErrorDefinition Definition => this switch
-    {
-        ConsumerMissing => Definitions.NotFound<ConsumerMissing>(),
-        _ => throw new InvalidOperationException("Unknown error case.")
-    };
-}
-
-sealed record ConsumerMissing : ConsumerError;

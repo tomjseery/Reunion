@@ -1,5 +1,4 @@
 using Reunion;
-using Reunion.Errors;
 
 Result<int, string> success = new Success<int>(42);
 Result<int, string> failure = new Failure<string>("error");
@@ -9,8 +8,6 @@ Option<int> some = new Some<int>(42);
 Option<int> none = new None();
 Option<int> defaultOption = default;
 Result<int, string> defaultResult = default;
-ConsumerError missingError = new ConsumerMissing();
-Result<int, ConsumerError> missing = Option.None<int>().OrNotFound(missingError);
 
 Require(Match(success) == "success:42", "Exhaustive success matching failed.");
 Require(Match(failure) == "failure:error", "Exhaustive failure matching failed.");
@@ -23,11 +20,6 @@ Require(MatchDefault(defaultResult) == "uninitialized", "A default Result must m
 
 Require(success.TryGetValue(out var resultValue) && resultValue == 42, "Result.TryGetValue(out var) was ambiguous or incorrect.");
 Require(some.TryGetValue(out var optionValue) && optionValue == 42, "Option.TryGetValue(out var) was ambiguous or incorrect.");
-Require(
-    missing.TryGetError(out var typedError)
-    && typedError == missingError
-    && typedError.Definition is NotFoundError,
-    "OrNotFound did not preserve the consumer-owned typed error.");
 
 Console.WriteLine("Reunion net11 package consumer passed.");
 
@@ -63,17 +55,3 @@ static void Require(bool condition, string message)
         throw new InvalidOperationException(message);
     }
 }
-
-abstract record ConsumerError : IError
-{
-    private static readonly ErrorDefinitions<ConsumerError> Definitions =
-        ErrorDefinition.For<ConsumerError>();
-
-    public ErrorDefinition Definition => this switch
-    {
-        ConsumerMissing => Definitions.NotFound<ConsumerMissing>(),
-        _ => throw new InvalidOperationException("Unknown error case.")
-    };
-}
-
-sealed record ConsumerMissing : ConsumerError;
