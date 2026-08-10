@@ -50,6 +50,9 @@ public readonly partial struct Result : IEquatable<Result>
         return new Result(FailureTag, error);
     }
 
+    /// <summary>Converts a string error to a failed result.</summary>
+    public static implicit operator Result(string error) => Failure(error);
+
     /// <summary>Creates a successful result.</summary>
     public static Result<TValue> Success<TValue>(TValue value)
         where TValue : notnull =>

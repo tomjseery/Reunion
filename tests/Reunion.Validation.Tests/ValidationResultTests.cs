@@ -11,6 +11,7 @@ public sealed class ValidationResultTests
         var errors = CreateErrors(("name", "Required."));
         ValidationResult validCase = new Valid();
         ValidationResult invalidCase = new Invalid(errors);
+        ValidationResult rawInvalid = errors;
         var valid = ValidationResult.Valid();
         var invalid = ValidationResult.Invalid(errors);
 
@@ -23,6 +24,7 @@ public sealed class ValidationResultTests
         Assert.Same(errors, actual);
         Assert.Equal(valid, validCase);
         Assert.Equal(invalid, invalidCase);
+        Assert.Equal(invalid, rawInvalid);
     }
 
     [Fact]
@@ -30,6 +32,10 @@ public sealed class ValidationResultTests
     {
         Assert.Throws<ArgumentNullException>(() => new Invalid(null!));
         Assert.Throws<ArgumentNullException>(() => ValidationResult.Invalid(null!));
+        Assert.Throws<ArgumentNullException>(() =>
+        {
+            ValidationResult _ = (ValidationErrors)null!;
+        });
         Assert.Throws<ArgumentNullException>(() =>
         {
             ValidationResult _ = default(Invalid);
@@ -120,7 +126,7 @@ public sealed class ValidationResultTests
     }
 
     [Fact]
-    public void PublicSurface_HidesPayloadAndRawConversions()
+    public void PublicSurface_HidesPayloadAndExposesCaseConversions()
     {
         var type = typeof(ValidationResult);
         var conversions = type.GetMethods(
@@ -131,9 +137,10 @@ public sealed class ValidationResultTests
         Assert.DoesNotContain(type.GetProperties(), property => property.Name is "Errors");
         Assert.Empty(type.GetConstructors(BindingFlags.Public | BindingFlags.Instance));
 #if NET11_0_OR_GREATER
-        Assert.Empty(conversions);
+        Assert.Equal([typeof(ValidationErrors)], conversions
+            .Select(method => method.GetParameters().Single().ParameterType));
 #else
-        Assert.Equal([typeof(Invalid), typeof(Valid)], conversions
+        Assert.Equal([typeof(Invalid), typeof(Valid), typeof(ValidationErrors)], conversions
             .Select(method => method.GetParameters().Single().ParameterType)
             .OrderBy(candidate => candidate.Name));
 #endif

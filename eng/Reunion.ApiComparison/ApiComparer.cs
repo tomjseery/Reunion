@@ -24,9 +24,13 @@ internal static class ApiComparer
         var expectedUnionTypes = KnownUnionTypes
             .Where(net11Types.ContainsKey)
             .ToHashSet(StringComparer.Ordinal);
+        var compatibilityConversions = GetCompatibilityConversions(
+            net10Types,
+            net11Types,
+            expectedUnionTypes);
         var net10Surface = net10.GetPublicSurface(
             excludeUnionProviders: true,
-            compatibilityConversionProviders: expectedUnionTypes);
+            excludedMembers: compatibilityConversions);
         var net11Surface = net11.GetPublicSurface(excludeUnionProviders: true);
 
         AddDifferences(errors, "net10-only public API", net10Surface.Except(net11Surface));
@@ -58,28 +62,67 @@ internal static class ApiComparer
     {
         foreach (var typeName in expectedUnionTypes)
         {
-            var net10Conversions = net10Types[typeName].GetMethods(
-                    BindingFlags.Public | BindingFlags.Static | BindingFlags.DeclaredOnly)
-                .Count(method => method.Name is "op_Implicit");
-            var net11Conversions = net11Types[typeName].GetMethods(
-                    BindingFlags.Public | BindingFlags.Static | BindingFlags.DeclaredOnly)
-                .Count(method => method.Name is "op_Implicit");
+            var net10Conversions = GetImplicitConversions(net10Types[typeName]);
+            var net11ConversionSignatures = GetImplicitConversions(net11Types[typeName])
+                .Select(method => method.ToString())
+                .ToHashSet(StringComparer.Ordinal);
+            var compatibilityConversions = net10Conversions
+                .Where(method => !net11ConversionSignatures.Contains(method.ToString()))
+                .ToArray();
 
-            if (net10Conversions is not 2)
+            if (compatibilityConversions.Length is not 2)
             {
                 errors.Add(
-                    $"{typeName} must expose exactly two net10 case compatibility conversions; "
-                    + $"found {net10Conversions}.");
+                    $"{typeName} must expose exactly two net10-only case compatibility conversions; "
+                    + $"found {compatibilityConversions.Length}.");
+                continue;
             }
 
-            if (net11Conversions is not 0)
+            var providerName = typeName + "+IUnionMembers";
+            var caseTypes = net11Types[providerName]
+                .GetMethods(BindingFlags.Public | BindingFlags.Static | BindingFlags.DeclaredOnly)
+                .Where(method => method.Name is "Create")
+                .Select(method => method.GetParameters().Single().ParameterType.ToString())
+                .ToHashSet(StringComparer.Ordinal);
+            var compatibilitySources = compatibilityConversions
+                .Select(method => method.GetParameters().Single().ParameterType.ToString())
+                .ToHashSet(StringComparer.Ordinal);
+
+            if (!compatibilitySources.SetEquals(caseTypes))
             {
                 errors.Add(
-                    $"{typeName} must rely on native net11 union conversions; "
-                    + $"found {net11Conversions} metadata operators.");
+                    $"{typeName} net10 compatibility conversions do not match its net11 union cases.");
             }
         }
     }
+
+    private static HashSet<string> GetCompatibilityConversions(
+        IReadOnlyDictionary<string, Type> net10Types,
+        IReadOnlyDictionary<string, Type> net11Types,
+        IReadOnlySet<string> expectedUnionTypes)
+    {
+        var compatibilityConversions = new HashSet<string>(StringComparer.Ordinal);
+
+        foreach (var typeName in expectedUnionTypes)
+        {
+            var net11ConversionSignatures = GetImplicitConversions(net11Types[typeName])
+                .Select(method => method.ToString())
+                .ToHashSet(StringComparer.Ordinal);
+
+            foreach (var method in GetImplicitConversions(net10Types[typeName]))
+            {
+                if (!net11ConversionSignatures.Contains(method.ToString()))
+                    compatibilityConversions.Add(method.ToPublicSurfaceKey());
+            }
+        }
+
+        return compatibilityConversions;
+    }
+
+    private static MethodInfo[] GetImplicitConversions(Type type) =>
+        type.GetMethods(BindingFlags.Public | BindingFlags.Static | BindingFlags.DeclaredOnly)
+            .Where(method => method.Name is "op_Implicit")
+            .ToArray();
 
     private static void ValidateInterfaces(
         ICollection<string> errors,

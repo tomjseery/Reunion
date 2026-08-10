@@ -43,6 +43,7 @@ static Reunion.Validation.TaskValidationResultExtensions.ToResult<TValue>(this S
 static Reunion.Validation.Valid.operator !=(Reunion.Validation.Valid left, Reunion.Validation.Valid right) -> bool
 static Reunion.Validation.Valid.operator ==(Reunion.Validation.Valid left, Reunion.Validation.Valid right) -> bool
 static Reunion.Validation.ValidationResult.Invalid(Reunion.Errors.ValidationErrors! errors) -> Reunion.Validation.ValidationResult
+static Reunion.Validation.ValidationResult.implicit operator Reunion.Validation.ValidationResult(Reunion.Errors.ValidationErrors! errors) -> Reunion.Validation.ValidationResult
 static Reunion.Validation.ValidationResult.operator !=(Reunion.Validation.ValidationResult left, Reunion.Validation.ValidationResult right) -> bool
 static Reunion.Validation.ValidationResult.operator ==(Reunion.Validation.ValidationResult left, Reunion.Validation.ValidationResult right) -> bool
 static Reunion.Validation.ValidationResult.Valid() -> Reunion.Validation.ValidationResult

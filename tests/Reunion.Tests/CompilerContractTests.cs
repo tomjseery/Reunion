@@ -47,6 +47,26 @@ public sealed class CompilerContractTests
     }
 
     [Fact]
+    public void RawPayloadConversionsPreserveNamedUnionCases()
+    {
+        Result resultFailure = "error";
+        Result<int> valueSuccess = 42;
+        Result<int> valueFailure = "error";
+        Result<int, string> typedSuccess = 42;
+        Result<int, string> typedFailure = "error";
+        UnitResult<string> unitFailure = "error";
+        Option<int> some = 42;
+
+        Assert.IsType<Failure<string>>(((IUnion)resultFailure).Value);
+        Assert.IsType<Success<int>>(((IUnion)valueSuccess).Value);
+        Assert.IsType<Failure<string>>(((IUnion)valueFailure).Value);
+        Assert.IsType<Success<int>>(((IUnion)typedSuccess).Value);
+        Assert.IsType<Failure<string>>(((IUnion)typedFailure).Value);
+        Assert.IsType<Failure<string>>(((IUnion)unitFailure).Value);
+        Assert.IsType<Some<int>>(((IUnion)some).Value);
+    }
+
+    [Fact]
     public void SamePayloadTypeRemainsDiscriminated()
     {
         Result<string, string> success = new Success<string>("same");
