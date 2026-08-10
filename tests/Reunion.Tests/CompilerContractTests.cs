@@ -1,4 +1,3 @@
-#if NET11_0_OR_GREATER
 using System.Runtime.CompilerServices;
 
 namespace Reunion.Tests;
@@ -350,4 +349,3 @@ public sealed class CompilerContractTests
         }
     }
 }
-#endif
