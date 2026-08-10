@@ -37,6 +37,30 @@ public sealed class CaseConversionTests
     }
 
     [Fact]
+    public void RawPayloadsConvertToTheirUnambiguousCases()
+    {
+        Result resultFailure = "error";
+        Result<int> valueSuccess = 42;
+        Result<int> valueFailure = "error";
+        Result<int, string> typedSuccess = 42;
+        Result<int, string> typedFailure = "error";
+        Result<int, TestError> inheritedFailure = new TestError.Expired();
+        UnitResult<TestError> unitFailure = new TestError.Expired();
+        Option<int> some = 42;
+
+        Assert.True(resultFailure.IsFailure);
+        Assert.True(valueSuccess.IsSuccess);
+        Assert.True(valueFailure.IsFailure);
+        Assert.True(typedSuccess.IsSuccess);
+        Assert.True(typedFailure.IsFailure);
+        Assert.True(inheritedFailure.TryGetError(out var inheritedError));
+        Assert.IsType<TestError.Expired>(inheritedError);
+        Assert.True(unitFailure.TryGetError(out var unitError));
+        Assert.IsType<TestError.Expired>(unitError);
+        Assert.True(some.IsSome);
+    }
+
+    [Fact]
     public void SamePayloadTypesRemainDiscriminated()
     {
         Result<string, string> success = new Success<string>("same");
@@ -74,22 +98,43 @@ public sealed class CaseConversionTests
     }
 
     [Fact]
-    public void PublicConversionSurfaceContainsOnlyNamedCases()
+    public void PublicConversionSurfaceContainsRawPayloadsAndNamedCaseCompatibility()
     {
-        AssertConversionSources(typeof(Result), typeof(Success), typeof(Failure<string>));
+#if NET11_0_OR_GREATER
+        AssertConversionSources(typeof(Result), typeof(string));
+        AssertConversionSources(typeof(Result<int>), typeof(int), typeof(string));
+        AssertConversionSources(typeof(Result<int, string>), typeof(int), typeof(string));
+        AssertConversionSources(typeof(UnitResult<string>), typeof(string));
+        AssertConversionSources(typeof(Option<int>), typeof(int));
+#else
+        AssertConversionSources(
+            typeof(Result),
+            typeof(string),
+            typeof(Success),
+            typeof(Failure<string>));
         AssertConversionSources(
             typeof(Result<int>),
+            typeof(int),
+            typeof(string),
             typeof(Success<int>),
             typeof(Failure<string>));
         AssertConversionSources(
             typeof(Result<int, string>),
+            typeof(int),
+            typeof(string),
             typeof(Success<int>),
             typeof(Failure<string>));
         AssertConversionSources(
             typeof(UnitResult<string>),
+            typeof(string),
             typeof(Success),
             typeof(Failure<string>));
-        AssertConversionSources(typeof(Option<int>), typeof(Some<int>), typeof(None));
+        AssertConversionSources(
+            typeof(Option<int>),
+            typeof(int),
+            typeof(Some<int>),
+            typeof(None));
+#endif
     }
 
     private static void AssertConversionSources(Type target, params Type[] expectedSources)
@@ -99,15 +144,16 @@ public sealed class CaseConversionTests
             .Where(method => method.Name is "op_Implicit")
             .ToArray();
 
-#if NET11_0_OR_GREATER
-        Assert.Empty(conversions);
-#else
         Assert.Equal(expectedSources.Length, conversions.Length);
         Assert.All(conversions, conversion => Assert.Equal(target, conversion.ReturnType));
         Assert.True(
             expectedSources.ToHashSet().SetEquals(
                 conversions.Select(conversion =>
                     conversion.GetParameters().Single().ParameterType)));
-#endif
+    }
+
+    private abstract record TestError
+    {
+        public sealed record Expired : TestError;
     }
 }

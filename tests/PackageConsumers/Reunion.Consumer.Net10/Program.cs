@@ -17,6 +17,13 @@ Result<int> valueSuccess = successCase;
 Result<int> valueFailure = failureCase;
 UnitResult<string> unitSuccess = new Success();
 UnitResult<string> unitFailure = failureCase;
+Result rawResultFailure = "raw error";
+Result<int> rawValueSuccess = 42;
+Result<int> rawValueFailure = "raw error";
+Result<int, string> rawTypedSuccess = 42;
+Result<int, string> rawTypedFailure = "raw error";
+UnitResult<string> rawUnitFailure = "raw error";
+Option<int> rawSome = 42;
 var query =
     from left in Result<int, string>.Success(20)
     from right in Result<int, string>.Success(22)
@@ -32,6 +39,11 @@ Require(noneCase.Equals(default(None)), "None must remain a value-type marker.")
 Require(resultSuccess.IsSuccess && resultFailure.IsFailure, "Result case conversions failed.");
 Require(valueSuccess.IsSuccess && valueFailure.IsFailure, "Result<T> case conversions failed.");
 Require(unitSuccess.IsSuccess && unitFailure.IsFailure, "UnitResult case conversions failed.");
+Require(rawResultFailure.IsFailure, "Raw Result error conversion failed.");
+Require(rawValueSuccess.IsSuccess && rawValueFailure.IsFailure, "Raw Result<T> conversions failed.");
+Require(rawTypedSuccess.IsSuccess && rawTypedFailure.IsFailure, "Raw typed Result conversions failed.");
+Require(rawUnitFailure.IsFailure, "Raw UnitResult error conversion failed.");
+Require(rawSome.IsSome, "Raw Option value conversion failed.");
 Require(Result.Success().Match(() => true, _ => false), "Conventional Result.Match failed.");
 Require(query.TryGetValue(out var queryValue) && queryValue == 42, "Result LINQ composition failed.");
 Require(new Success<int>(42).ToString() == "Success(42)", "Named case formatting failed.");

@@ -62,6 +62,9 @@ public readonly partial struct UnitResult<TError> : IEquatable<UnitResult<TError
         return new UnitResult<TError>(FailureTag, error);
     }
 
+    /// <summary>Converts an error to a failed result.</summary>
+    public static implicit operator UnitResult<TError>(TError error) => Failure(error);
+
     /// <summary>Invokes the callback for the active case.</summary>
     public TResult Match<TResult>(Func<TResult> success, Func<TError, TResult> failure)
     {

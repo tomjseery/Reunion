@@ -7,7 +7,7 @@ internal static class ReflectionExtensions
     public static SortedSet<string> GetPublicSurface(
         this Assembly assembly,
         bool excludeUnionProviders,
-        IReadOnlySet<string>? compatibilityConversionProviders = null)
+        IReadOnlySet<string>? excludedMembers = null)
     {
         var surface = new SortedSet<string>(StringComparer.Ordinal);
         foreach (var type in assembly.GetExportedTypes())
@@ -29,13 +29,11 @@ internal static class ReflectionExtensions
                     continue;
                 }
 
-                if (compatibilityConversionProviders?.Contains(type.FullName!) is true
-                    && member is MethodInfo { Name: "op_Implicit" })
-                {
+                var memberKey = member.ToPublicSurfaceKey();
+                if (excludedMembers?.Contains(memberKey) is true)
                     continue;
-                }
 
-                surface.Add($"member:{type.FullName}:{member.MemberType}:{member}");
+                surface.Add(memberKey);
             }
         }
 
@@ -54,6 +52,9 @@ internal static class ReflectionExtensions
 
     public static bool IsUnionProvider(this Type type) =>
         type.Name is "IUnionMembers" && type.IsNestedPublic;
+
+    public static string ToPublicSurfaceKey(this MemberInfo member) =>
+        $"member:{member.DeclaringType!.FullName}:{member.MemberType}:{member}";
 
     public static bool HasExpectedUnionProviderShape(this Type provider)
     {

@@ -55,6 +55,12 @@ public readonly partial struct Result<TValue, TError> : IEquatable<Result<TValue
         return new Result<TValue, TError>(FailureTag, default, error);
     }
 
+    /// <summary>Converts a value to a successful result.</summary>
+    public static implicit operator Result<TValue, TError>(TValue value) => Success(value);
+
+    /// <summary>Converts an error to a failed result.</summary>
+    public static implicit operator Result<TValue, TError>(TError error) => Failure(error);
+
     /// <summary>Invokes the callback for the active case.</summary>
     public TResult Match<TResult>(
         Func<TValue, TResult> success,
