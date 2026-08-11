@@ -16,4 +16,8 @@
     <PackageReference Include="Reunion" Version="$(ReunionPackageVersion)" />
   </ItemGroup>
 
+  <ItemGroup Condition="'$(VerifyAmbiguousConversions)' == 'true'">
+    <Compile Include="..\AmbiguousConversionContracts.cs" Link="AmbiguousConversionContracts.cs" />
+  </ItemGroup>
+
 </Project>

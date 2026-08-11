@@ -2,15 +2,11 @@ using System.Reflection;
 
 namespace Reunion.Tests;
 
-public sealed class CaseCompatibilityConversionTests
+public sealed class ConversionSurfaceTests
 {
     [Fact]
-    public void PublicConversionSurfaceContainsRawPayloadsAndNamedCases()
+    public void ConversionSurfaceContainsRawPayloadsAndNamedCases()
     {
-        AssertConversionSources(
-            typeof(Result),
-            typeof(Success),
-            typeof(Failure<string>));
         AssertConversionSources(
             typeof(Result<int>),
             typeof(int),

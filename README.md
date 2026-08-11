@@ -58,11 +58,12 @@ var message = result.Match(
 
 Both target frameworks also expose the shared named case value types: `Success`,
 `Success<TValue>`, `Failure<TError>`, `Some<T>`, and `None`. Payload-bearing cases reject `null`,
-and `Failure<string>` also rejects empty or whitespace errors. Named cases implicitly convert to
-their compatible Result or Option on both targets: .NET 10 uses case-only compatibility operators,
-while .NET 11 uses native union conversions. Every conversion revalidates through the normal
-Result/Option factories. Cases have value equality, readable formatting, and payload
-deconstruction:
+and `Failure<string>` also rejects empty or whitespace errors. Generic families with raw payload
+operators expose the same named-case operators on both targets so exact named cases take precedence
+over broad raw conversions. Non-generic `Result` and `ValidationResult` need no such override: .NET
+10 supplies compatibility operators and .NET 11 uses native union conversions. Every conversion
+revalidates through the normal factories. Cases have value equality, readable formatting, and
+payload deconstruction:
 
 ```csharp
 Result<User, Error> found = user;
@@ -84,9 +85,11 @@ construction. `Result<TValue, TError>` accepts `TValue` as success and `TError` 
 `Option<T>` maps non-null `T` to `Some` and `null` to `None`. Non-generic `Result` and
 `ValidationResult` use their factories or named cases.
 
-Named cases retain their branch when one broad raw conversion also applies. If multiple raw
-operators apply, C# reports an ambiguous conversion instead of selecting a branch. Use named cases
-where they uniquely resolve the conversion, or use factories as the universal fallback:
+Named cases retain their branch when one broad raw conversion also applies. Boxed or
+interface-typed values follow their declared raw payload conversion without runtime case
+inspection. If multiple operators have the same best source conversion, C# reports an ambiguous
+conversion instead of selecting a branch. Use named cases where they uniquely resolve the
+conversion, or use factories as the universal fallback:
 
 ```csharp
 Result<string, string> success = new Success<string>("value");

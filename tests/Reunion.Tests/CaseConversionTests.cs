@@ -59,6 +59,42 @@ public sealed class CaseConversionTests
     }
 
     [Fact]
+    public void BroadNamedCasesUseTheirNamedCaseConversions()
+    {
+        Result<object> valueFailure = new Failure<string>("error");
+        Result<int, object> typedSuccess = new Success<int>(42);
+        UnitResult<object> unitSuccess = new Success();
+        Option<object> none = new None();
+
+        Assert.True(valueFailure.IsFailure);
+        Assert.True(typedSuccess.IsSuccess);
+        Assert.True(unitSuccess.IsSuccess);
+        Assert.True(none.IsNone);
+    }
+
+    [Fact]
+    public void BoxedNamedCasesUseTheirRawPayloadConversions()
+    {
+        object boxedFailure = new Failure<string>("error");
+        object boxedSuccess = new Success<int>(42);
+        object boxedNone = new None();
+
+        Result<object> valueSuccess = boxedFailure;
+        Result<int, object> typedFailure = boxedSuccess;
+        UnitResult<object> unitFailure = boxedSuccess;
+        Option<object> some = boxedNone;
+
+        Assert.True(valueSuccess.TryGetValue(out var value));
+        Assert.Same(boxedFailure, value);
+        Assert.True(typedFailure.TryGetError(out var typedError));
+        Assert.Same(boxedSuccess, typedError);
+        Assert.True(unitFailure.TryGetError(out var unitError));
+        Assert.Same(boxedSuccess, unitError);
+        Assert.True(some.TryGetValue(out var optionValue));
+        Assert.Same(boxedNone, optionValue);
+    }
+
+    [Fact]
     public void SamePayloadTypesRemainDiscriminated()
     {
         Result<string, string> success = new Success<string>("same");
