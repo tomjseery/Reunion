@@ -29,9 +29,6 @@ public readonly partial struct Option<T> : IEquatable<Option<T>>
         return new Option<T>(value);
     }
 
-    /// <summary>Converts a value to a populated option.</summary>
-    public static implicit operator Option<T>(T value) => CreateSome(value);
-
     /// <summary>Invokes the callback for the active case.</summary>
     public TResult Match<TResult>(Func<T, TResult> some, Func<TResult> none)
     {

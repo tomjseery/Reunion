@@ -5,7 +5,7 @@ namespace Reunion.Tests;
 public sealed class CaseCompatibilityConversionTests
 {
     [Fact]
-    public void PublicConversionSurfaceContainsRawPayloadsAndNamedCases()
+    public void PublicConversionSurfaceContainsConcreteErrorAndNamedCases()
     {
         AssertConversionSources(
             typeof(Result),
@@ -14,24 +14,18 @@ public sealed class CaseCompatibilityConversionTests
             typeof(Failure<string>));
         AssertConversionSources(
             typeof(Result<int>),
-            typeof(int),
-            typeof(string),
             typeof(Success<int>),
             typeof(Failure<string>));
         AssertConversionSources(
             typeof(Result<int, string>),
-            typeof(int),
-            typeof(string),
             typeof(Success<int>),
             typeof(Failure<string>));
         AssertConversionSources(
             typeof(UnitResult<string>),
-            typeof(string),
             typeof(Success),
             typeof(Failure<string>));
         AssertConversionSources(
             typeof(Option<int>),
-            typeof(int),
             typeof(Some<int>),
             typeof(None));
     }
