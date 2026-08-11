@@ -1,8 +1,9 @@
+#if !NET11_0_OR_GREATER
 using System.Reflection;
 
 namespace Reunion.Tests;
 
-public sealed class ResultConversionSurfaceTests
+public sealed class ResultCompatibilityConversionSurfaceTests
 {
     [Fact]
     public void NonGenericResultDeclaresNamedCaseConversions()
@@ -18,3 +19,4 @@ public sealed class ResultConversionSurfaceTests
         Assert.Contains(typeof(Failure<string>), sources);
     }
 }
+#endif

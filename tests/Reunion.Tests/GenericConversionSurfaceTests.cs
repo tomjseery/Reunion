@@ -2,7 +2,7 @@ using System.Reflection;
 
 namespace Reunion.Tests;
 
-public sealed class ConversionSurfaceTests
+public sealed class GenericConversionSurfaceTests
 {
     [Fact]
     public void ConversionSurfaceContainsRawPayloadsAndNamedCases()

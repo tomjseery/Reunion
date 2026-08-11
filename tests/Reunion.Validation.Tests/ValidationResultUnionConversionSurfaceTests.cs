@@ -2,7 +2,7 @@ using System.Reflection;
 
 namespace Reunion.Validation.Tests;
 
-public sealed class ValidationResultUnionSurfaceTests
+public sealed class ValidationResultUnionConversionSurfaceTests
 {
     [Fact]
     public void NativeUnionTypeDeclaresNoOrdinaryImplicitConversions()
