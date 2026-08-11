@@ -31,9 +31,6 @@ public readonly partial struct ValidationResult : IEquatable<ValidationResult>
     public static ValidationResult Invalid(ValidationErrors errors) =>
         new(UnitResult.Failure(errors));
 
-    /// <summary>Converts structured validation errors to an invalid result.</summary>
-    public static implicit operator ValidationResult(ValidationErrors errors) => Invalid(errors);
-
     /// <summary>Invokes the callback for the active case.</summary>
     /// <typeparam name="TResult">The callback result type.</typeparam>
     /// <param name="valid">The valid-case callback.</param>

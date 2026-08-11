@@ -8,11 +8,9 @@ var errors = new ValidationErrors(
     });
 ValidationResult valid = new Valid();
 ValidationResult invalid = new Invalid(errors);
-ValidationResult rawInvalid = errors;
 
 Require(Match(valid) == "valid", "Native Valid matching failed.");
 Require(Match(invalid) == "Name is required.", "Native Invalid matching failed.");
-Require(Match(rawInvalid) == "Name is required.", "Raw validation error conversion failed.");
 Require(MatchDefault(default) == "uninitialized", "Default did not match the null union state.");
 
 Console.WriteLine("Reunion.Validation net11 package consumer passed.");

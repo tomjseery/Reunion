@@ -7,8 +7,8 @@ public sealed class UnionConversionSurfaceTests
     [Fact]
     public void NativeUnionTypesDeclareOnlyRawPayloadConversions()
     {
-        AssertConversionSources(typeof(Result), typeof(string));
-        AssertConversionSources(typeof(Result<int>), typeof(int), typeof(string));
+        AssertConversionSources(typeof(Result));
+        AssertConversionSources(typeof(Result<int>), typeof(int));
         AssertConversionSources(typeof(Result<int, string>), typeof(int), typeof(string));
         AssertConversionSources(typeof(UnitResult<string>), typeof(string));
         AssertConversionSources(typeof(Option<int>), typeof(int));

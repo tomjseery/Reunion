@@ -30,8 +30,9 @@ public readonly partial struct Option<T> : IEquatable<Option<T>>
     }
 
     /// <summary>Converts a value to a populated option.</summary>
-    public static implicit operator Option<T>(T value) => value switch
+    public static implicit operator Option<T>([AllowNull] T value) => value switch
     {
+        null => default,
         Some<T> some => CreateSome(some.Value),
         None _ => default,
         _ => CreateSome(value)

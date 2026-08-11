@@ -62,9 +62,6 @@ public readonly partial struct Result<TValue> : IEquatable<Result<TValue>>
         _ => Success(value)
     };
 
-    /// <summary>Converts a string error to a failed result.</summary>
-    public static implicit operator Result<TValue>(string error) => Failure(error);
-
     /// <summary>Invokes the callback for the active case.</summary>
     public TResult Match<TResult>(
         Func<TValue, TResult> success,
