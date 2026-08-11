@@ -168,6 +168,7 @@ static Reunion.Option.None<T>() -> Reunion.Option<T>
 static Reunion.Option.Some<T>(T value) -> Reunion.Option<T>
 static Reunion.Option<T>.operator !=(Reunion.Option<T> left, Reunion.Option<T> right) -> bool
 static Reunion.Option<T>.operator ==(Reunion.Option<T> left, Reunion.Option<T> right) -> bool
+static Reunion.Option<T>.implicit operator Reunion.Option<T>(T value) -> Reunion.Option<T>
 static Reunion.OptionExtensions.ToOption<T>(this System.Threading.Tasks.Task<T?>! source) -> System.Threading.Tasks.Task<Reunion.Option<T!>>!
 static Reunion.OptionExtensions.ToOption<T>(this T? value) -> Reunion.Option<T!>
 static Reunion.OptionExtensions.ToOption<T>(this T? value) -> Reunion.Option<T>
@@ -181,10 +182,14 @@ static Reunion.Result.Success() -> Reunion.Result
 static Reunion.Result.Success<TValue, TError>(TValue value) -> Reunion.Result<TValue, TError>
 static Reunion.Result.Success<TValue>(TValue value) -> Reunion.Result<TValue>
 static Reunion.Result<TValue, TError>.Failure(TError error) -> Reunion.Result<TValue, TError>
+static Reunion.Result<TValue, TError>.implicit operator Reunion.Result<TValue, TError>(TError error) -> Reunion.Result<TValue, TError>
+static Reunion.Result<TValue, TError>.implicit operator Reunion.Result<TValue, TError>(TValue value) -> Reunion.Result<TValue, TError>
 static Reunion.Result<TValue, TError>.operator !=(Reunion.Result<TValue, TError> left, Reunion.Result<TValue, TError> right) -> bool
 static Reunion.Result<TValue, TError>.operator ==(Reunion.Result<TValue, TError> left, Reunion.Result<TValue, TError> right) -> bool
 static Reunion.Result<TValue, TError>.Success(TValue value) -> Reunion.Result<TValue, TError>
 static Reunion.Result<TValue>.Failure(string! error) -> Reunion.Result<TValue>
+static Reunion.Result<TValue>.implicit operator Reunion.Result<TValue>(string! error) -> Reunion.Result<TValue>
+static Reunion.Result<TValue>.implicit operator Reunion.Result<TValue>(TValue value) -> Reunion.Result<TValue>
 static Reunion.Result<TValue>.operator !=(Reunion.Result<TValue> left, Reunion.Result<TValue> right) -> bool
 static Reunion.Result<TValue>.operator ==(Reunion.Result<TValue> left, Reunion.Result<TValue> right) -> bool
 static Reunion.Result<TValue>.Success(TValue value) -> Reunion.Result<TValue>
@@ -356,6 +361,7 @@ static Reunion.TaskResultExtensions.TapErrorAsync<TValue>(this System.Threading.
 static Reunion.UnitResult.Failure<TError>(TError error) -> Reunion.UnitResult<TError>
 static Reunion.UnitResult.Success<TError>() -> Reunion.UnitResult<TError>
 static Reunion.UnitResult<TError>.Failure(TError error) -> Reunion.UnitResult<TError>
+static Reunion.UnitResult<TError>.implicit operator Reunion.UnitResult<TError>(TError error) -> Reunion.UnitResult<TError>
 static Reunion.UnitResult<TError>.operator !=(Reunion.UnitResult<TError> left, Reunion.UnitResult<TError> right) -> bool
 static Reunion.UnitResult<TError>.operator ==(Reunion.UnitResult<TError> left, Reunion.UnitResult<TError> right) -> bool
 static Reunion.UnitResult<TError>.Success() -> Reunion.UnitResult<TError>

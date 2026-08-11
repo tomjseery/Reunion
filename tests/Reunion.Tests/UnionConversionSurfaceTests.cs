@@ -5,13 +5,13 @@ namespace Reunion.Tests;
 public sealed class UnionConversionSurfaceTests
 {
     [Fact]
-    public void NativeUnionTypesDeclareOnlyConcreteErrorConversion()
+    public void NativeUnionTypesDeclareOnlyRawPayloadConversions()
     {
         AssertConversionSources(typeof(Result), typeof(string));
-        AssertConversionSources(typeof(Result<int>));
-        AssertConversionSources(typeof(Result<int, string>));
-        AssertConversionSources(typeof(UnitResult<string>));
-        AssertConversionSources(typeof(Option<int>));
+        AssertConversionSources(typeof(Result<int>), typeof(int), typeof(string));
+        AssertConversionSources(typeof(Result<int, string>), typeof(int), typeof(string));
+        AssertConversionSources(typeof(UnitResult<string>), typeof(string));
+        AssertConversionSources(typeof(Option<int>), typeof(int));
     }
 
     private static void AssertConversionSources(Type target, params Type[] expectedSources)
