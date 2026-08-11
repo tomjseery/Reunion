@@ -40,3 +40,4 @@ if (-not $output.Contains('error CS0457')) {
 }
 
 Write-Output "$ProjectPath rejects all ambiguous implicit conversions."
+$global:LASTEXITCODE = 0
