@@ -1,8 +1,9 @@
+#if !NET11_0_OR_GREATER
 using System.Reflection;
 
 namespace Reunion.Validation.Tests;
 
-public sealed class ValidationResultCompatibilitySurfaceTests
+public sealed class ValidationResultCompatibilityConversionSurfaceTests
 {
     [Fact]
     public void PublicConversionSurfaceContainsOnlyNamedCases()
@@ -17,3 +18,4 @@ public sealed class ValidationResultCompatibilitySurfaceTests
             .OrderBy(candidate => candidate.Name));
     }
 }
+#endif

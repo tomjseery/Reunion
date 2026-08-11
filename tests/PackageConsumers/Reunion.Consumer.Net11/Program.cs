@@ -8,6 +8,12 @@ Option<int> some = new Some<int>(42);
 Option<int> none = new None();
 Option<int> defaultOption = default;
 Result<int, string> defaultResult = default;
+Result<int> rawValueSuccess = 42;
+Result<int, string> rawTypedSuccess = 42;
+Result<int, string> rawTypedFailure = "raw error";
+UnitResult<string> rawUnitFailure = "raw error";
+Option<int> rawSome = 42;
+Option<string> rawNone = null;
 
 Require(Match(success) == "success:42", "Exhaustive success matching failed.");
 Require(Match(failure) == "failure:error", "Exhaustive failure matching failed.");
@@ -17,6 +23,12 @@ Require(MatchOption(some) == "some:42", "Some matching failed.");
 Require(MatchOption(none) == "none", "Native None conversion failed.");
 Require(MatchOption(defaultOption) == "none", "A default Option must match None.");
 Require(MatchDefault(defaultResult) == "uninitialized", "A default Result must match the union null state.");
+Require(rawValueSuccess.IsSuccess, "Raw Result<T> success conversion failed.");
+Require(Match(rawTypedSuccess) == "success:42", "Raw typed Result success conversion failed.");
+Require(Match(rawTypedFailure) == "failure:raw error", "Raw typed Result failure conversion failed.");
+Require(rawUnitFailure.IsFailure, "Raw UnitResult error conversion failed.");
+Require(MatchOption(rawSome) == "some:42", "Raw Option value conversion failed.");
+Require(rawNone.IsNone, "Null Option conversion failed.");
 
 Require(success.TryGetValue(out var resultValue) && resultValue == 42, "Result.TryGetValue(out var) was ambiguous or incorrect.");
 Require(some.TryGetValue(out var optionValue) && optionValue == 42, "Option.TryGetValue(out var) was ambiguous or incorrect.");

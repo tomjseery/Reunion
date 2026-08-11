@@ -27,7 +27,7 @@ internal static class ApiComparer
 
         ValidateInterfaces(errors, downlevelTypes, unionTypes, unionTypeNames);
         ValidateAddedTypes(errors, downlevelTypes, unionTypes, unionTypeNames);
-        ValidateCompatibilityConversions(errors, downlevelTypes, unionTypes, unionTypeNames);
+        ValidateCaseConversions(errors, downlevelTypes, unionTypes, unionTypeNames);
 
         return errors;
     }
@@ -43,7 +43,7 @@ internal static class ApiComparer
         return errors;
     }
 
-    private static void ValidateCompatibilityConversions(
+    private static void ValidateCaseConversions(
         ICollection<string> errors,
         IReadOnlyDictionary<string, Type> downlevelTypes,
         IReadOnlyDictionary<string, Type> unionTypes,
@@ -54,21 +54,6 @@ internal static class ApiComparer
             if (!downlevelTypes.TryGetValue(typeName, out var downlevelType))
                 continue;
 
-            var unionConversionSignatures = GetImplicitConversions(unionTypes[typeName])
-                .Select(method => method.ToString())
-                .ToHashSet(StringComparer.Ordinal);
-            var compatibilityConversions = GetImplicitConversions(downlevelType)
-                .Where(method => !unionConversionSignatures.Contains(method.ToString()))
-                .ToArray();
-
-            if (compatibilityConversions.Length is not 2)
-            {
-                errors.Add(
-                    $"{typeName} must expose exactly two downlevel case compatibility conversions; "
-                    + $"found {compatibilityConversions.Length}.");
-                continue;
-            }
-
             var providerName = typeName + "+IUnionMembers";
             if (!unionTypes.TryGetValue(providerName, out var provider))
                 continue;
@@ -76,22 +61,33 @@ internal static class ApiComparer
             if (!provider.TryGetUnionCaseTypeNames(out var caseTypes))
                 continue;
 
+            var downlevelConversions = GetCaseConversions(downlevelType, caseTypes);
             if (!TryGetConversionSourceTypeNames(
                     downlevelType,
-                    compatibilityConversions,
-                    out var compatibilitySources))
+                    downlevelConversions,
+                    out var downlevelSources)
+                || !downlevelSources.SetEquals(caseTypes))
             {
-                errors.Add($"{typeName} has malformed downlevel compatibility conversions.");
-                continue;
+                errors.Add($"{typeName} downlevel named-case conversions do not match its union cases.");
             }
 
-            if (!compatibilitySources.SetEquals(caseTypes))
+            var unionType = unionTypes[typeName];
+            var unionConversions = GetCaseConversions(unionType, caseTypes);
+            if (!TryGetConversionSourceTypeNames(unionType, unionConversions, out var unionSources)
+                || (unionSources.Count is not 0 && !unionSources.SetEquals(caseTypes)))
             {
-                errors.Add(
-                    $"{typeName} downlevel compatibility conversions do not match its union cases.");
+                errors.Add($"{typeName} union named-case conversions do not match its union cases.");
             }
         }
     }
+
+    private static MethodInfo[] GetCaseConversions(
+        Type type,
+        IReadOnlySet<string> caseTypes) =>
+        GetImplicitConversions(type)
+            .Where(method => method.GetParameters() is [{ ParameterType: var source }]
+                && caseTypes.Contains(source.ToString()))
+            .ToArray();
 
     private static HashSet<string> GetCompatibilityConversions(
         IReadOnlyDictionary<string, Type> downlevelTypes,
@@ -105,11 +101,18 @@ internal static class ApiComparer
             if (!downlevelTypes.TryGetValue(typeName, out var downlevelType))
                 continue;
 
+            var providerName = typeName + "+IUnionMembers";
+            if (!unionTypes.TryGetValue(providerName, out var provider)
+                || !provider.TryGetUnionCaseTypeNames(out var caseTypes))
+            {
+                continue;
+            }
+
             var unionConversionSignatures = GetImplicitConversions(unionTypes[typeName])
                 .Select(method => method.ToString())
                 .ToHashSet(StringComparer.Ordinal);
 
-            foreach (var method in GetImplicitConversions(downlevelType))
+            foreach (var method in GetCaseConversions(downlevelType, caseTypes))
             {
                 if (!unionConversionSignatures.Contains(method.ToString()))
                     compatibilityConversions.Add(method.ToPublicSurfaceKey());

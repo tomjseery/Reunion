@@ -18,6 +18,8 @@ public sealed class CaseConversionTests
 
         Assert.True(resultSuccess.IsSuccess);
         Assert.True(resultFailure.IsFailure);
+        Assert.Equal(Result.Success(), resultSuccess);
+        Assert.Equal(Result.Failure("error"), resultFailure);
         Assert.True(valueSuccess.TryGetValue(out var value));
         Assert.Equal(42, value);
         Assert.True(valueFailure.TryGetError(out var valueError));
@@ -32,6 +34,64 @@ public sealed class CaseConversionTests
         Assert.True(some.TryGetValue(out var optionValue));
         Assert.Equal(42, optionValue);
         Assert.True(none.IsNone);
+    }
+
+    [Fact]
+    public void RawPayloadsConvertToTheirUnambiguousCases()
+    {
+        Result<int> valueSuccess = 42;
+        Result<int, string> typedSuccess = 42;
+        Result<int, string> typedFailure = "error";
+        Result<int, TestError> inheritedFailure = new TestError.Expired();
+        UnitResult<TestError> unitFailure = new TestError.Expired();
+        Option<int> some = 42;
+        Option<string> none = null;
+
+        Assert.True(valueSuccess.IsSuccess);
+        Assert.True(typedSuccess.IsSuccess);
+        Assert.True(typedFailure.IsFailure);
+        Assert.True(inheritedFailure.TryGetError(out var inheritedError));
+        Assert.IsType<TestError.Expired>(inheritedError);
+        Assert.True(unitFailure.TryGetError(out var unitError));
+        Assert.IsType<TestError.Expired>(unitError);
+        Assert.True(some.IsSome);
+        Assert.True(none.IsNone);
+    }
+
+    [Fact]
+    public void BroadNamedCasesUseTheirNamedCaseConversions()
+    {
+        Result<object> valueFailure = new Failure<string>("error");
+        Result<int, object> typedSuccess = new Success<int>(42);
+        UnitResult<object> unitSuccess = new Success();
+        Option<object> none = new None();
+
+        Assert.True(valueFailure.IsFailure);
+        Assert.True(typedSuccess.IsSuccess);
+        Assert.True(unitSuccess.IsSuccess);
+        Assert.True(none.IsNone);
+    }
+
+    [Fact]
+    public void BoxedNamedCasesUseTheirRawPayloadConversions()
+    {
+        object boxedFailure = new Failure<string>("error");
+        object boxedSuccess = new Success<int>(42);
+        object boxedNone = new None();
+
+        Result<object> valueSuccess = boxedFailure;
+        Result<int, object> typedFailure = boxedSuccess;
+        UnitResult<object> unitFailure = boxedSuccess;
+        Option<object> some = boxedNone;
+
+        Assert.True(valueSuccess.TryGetValue(out var value));
+        Assert.Same(boxedFailure, value);
+        Assert.True(typedFailure.TryGetError(out var typedError));
+        Assert.Same(boxedSuccess, typedError);
+        Assert.True(unitFailure.TryGetError(out var unitError));
+        Assert.Same(boxedSuccess, unitError);
+        Assert.True(some.TryGetValue(out var optionValue));
+        Assert.Same(boxedNone, optionValue);
     }
 
     [Fact]
@@ -71,4 +131,8 @@ public sealed class CaseConversionTests
         });
     }
 
+    private abstract record TestError
+    {
+        public sealed record Expired : TestError;
+    }
 }

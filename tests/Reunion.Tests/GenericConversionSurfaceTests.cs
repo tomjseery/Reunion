@@ -2,25 +2,32 @@ using System.Reflection;
 
 namespace Reunion.Tests;
 
-public sealed class CaseCompatibilityConversionTests
+public sealed class GenericConversionSurfaceTests
 {
     [Fact]
-    public void PublicConversionSurfaceContainsOnlyNamedCases()
+    public void ConversionSurfaceContainsRawPayloadsAndNamedCases()
     {
-        AssertConversionSources(typeof(Result), typeof(Success), typeof(Failure<string>));
         AssertConversionSources(
             typeof(Result<int>),
+            typeof(int),
             typeof(Success<int>),
             typeof(Failure<string>));
         AssertConversionSources(
             typeof(Result<int, string>),
+            typeof(int),
+            typeof(string),
             typeof(Success<int>),
             typeof(Failure<string>));
         AssertConversionSources(
             typeof(UnitResult<string>),
+            typeof(string),
             typeof(Success),
             typeof(Failure<string>));
-        AssertConversionSources(typeof(Option<int>), typeof(Some<int>), typeof(None));
+        AssertConversionSources(
+            typeof(Option<int>),
+            typeof(int),
+            typeof(Some<int>),
+            typeof(None));
     }
 
     private static void AssertConversionSources(Type target, params Type[] expectedSources)

@@ -1,11 +1,3 @@
 #nullable enable
-static Reunion.Option<T>.implicit operator Reunion.Option<T>(Reunion.None none) -> Reunion.Option<T>
-static Reunion.Option<T>.implicit operator Reunion.Option<T>(Reunion.Some<T> some) -> Reunion.Option<T>
 static Reunion.Result.implicit operator Reunion.Result(Reunion.Failure<string!> failure) -> Reunion.Result
 static Reunion.Result.implicit operator Reunion.Result(Reunion.Success success) -> Reunion.Result
-static Reunion.Result<TValue, TError>.implicit operator Reunion.Result<TValue, TError>(Reunion.Failure<TError> failure) -> Reunion.Result<TValue, TError>
-static Reunion.Result<TValue, TError>.implicit operator Reunion.Result<TValue, TError>(Reunion.Success<TValue> success) -> Reunion.Result<TValue, TError>
-static Reunion.Result<TValue>.implicit operator Reunion.Result<TValue>(Reunion.Failure<string!> failure) -> Reunion.Result<TValue>
-static Reunion.Result<TValue>.implicit operator Reunion.Result<TValue>(Reunion.Success<TValue> success) -> Reunion.Result<TValue>
-static Reunion.UnitResult<TError>.implicit operator Reunion.UnitResult<TError>(Reunion.Failure<TError> failure) -> Reunion.UnitResult<TError>
-static Reunion.UnitResult<TError>.implicit operator Reunion.UnitResult<TError>(Reunion.Success success) -> Reunion.UnitResult<TError>
