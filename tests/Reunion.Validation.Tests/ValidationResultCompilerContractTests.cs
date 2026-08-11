@@ -1,4 +1,3 @@
-#if NET11_0_OR_GREATER
 using System.Runtime.CompilerServices;
 using Reunion.Errors;
 
@@ -87,4 +86,3 @@ public sealed class ValidationResultCompilerContractTests
         return allocated;
     }
 }
-#endif
