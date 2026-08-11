@@ -101,11 +101,18 @@ internal static class ApiComparer
             if (!downlevelTypes.TryGetValue(typeName, out var downlevelType))
                 continue;
 
+            var providerName = typeName + "+IUnionMembers";
+            if (!unionTypes.TryGetValue(providerName, out var provider)
+                || !provider.TryGetUnionCaseTypeNames(out var caseTypes))
+            {
+                continue;
+            }
+
             var unionConversionSignatures = GetImplicitConversions(unionTypes[typeName])
                 .Select(method => method.ToString())
                 .ToHashSet(StringComparer.Ordinal);
 
-            foreach (var method in GetImplicitConversions(downlevelType))
+            foreach (var method in GetCaseConversions(downlevelType, caseTypes))
             {
                 if (!unionConversionSignatures.Contains(method.ToString()))
                     compatibilityConversions.Add(method.ToPublicSurfaceKey());
