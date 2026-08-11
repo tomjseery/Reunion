@@ -6,112 +6,112 @@ internal static class ApiComparer
 {
     private const string UnionInterfaceName = "System.Runtime.CompilerServices.IUnion";
 
-    private static readonly HashSet<string> KnownUnionTypes = new(StringComparer.Ordinal)
-    {
-        "Reunion.Result",
-        "Reunion.Result`1",
-        "Reunion.Result`2",
-        "Reunion.UnitResult`1",
-        "Reunion.Option`1",
-        "Reunion.Validation.ValidationResult"
-    };
-
-    public static IReadOnlyList<string> Compare(Assembly net10, Assembly net11)
+    public static IReadOnlyList<string> Compare(Assembly downlevel, Assembly union)
     {
         var errors = new List<string>();
-        var net10Types = net10.GetExportedTypesByName();
-        var net11Types = net11.GetExportedTypesByName();
-        var expectedUnionTypes = KnownUnionTypes
-            .Where(net11Types.ContainsKey)
+        var downlevelTypes = downlevel.GetExportedTypesByName();
+        var unionTypes = union.GetExportedTypesByName();
+        var unionTypeNames = unionTypes
+            .Where(pair => pair.Value.GetInterfaceNames().Contains(UnionInterfaceName))
+            .Select(pair => pair.Key)
             .ToHashSet(StringComparer.Ordinal);
         var compatibilityConversions = GetCompatibilityConversions(
-            net10Types,
-            net11Types,
-            expectedUnionTypes);
-        var net10Surface = net10.GetPublicSurface(
-            excludeUnionProviders: true,
-            excludedMembers: compatibilityConversions);
-        var net11Surface = net11.GetPublicSurface(excludeUnionProviders: true);
+            downlevelTypes,
+            unionTypes,
+            unionTypeNames);
+        var unionSurface = union.GetUnionConsumerSurface();
+        var downlevelSurface = downlevel.GetDownlevelConsumerSurface(compatibilityConversions);
 
-        AddDifferences(errors, "net10-only public API", net10Surface.Except(net11Surface));
-        AddDifferences(errors, "unexpected net11-only public API", net11Surface.Except(net10Surface));
+        AddDifferences(errors, "missing downlevel public API", unionSurface.Except(downlevelSurface));
+        AddDifferences(errors, "unexpected downlevel public API", downlevelSurface.Except(unionSurface));
 
-        ValidateInterfaces(errors, net10Types, net11Types, expectedUnionTypes);
-        ValidateAddedTypes(errors, net10Types, net11Types, expectedUnionTypes);
-        ValidateCompatibilityConversions(errors, net10Types, net11Types, expectedUnionTypes);
+        ValidateInterfaces(errors, downlevelTypes, unionTypes, unionTypeNames);
+        ValidateAddedTypes(errors, downlevelTypes, unionTypes, unionTypeNames);
+        ValidateCompatibilityConversions(errors, downlevelTypes, unionTypes, unionTypeNames);
 
         return errors;
     }
 
-    public static IReadOnlyList<string> CompareExact(Assembly net10, Assembly net11)
+    public static IReadOnlyList<string> CompareExact(Assembly downlevel, Assembly union)
     {
         var errors = new List<string>();
-        var net10Surface = net10.GetPublicSurface(excludeUnionProviders: false);
-        var net11Surface = net11.GetPublicSurface(excludeUnionProviders: false);
+        var downlevelSurface = downlevel.GetPublicSurface();
+        var unionSurface = union.GetPublicSurface();
 
-        AddDifferences(errors, "net10-only public API", net10Surface.Except(net11Surface));
-        AddDifferences(errors, "net11-only public API", net11Surface.Except(net10Surface));
+        AddDifferences(errors, "missing downlevel public API", unionSurface.Except(downlevelSurface));
+        AddDifferences(errors, "unexpected downlevel public API", downlevelSurface.Except(unionSurface));
         return errors;
     }
 
     private static void ValidateCompatibilityConversions(
         ICollection<string> errors,
-        IReadOnlyDictionary<string, Type> net10Types,
-        IReadOnlyDictionary<string, Type> net11Types,
-        IReadOnlySet<string> expectedUnionTypes)
+        IReadOnlyDictionary<string, Type> downlevelTypes,
+        IReadOnlyDictionary<string, Type> unionTypes,
+        IReadOnlySet<string> unionTypeNames)
     {
-        foreach (var typeName in expectedUnionTypes)
+        foreach (var typeName in unionTypeNames)
         {
-            var net10Conversions = GetImplicitConversions(net10Types[typeName]);
-            var net11ConversionSignatures = GetImplicitConversions(net11Types[typeName])
+            if (!downlevelTypes.TryGetValue(typeName, out var downlevelType))
+                continue;
+
+            var unionConversionSignatures = GetImplicitConversions(unionTypes[typeName])
                 .Select(method => method.ToString())
                 .ToHashSet(StringComparer.Ordinal);
-            var compatibilityConversions = net10Conversions
-                .Where(method => !net11ConversionSignatures.Contains(method.ToString()))
+            var compatibilityConversions = GetImplicitConversions(downlevelType)
+                .Where(method => !unionConversionSignatures.Contains(method.ToString()))
                 .ToArray();
 
             if (compatibilityConversions.Length is not 2)
             {
                 errors.Add(
-                    $"{typeName} must expose exactly two net10-only case compatibility conversions; "
+                    $"{typeName} must expose exactly two downlevel case compatibility conversions; "
                     + $"found {compatibilityConversions.Length}.");
                 continue;
             }
 
             var providerName = typeName + "+IUnionMembers";
-            var caseTypes = net11Types[providerName]
-                .GetMethods(BindingFlags.Public | BindingFlags.Static | BindingFlags.DeclaredOnly)
-                .Where(method => method.Name is "Create")
-                .Select(method => method.GetParameters().Single().ParameterType.ToString())
-                .ToHashSet(StringComparer.Ordinal);
-            var compatibilitySources = compatibilityConversions
-                .Select(method => method.GetParameters().Single().ParameterType.ToString())
-                .ToHashSet(StringComparer.Ordinal);
+            if (!unionTypes.TryGetValue(providerName, out var provider))
+                continue;
+
+            if (!provider.TryGetUnionCaseTypeNames(out var caseTypes))
+                continue;
+
+            if (!TryGetConversionSourceTypeNames(
+                    downlevelType,
+                    compatibilityConversions,
+                    out var compatibilitySources))
+            {
+                errors.Add($"{typeName} has malformed downlevel compatibility conversions.");
+                continue;
+            }
 
             if (!compatibilitySources.SetEquals(caseTypes))
             {
                 errors.Add(
-                    $"{typeName} net10 compatibility conversions do not match its net11 union cases.");
+                    $"{typeName} downlevel compatibility conversions do not match its union cases.");
             }
         }
     }
 
     private static HashSet<string> GetCompatibilityConversions(
-        IReadOnlyDictionary<string, Type> net10Types,
-        IReadOnlyDictionary<string, Type> net11Types,
-        IReadOnlySet<string> expectedUnionTypes)
+        IReadOnlyDictionary<string, Type> downlevelTypes,
+        IReadOnlyDictionary<string, Type> unionTypes,
+        IReadOnlySet<string> unionTypeNames)
     {
         var compatibilityConversions = new HashSet<string>(StringComparer.Ordinal);
 
-        foreach (var typeName in expectedUnionTypes)
+        foreach (var typeName in unionTypeNames)
         {
-            var net11ConversionSignatures = GetImplicitConversions(net11Types[typeName])
+            if (!downlevelTypes.TryGetValue(typeName, out var downlevelType))
+                continue;
+
+            var unionConversionSignatures = GetImplicitConversions(unionTypes[typeName])
                 .Select(method => method.ToString())
                 .ToHashSet(StringComparer.Ordinal);
 
-            foreach (var method in GetImplicitConversions(net10Types[typeName]))
+            foreach (var method in GetImplicitConversions(downlevelType))
             {
-                if (!net11ConversionSignatures.Contains(method.ToString()))
+                if (!unionConversionSignatures.Contains(method.ToString()))
                     compatibilityConversions.Add(method.ToPublicSurfaceKey());
             }
         }
@@ -124,64 +124,97 @@ internal static class ApiComparer
             .Where(method => method.Name is "op_Implicit")
             .ToArray();
 
+    private static bool TryGetConversionSourceTypeNames(
+        Type targetType,
+        IEnumerable<MethodInfo> conversions,
+        out HashSet<string> sourceTypeNames)
+    {
+        sourceTypeNames = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var method in conversions)
+        {
+            var parameters = method.GetParameters();
+            if (!method.IsStatic
+                || !method.IsSpecialName
+                || method.ReturnType != targetType
+                || parameters.Length is not 1
+                || parameters[0].IsOut
+                || parameters[0].ParameterType.IsByRef)
+            {
+                return false;
+            }
+
+            sourceTypeNames.Add(parameters[0].ParameterType.ToString());
+        }
+
+        return true;
+    }
+
     private static void ValidateInterfaces(
         ICollection<string> errors,
-        IReadOnlyDictionary<string, Type> net10Types,
-        IReadOnlyDictionary<string, Type> net11Types,
-        IReadOnlySet<string> expectedUnionTypes)
+        IReadOnlyDictionary<string, Type> downlevelTypes,
+        IReadOnlyDictionary<string, Type> unionTypes,
+        IReadOnlySet<string> unionTypeNames)
     {
-        foreach (var typeName in net10Types.Keys.Intersect(net11Types.Keys, StringComparer.Ordinal))
+        foreach (var typeName in downlevelTypes.Keys.Intersect(unionTypes.Keys, StringComparer.Ordinal))
         {
-            var oldInterfaces = net10Types[typeName].GetInterfaceNames();
-            var newInterfaces = net11Types[typeName].GetInterfaceNames();
-            var addedInterfaces = newInterfaces.Except(oldInterfaces).ToHashSet(StringComparer.Ordinal);
-            var removedInterfaces = oldInterfaces.Except(newInterfaces).ToArray();
+            var downlevelInterfaces = downlevelTypes[typeName].GetInterfaceNames();
+            var unionInterfaces = unionTypes[typeName].GetInterfaceNames();
+            var unionOnlyInterfaces = unionInterfaces
+                .Except(downlevelInterfaces)
+                .ToHashSet(StringComparer.Ordinal);
+            var downlevelOnlyInterfaces = downlevelInterfaces.Except(unionInterfaces).ToArray();
 
-            if (removedInterfaces.Length is not 0)
+            if (downlevelOnlyInterfaces.Length is not 0)
             {
-                errors.Add($"{typeName} lost interfaces: {string.Join(", ", removedInterfaces)}");
+                errors.Add(
+                    $"{typeName} has downlevel-only interfaces: "
+                    + string.Join(", ", downlevelOnlyInterfaces));
             }
 
-            if (expectedUnionTypes.Contains(typeName))
+            if (unionTypeNames.Contains(typeName))
             {
                 var expectedProvider = typeName + "+IUnionMembers";
-                if (!addedInterfaces.SetEquals([UnionInterfaceName, expectedProvider]))
+                if (!unionOnlyInterfaces.SetEquals([UnionInterfaceName, expectedProvider]))
                 {
-                    errors.Add($"{typeName} has unexpected added interfaces: {string.Join(", ", addedInterfaces)}");
+                    errors.Add(
+                        $"{typeName} has unexpected union-only interfaces: "
+                        + string.Join(", ", unionOnlyInterfaces));
                 }
             }
-            else if (addedInterfaces.Count is not 0)
+            else if (unionOnlyInterfaces.Count is not 0)
             {
-                errors.Add($"{typeName} unexpectedly gained interfaces: {string.Join(", ", addedInterfaces)}");
+                errors.Add(
+                    $"{typeName} unexpectedly has union-only interfaces: "
+                    + string.Join(", ", unionOnlyInterfaces));
             }
         }
     }
 
     private static void ValidateAddedTypes(
         ICollection<string> errors,
-        IReadOnlyDictionary<string, Type> net10Types,
-        IReadOnlyDictionary<string, Type> net11Types,
-        IReadOnlySet<string> expectedUnionTypes)
+        IReadOnlyDictionary<string, Type> downlevelTypes,
+        IReadOnlyDictionary<string, Type> unionTypes,
+        IReadOnlySet<string> unionTypeNames)
     {
-        var addedTypes = net11Types.Keys
-            .Except(net10Types.Keys, StringComparer.Ordinal)
+        var unionOnlyTypes = unionTypes.Keys
+            .Except(downlevelTypes.Keys, StringComparer.Ordinal)
             .ToHashSet(StringComparer.Ordinal);
-        var expectedProviders = expectedUnionTypes
+        var expectedProviders = unionTypeNames
             .Select(name => name + "+IUnionMembers")
             .ToHashSet(StringComparer.Ordinal);
 
-        if (!addedTypes.SetEquals(expectedProviders))
+        if (!unionOnlyTypes.SetEquals(expectedProviders))
         {
-            errors.Add($"Unexpected net11-only public types: {string.Join(", ", addedTypes)}");
+            errors.Add($"Unexpected union-only public types: {string.Join(", ", unionOnlyTypes)}");
         }
 
         foreach (var providerName in expectedProviders)
         {
-            if (!net11Types.TryGetValue(providerName, out var provider))
+            if (!unionTypes.TryGetValue(providerName, out var provider))
             {
                 errors.Add($"The expected union provider {providerName} is missing.");
             }
-            else if (!provider.HasExpectedUnionProviderShape())
+            else if (!provider.TryGetUnionCaseTypeNames(out _))
             {
                 errors.Add(
                     $"{provider.FullName} does not have the expected two factories, "

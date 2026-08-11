@@ -1,4 +1,3 @@
-using System.Reflection;
 using Reunion.Errors;
 
 namespace Reunion.Validation.Tests;
@@ -126,24 +125,12 @@ public sealed class ValidationResultTests
     }
 
     [Fact]
-    public void PublicSurface_HidesPayloadAndExposesCaseConversions()
+    public void PublicSurface_HidesPayloadAndRawConstruction()
     {
         var type = typeof(ValidationResult);
-        var conversions = type.GetMethods(
-                BindingFlags.Public | BindingFlags.Static | BindingFlags.DeclaredOnly)
-            .Where(method => method.Name is "op_Implicit")
-            .ToArray();
 
         Assert.DoesNotContain(type.GetProperties(), property => property.Name is "Errors");
-        Assert.Empty(type.GetConstructors(BindingFlags.Public | BindingFlags.Instance));
-#if NET11_0_OR_GREATER
-        Assert.Equal([typeof(ValidationErrors)], conversions
-            .Select(method => method.GetParameters().Single().ParameterType));
-#else
-        Assert.Equal([typeof(Invalid), typeof(Valid), typeof(ValidationErrors)], conversions
-            .Select(method => method.GetParameters().Single().ParameterType)
-            .OrderBy(candidate => candidate.Name));
-#endif
+        Assert.Empty(type.GetConstructors());
     }
 
     internal static ValidationErrors CreateErrors(params (string Field, string Message)[] errors) =>

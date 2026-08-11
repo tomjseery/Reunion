@@ -1,4 +1,3 @@
-#if NET11_0_OR_GREATER
 using System.Runtime.CompilerServices;
 using Reunion.Errors;
 
@@ -67,4 +66,3 @@ public readonly partial struct ValidationResult :
         return false;
     }
 }
-#endif
