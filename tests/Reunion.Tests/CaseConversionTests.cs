@@ -35,27 +35,11 @@ public sealed class CaseConversionTests
     }
 
     [Fact]
-    public void RawPayloadsConvertToTheirUnambiguousCases()
+    public void ConcreteErrorPayloadConvertsToFailure()
     {
         Result resultFailure = "error";
-        Result<int> valueSuccess = 42;
-        Result<int> valueFailure = "error";
-        Result<int, string> typedSuccess = 42;
-        Result<int, string> typedFailure = "error";
-        Result<int, TestError> inheritedFailure = new TestError.Expired();
-        UnitResult<TestError> unitFailure = new TestError.Expired();
-        Option<int> some = 42;
 
         Assert.True(resultFailure.IsFailure);
-        Assert.True(valueSuccess.IsSuccess);
-        Assert.True(valueFailure.IsFailure);
-        Assert.True(typedSuccess.IsSuccess);
-        Assert.True(typedFailure.IsFailure);
-        Assert.True(inheritedFailure.TryGetError(out var inheritedError));
-        Assert.IsType<TestError.Expired>(inheritedError);
-        Assert.True(unitFailure.TryGetError(out var unitError));
-        Assert.IsType<TestError.Expired>(unitError);
-        Assert.True(some.IsSome);
     }
 
     [Fact]
@@ -93,10 +77,5 @@ public sealed class CaseConversionTests
         {
             Option<string> _ = default(Some<string>);
         });
-    }
-
-    private abstract record TestError
-    {
-        public sealed record Expired : TestError;
     }
 }

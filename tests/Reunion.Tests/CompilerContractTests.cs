@@ -46,23 +46,25 @@ public sealed class CompilerContractTests
     }
 
     [Fact]
-    public void RawPayloadConversionsPreserveNamedUnionCases()
+    public void ConcreteErrorPayloadConversionPreservesFailureCase()
     {
         Result resultFailure = "error";
-        Result<int> valueSuccess = 42;
-        Result<int> valueFailure = "error";
-        Result<int, string> typedSuccess = 42;
-        Result<int, string> typedFailure = "error";
-        UnitResult<string> unitFailure = "error";
-        Option<int> some = 42;
 
         Assert.IsType<Failure<string>>(((IUnion)resultFailure).Value);
-        Assert.IsType<Success<int>>(((IUnion)valueSuccess).Value);
+    }
+
+    [Fact]
+    public void BroadPayloadTypesPreserveNativeNamedCaseConversions()
+    {
+        Result<object> valueFailure = new Failure<string>("error");
+        Result<int, object> typedSuccess = new Success<int>(42);
+        UnitResult<object> unitSuccess = new Success();
+        Option<object> none = new None();
+
         Assert.IsType<Failure<string>>(((IUnion)valueFailure).Value);
         Assert.IsType<Success<int>>(((IUnion)typedSuccess).Value);
-        Assert.IsType<Failure<string>>(((IUnion)typedFailure).Value);
-        Assert.IsType<Failure<string>>(((IUnion)unitFailure).Value);
-        Assert.IsType<Some<int>>(((IUnion)some).Value);
+        Assert.IsType<Success>(((IUnion)unitSuccess).Value);
+        Assert.IsType<None>(((IUnion)none).Value);
     }
 
     [Fact]

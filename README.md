@@ -33,8 +33,8 @@ dependencies; optional error, validation, and ASP.NET Core concerns live in comp
 
 Reunion is deliberately strict at the boundaries of the type system:
 
-- Unambiguous raw payloads convert directly to their Result or Option case; named cases remain the
-  explicit form when payload types overlap.
+- Concrete error payloads convert directly only where they cannot overlap a named case; generic
+  Result and Option payloads use factories or named cases.
 - Payloads are read through `Match`, `TryGetValue`, and `TryGetError`; there is no accessor that
   throws merely because the caller selected the wrong case.
 - Success and failure use distinct case types, so `Result<T, T>` remains fully discriminated.
@@ -49,7 +49,7 @@ same Result and Option types, not a second implementation layered over a convent
 ## Conventional API on .NET 10 and .NET 11
 
 ```csharp
-Result<User, Error> result = user;
+var result = Result<User, Error>.Success(user);
 
 var message = result.Match(
     success => success.Name,
@@ -65,8 +65,8 @@ Result/Option factories. Cases have value equality, readable formatting, and pay
 deconstruction:
 
 ```csharp
-Result<User, Error> found = user;
-Result<User, Error> failed = error;
+Result<User, Error> found = new Success<User>(user);
+Result<User, Error> failed = new Failure<Error>(error);
 
 var description = result.Match(
     static value => $"found {value.Name}",
@@ -78,14 +78,13 @@ var query =
     select (user, account);
 ```
 
-Raw payload conversion is target-typed and delegates to the same validated factories as explicit
-construction. `Result<TValue, TError>` accepts `TValue` as success and `TError` as failure;
-`Result<TValue>` accepts `TValue` as success and `string` as failure; `Result` and
-`UnitResult<TError>` accept their error type as failure; and `Option<T>` accepts `T` as `Some`.
-`ValidationErrors` similarly converts to an invalid `ValidationResult`.
+Two concrete error payloads have direct conversions because their source types cannot overlap the
+named cases: `string` converts to a failed non-generic `Result`, and `ValidationErrors` converts to
+an invalid `ValidationResult`.
 
-When C# cannot select a unique conversion—most obviously when the payload types are identical—use
-named cases to state the intended branch:
+Generic raw payload conversions intentionally remain explicit. Under the current C# union rules,
+an operator accepting `T` would take priority over native union conversion when `T` is broad enough
+to accept a named case. Use named cases to state the intended branch and preserve union semantics:
 
 ```csharp
 Result<string, string> success = new Success<string>("value");
