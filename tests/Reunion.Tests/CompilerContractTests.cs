@@ -35,6 +35,8 @@ public sealed class CompilerContractTests
 
         Assert.True(resultSuccess.IsSuccess);
         Assert.True(resultFailure.IsFailure);
+        Assert.Equal(Result.Success(), resultSuccess);
+        Assert.Equal(Result.Failure("error"), resultFailure);
         Assert.True(valueSuccess.IsSuccess);
         Assert.True(valueFailure.IsFailure);
         Assert.True(typedSuccess.IsSuccess);
@@ -43,6 +45,46 @@ public sealed class CompilerContractTests
         Assert.True(unitFailure.IsFailure);
         Assert.True(some.IsSome);
         Assert.True(none.IsNone);
+    }
+
+    [Fact]
+    public void RawPayloadConversionsCreateTheirDeclaredCases()
+    {
+        Result<int> valueSuccess = 42;
+        Result<int, string> typedSuccess = 42;
+        Result<int, string> typedFailure = "error";
+        UnitResult<string> unitFailure = "error";
+        Option<int> some = 42;
+        Option<string> none = null;
+
+        Assert.IsType<Success<int>>(((IUnion)valueSuccess).Value);
+        Assert.IsType<Success<int>>(((IUnion)typedSuccess).Value);
+        Assert.IsType<Failure<string>>(((IUnion)typedFailure).Value);
+        Assert.IsType<Failure<string>>(((IUnion)unitFailure).Value);
+        Assert.IsType<Some<int>>(((IUnion)some).Value);
+        Assert.IsType<None>(((IUnion)none).Value);
+    }
+
+    [Fact]
+    public void BroadPayloadTypesPreserveNamedCaseConversions()
+    {
+        Result<object> valueSuccess = new Success<object>(42);
+        Result<object> valueFailure = new Failure<string>("error");
+        Result<int, object> typedSuccess = new Success<int>(42);
+        Result<object, string> typedFailure = new Failure<string>("error");
+        UnitResult<object> unitSuccess = new Success();
+        UnitResult<object> unitFailure = new Failure<object>("error");
+        Option<object> some = new Some<object>(42);
+        Option<object> none = new None();
+
+        Assert.IsType<Success<object>>(((IUnion)valueSuccess).Value);
+        Assert.IsType<Failure<string>>(((IUnion)valueFailure).Value);
+        Assert.IsType<Success<int>>(((IUnion)typedSuccess).Value);
+        Assert.IsType<Failure<string>>(((IUnion)typedFailure).Value);
+        Assert.IsType<Success>(((IUnion)unitSuccess).Value);
+        Assert.IsType<Failure<object>>(((IUnion)unitFailure).Value);
+        Assert.IsType<Some<object>>(((IUnion)some).Value);
+        Assert.IsType<None>(((IUnion)none).Value);
     }
 
     [Fact]

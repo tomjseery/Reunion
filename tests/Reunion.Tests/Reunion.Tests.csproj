@@ -30,13 +30,8 @@
     <Using Include="Xunit" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Compile Remove="CaseCompatibilityConversionTests.Net10.cs" />
-  </ItemGroup>
-
   <ItemGroup Condition="'$(TargetFramework)' == 'net10.0'">
-    <Compile Remove="CompilerContractTests.cs;UnionConversionSurfaceTests.cs" />
-    <Compile Include="CaseCompatibilityConversionTests.Net10.cs" />
+    <Compile Remove="CompilerContractTests.cs;ResultUnionConversionSurfaceTests.cs" />
   </ItemGroup>
 
 </Project>

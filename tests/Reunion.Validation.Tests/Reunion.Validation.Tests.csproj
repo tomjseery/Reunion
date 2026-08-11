@@ -30,13 +30,8 @@
     <Using Include="Xunit" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Compile Remove="ValidationResultCompatibilitySurfaceTests.Net10.cs" />
-  </ItemGroup>
-
   <ItemGroup Condition="'$(TargetFramework)' == 'net10.0'">
-    <Compile Remove="ValidationResultCompilerContractTests.cs;ValidationResultUnionSurfaceTests.cs" />
-    <Compile Include="ValidationResultCompatibilitySurfaceTests.Net10.cs" />
+    <Compile Remove="ValidationResultCompilerContractTests.cs;ValidationResultUnionConversionSurfaceTests.cs" />
   </ItemGroup>
 
 </Project>
