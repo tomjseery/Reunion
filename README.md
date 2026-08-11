@@ -80,9 +80,9 @@ var query =
 
 Raw payload conversion is target-typed and delegates to the same validated factories as explicit
 construction. `Result<TValue, TError>` accepts `TValue` as success and `TError` as failure;
-`Result<TValue>` accepts `TValue` as success and `string` as failure; `Result` and
-`UnitResult<TError>` accept their error type as failure; and `Option<T>` accepts `T` as `Some`.
-`ValidationErrors` similarly converts to an invalid `ValidationResult`.
+`Result<TValue>` accepts `TValue` as success; `UnitResult<TError>` accepts `TError` as failure; and
+`Option<T>` maps non-null `T` to `Some` and `null` to `None`. Non-generic `Result` and
+`ValidationResult` use their factories or named cases.
 
 Named cases retain their branch when one broad raw conversion also applies. If multiple raw
 operators apply, C# reports an ambiguous conversion instead of selecting a branch. Use named cases

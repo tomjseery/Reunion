@@ -10,7 +10,6 @@ public sealed class ValidationResultTests
         var errors = CreateErrors(("name", "Required."));
         ValidationResult validCase = new Valid();
         ValidationResult invalidCase = new Invalid(errors);
-        ValidationResult rawInvalid = errors;
         var valid = ValidationResult.Valid();
         var invalid = ValidationResult.Invalid(errors);
 
@@ -23,7 +22,6 @@ public sealed class ValidationResultTests
         Assert.Same(errors, actual);
         Assert.Equal(valid, validCase);
         Assert.Equal(invalid, invalidCase);
-        Assert.Equal(invalid, rawInvalid);
     }
 
     [Fact]
@@ -31,10 +29,6 @@ public sealed class ValidationResultTests
     {
         Assert.Throws<ArgumentNullException>(() => new Invalid(null!));
         Assert.Throws<ArgumentNullException>(() => ValidationResult.Invalid(null!));
-        Assert.Throws<ArgumentNullException>(() =>
-        {
-            ValidationResult _ = (ValidationErrors)null!;
-        });
         Assert.Throws<ArgumentNullException>(() =>
         {
             ValidationResult _ = default(Invalid);

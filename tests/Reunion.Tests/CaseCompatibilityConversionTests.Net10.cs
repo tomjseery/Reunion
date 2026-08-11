@@ -9,13 +9,11 @@ public sealed class CaseCompatibilityConversionTests
     {
         AssertConversionSources(
             typeof(Result),
-            typeof(string),
             typeof(Success),
             typeof(Failure<string>));
         AssertConversionSources(
             typeof(Result<int>),
             typeof(int),
-            typeof(string),
             typeof(Success<int>),
             typeof(Failure<string>));
         AssertConversionSources(

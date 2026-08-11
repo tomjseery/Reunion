@@ -35,6 +35,8 @@ public sealed class CompilerContractTests
 
         Assert.True(resultSuccess.IsSuccess);
         Assert.True(resultFailure.IsFailure);
+        Assert.Equal(Result.Success(), resultSuccess);
+        Assert.Equal(Result.Failure("error"), resultFailure);
         Assert.True(valueSuccess.IsSuccess);
         Assert.True(valueFailure.IsFailure);
         Assert.True(typedSuccess.IsSuccess);
@@ -48,21 +50,19 @@ public sealed class CompilerContractTests
     [Fact]
     public void RawPayloadConversionsPreserveNamedUnionCases()
     {
-        Result resultFailure = "error";
         Result<int> valueSuccess = 42;
-        Result<int> valueFailure = "error";
         Result<int, string> typedSuccess = 42;
         Result<int, string> typedFailure = "error";
         UnitResult<string> unitFailure = "error";
         Option<int> some = 42;
+        Option<string> none = null;
 
-        Assert.IsType<Failure<string>>(((IUnion)resultFailure).Value);
         Assert.IsType<Success<int>>(((IUnion)valueSuccess).Value);
-        Assert.IsType<Failure<string>>(((IUnion)valueFailure).Value);
         Assert.IsType<Success<int>>(((IUnion)typedSuccess).Value);
         Assert.IsType<Failure<string>>(((IUnion)typedFailure).Value);
         Assert.IsType<Failure<string>>(((IUnion)unitFailure).Value);
         Assert.IsType<Some<int>>(((IUnion)some).Value);
+        Assert.IsType<None>(((IUnion)none).Value);
     }
 
     [Fact]

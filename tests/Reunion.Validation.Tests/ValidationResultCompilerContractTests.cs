@@ -11,12 +11,9 @@ public sealed class ValidationResultCompilerContractTests
         var errors = ValidationResultTests.CreateErrors(("name", "Required."));
         ValidationResult valid = new Valid();
         ValidationResult invalid = new Invalid(errors);
-        ValidationResult rawInvalid = errors;
 
         Assert.Equal("valid", Match(valid));
         Assert.Equal("Required.", Match(invalid));
-        Assert.Equal("Required.", Match(rawInvalid));
-        Assert.IsType<Invalid>(((IUnion)rawInvalid).Value);
     }
 
     [Fact]

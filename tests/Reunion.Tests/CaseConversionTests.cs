@@ -18,6 +18,8 @@ public sealed class CaseConversionTests
 
         Assert.True(resultSuccess.IsSuccess);
         Assert.True(resultFailure.IsFailure);
+        Assert.Equal(Result.Success(), resultSuccess);
+        Assert.Equal(Result.Failure("error"), resultFailure);
         Assert.True(valueSuccess.TryGetValue(out var value));
         Assert.Equal(42, value);
         Assert.True(valueFailure.TryGetError(out var valueError));
@@ -37,18 +39,15 @@ public sealed class CaseConversionTests
     [Fact]
     public void RawPayloadsConvertToTheirUnambiguousCases()
     {
-        Result resultFailure = "error";
         Result<int> valueSuccess = 42;
-        Result<int> valueFailure = "error";
         Result<int, string> typedSuccess = 42;
         Result<int, string> typedFailure = "error";
         Result<int, TestError> inheritedFailure = new TestError.Expired();
         UnitResult<TestError> unitFailure = new TestError.Expired();
         Option<int> some = 42;
+        Option<string> none = null;
 
-        Assert.True(resultFailure.IsFailure);
         Assert.True(valueSuccess.IsSuccess);
-        Assert.True(valueFailure.IsFailure);
         Assert.True(typedSuccess.IsSuccess);
         Assert.True(typedFailure.IsFailure);
         Assert.True(inheritedFailure.TryGetError(out var inheritedError));
@@ -56,6 +55,7 @@ public sealed class CaseConversionTests
         Assert.True(unitFailure.TryGetError(out var unitError));
         Assert.IsType<TestError.Expired>(unitError);
         Assert.True(some.IsSome);
+        Assert.True(none.IsNone);
     }
 
     [Fact]
