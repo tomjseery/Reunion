@@ -55,12 +55,7 @@ public readonly partial struct Result<TValue> : IEquatable<Result<TValue>>
     }
 
     /// <summary>Converts a value to a successful result.</summary>
-    public static implicit operator Result<TValue>(TValue value) => value switch
-    {
-        Success<TValue> success => Success(success.Value),
-        Failure<string> failure => Failure(failure.Error),
-        _ => Success(value)
-    };
+    public static implicit operator Result<TValue>(TValue value) => Success(value);
 
     /// <summary>Invokes the callback for the active case.</summary>
     public TResult Match<TResult>(

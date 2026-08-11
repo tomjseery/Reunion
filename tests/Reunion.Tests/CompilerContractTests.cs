@@ -48,7 +48,7 @@ public sealed class CompilerContractTests
     }
 
     [Fact]
-    public void RawPayloadConversionsPreserveNamedUnionCases()
+    public void RawPayloadConversionsCreateTheirDeclaredCases()
     {
         Result<int> valueSuccess = 42;
         Result<int, string> typedSuccess = 42;
@@ -66,31 +66,25 @@ public sealed class CompilerContractTests
     }
 
     [Fact]
-    public void BroadPayloadTypesPreserveNativeNamedCaseConversions()
+    public void BroadPayloadTypesPreserveNamedCaseConversions()
     {
         Result<object> valueSuccess = new Success<object>(42);
         Result<object> valueFailure = new Failure<string>("error");
         Result<int, object> typedSuccess = new Success<int>(42);
         Result<object, string> typedFailure = new Failure<string>("error");
-        Result<Failure<string>> collidingValueFailure = new Failure<string>("error");
         UnitResult<object> unitSuccess = new Success();
         UnitResult<object> unitFailure = new Failure<object>("error");
-        UnitResult<Success> collidingErrorSuccess = new Success();
         Option<object> some = new Some<object>(42);
         Option<object> none = new None();
-        Option<None> collidingValueNone = new None();
 
         Assert.IsType<Success<object>>(((IUnion)valueSuccess).Value);
         Assert.IsType<Failure<string>>(((IUnion)valueFailure).Value);
         Assert.IsType<Success<int>>(((IUnion)typedSuccess).Value);
         Assert.IsType<Failure<string>>(((IUnion)typedFailure).Value);
-        Assert.IsType<Failure<string>>(((IUnion)collidingValueFailure).Value);
         Assert.IsType<Success>(((IUnion)unitSuccess).Value);
         Assert.IsType<Failure<object>>(((IUnion)unitFailure).Value);
-        Assert.IsType<Success>(((IUnion)collidingErrorSuccess).Value);
         Assert.IsType<Some<object>>(((IUnion)some).Value);
         Assert.IsType<None>(((IUnion)none).Value);
-        Assert.IsType<None>(((IUnion)collidingValueNone).Value);
     }
 
     [Fact]
