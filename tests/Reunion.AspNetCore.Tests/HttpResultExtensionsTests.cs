@@ -17,6 +17,10 @@ public sealed class HttpResultExtensionsTests
         Results<Ok<User>, NotFound> missing = Option.None<User>().ToOkOrNotFound();
         Results<Ok<User>, NoContent> present = Option.Some(new User(43)).ToOkOrNoContent();
         Results<Ok<User>, NoContent> absent = Option.None<User>().ToOkOrNoContent();
+        Results<Ok<string>, NotFound> projectedFound = Option.Some(new User(44))
+            .ToOkOrNotFound(user => user.Id.ToString());
+        Results<Ok<string>, NoContent> projectedAbsent = Option.None<User>()
+            .ToOkOrNoContent(user => user.Id.ToString());
 
         var foundResult = Assert.IsType<Ok<User>>(found.Result);
         Assert.Equal(StatusCodes.Status200OK, foundResult.StatusCode);
@@ -24,6 +28,61 @@ public sealed class HttpResultExtensionsTests
         Assert.Equal(StatusCodes.Status404NotFound, Assert.IsType<NotFound>(missing.Result).StatusCode);
         Assert.Equal(43, Assert.IsType<Ok<User>>(present.Result).Value!.Id);
         Assert.Equal(StatusCodes.Status204NoContent, Assert.IsType<NoContent>(absent.Result).StatusCode);
+        Assert.Equal("44", Assert.IsType<Ok<string>>(projectedFound.Result).Value);
+        Assert.IsType<NoContent>(projectedAbsent.Result);
+    }
+
+    [Fact]
+    public void ToOkOr_MapsAbsenceWithCallerSelectedTypedResult()
+    {
+        Results<Ok<User>, UnauthorizedHttpResult> found = Option.Some(new User(42))
+            .ToOkOr(TypedResults.Unauthorized);
+        Results<Ok<User>, UnauthorizedHttpResult> missing = Option.None<User>()
+            .ToOkOr(TypedResults.Unauthorized);
+        Results<Ok<string>, UnauthorizedHttpResult> projected = Option.Some(new User(43))
+            .ToOkOr(user => user.Id.ToString(), TypedResults.Unauthorized);
+
+        Assert.Equal(42, Assert.IsType<Ok<User>>(found.Result).Value!.Id);
+        Assert.IsType<UnauthorizedHttpResult>(missing.Result);
+        Assert.Equal("43", Assert.IsType<Ok<string>>(projected.Result).Value);
+    }
+
+    [Fact]
+    public void ToOkOr_ValidatesDelegatesAndInvokesOnlySelectedBranch()
+    {
+        var projectionInvocations = 0;
+        var alternativeInvocations = 0;
+        Func<User, string> projection = user =>
+        {
+            projectionInvocations++;
+            return user.Id.ToString();
+        };
+        Func<UnauthorizedHttpResult> alternative = () =>
+        {
+            alternativeInvocations++;
+            return TypedResults.Unauthorized();
+        };
+
+        Option.Some(new User(42)).ToOkOr(projection, alternative);
+        Assert.Equal(1, projectionInvocations);
+        Assert.Equal(0, alternativeInvocations);
+
+        Option.None<User>().ToOkOr(projection, alternative);
+        Assert.Equal(1, projectionInvocations);
+        Assert.Equal(1, alternativeInvocations);
+
+        Assert.Throws<ArgumentNullException>(() =>
+            Option.Some(new User(42)).ToOkOr<User, UnauthorizedHttpResult>(null!));
+        Assert.Throws<ArgumentNullException>(() =>
+            Option.Some(new User(42))
+                .ToOkOr<User, string, UnauthorizedHttpResult>(null!, alternative));
+        Assert.Throws<ArgumentNullException>(() =>
+            Option.Some(new User(42))
+                .ToOkOr<User, string, UnauthorizedHttpResult>(projection, null!));
+        Assert.Throws<InvalidOperationException>(() =>
+            Option.None<User>().ToOkOr(() => (UnauthorizedHttpResult)null!));
+        Assert.Throws<ArgumentNullException>(() =>
+            Option.Some(new User(42)).ToOkOr(_ => (string)null!, alternative));
     }
 
     [Fact]

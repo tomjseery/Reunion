@@ -373,6 +373,22 @@ app.MapGet("/users/{id:int}/avatar", async (int id, UserService service) =>
     (await service.FindAvatar(id)).ToOkOrNoContent());
 ```
 
+Option terminals can project a present value directly into the response body:
+
+```csharp
+app.MapGet("/users/{id:int}", async (int id, UserService service) =>
+    (await service.FindUser(id)).ToOkOrNotFound(
+        user => user.ToResponse()));
+```
+
+For another absence response, `ToOkOr` accepts a concrete typed-result factory while preserving the
+exact result union:
+
+```csharp
+app.MapGet("/users/me", async (UserService service) =>
+    (await service.FindCurrentUser()).ToOkOr(TypedResults.Unauthorized));
+```
+
 GET with `200 OK` or a caller-mapped problem:
 
 ```csharp
@@ -479,6 +495,13 @@ public async Task<ActionResult<User>> Get(int id) =>
 
 MVC error mappers return `ProblemDetails` with an explicit status. Subtypes such as
 `ValidationProblemDetails`, including their structured errors and extensions, are preserved.
+MVC Option endpoints can likewise select another absence response through a controller result
+factory, with an optional value projection:
+
+```csharp
+return user.ToOkOr(Unauthorized);
+return profile.ToOkOr(value => value.ToResponse(), Unauthorized);
+```
 
 ## License
 
