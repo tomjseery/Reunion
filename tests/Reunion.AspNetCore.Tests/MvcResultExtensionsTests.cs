@@ -18,6 +18,10 @@ public sealed class MvcResultExtensionsTests
         ActionResult<User> missing = Option.None<User>().ToOkOrNotFound();
         ActionResult<User> present = Option.Some(new User(43)).ToOkOrNoContent();
         ActionResult<User> absent = Option.None<User>().ToOkOrNoContent();
+        ActionResult<string> projectedFound = Option.Some(new User(44))
+            .ToOkOrNotFound(user => user.Id.ToString());
+        ActionResult<string> projectedAbsent = Option.None<User>()
+            .ToOkOrNoContent(user => user.Id.ToString());
 
         var foundResult = Assert.IsType<OkObjectResult>(found.Result);
         Assert.Equal(StatusCodes.Status200OK, foundResult.StatusCode);
@@ -25,6 +29,63 @@ public sealed class MvcResultExtensionsTests
         Assert.IsType<NotFoundResult>(missing.Result);
         Assert.Equal(43, Assert.IsType<User>(Assert.IsType<OkObjectResult>(present.Result).Value).Id);
         Assert.IsType<NoContentResult>(absent.Result);
+        Assert.Equal(
+            "44",
+            Assert.IsType<string>(Assert.IsType<OkObjectResult>(projectedFound.Result).Value));
+        Assert.IsType<NoContentResult>(projectedAbsent.Result);
+    }
+
+    [Fact]
+    public void ToOkOr_MapsAbsenceWithCallerSelectedMvcResult()
+    {
+        var controller = new TestController();
+        ActionResult<User> found = controller.ToUnauthorized(Option.Some(new User(42)));
+        ActionResult<User> missing = controller.ToUnauthorized(Option.None<User>());
+        ActionResult<string> projected = controller.ToConflict(Option.Some(new User(43)));
+
+        Assert.Equal(
+            42,
+            Assert.IsType<User>(Assert.IsType<OkObjectResult>(found.Result).Value).Id);
+        Assert.IsType<UnauthorizedResult>(missing.Result);
+        Assert.Equal(
+            "43",
+            Assert.IsType<string>(Assert.IsType<OkObjectResult>(projected.Result).Value));
+    }
+
+    [Fact]
+    public void ToOkOr_ValidatesDelegatesAndInvokesOnlySelectedBranch()
+    {
+        var projectionInvocations = 0;
+        var alternativeInvocations = 0;
+        Func<User, string> projection = user =>
+        {
+            projectionInvocations++;
+            return user.Id.ToString();
+        };
+        Func<ActionResult> alternative = () =>
+        {
+            alternativeInvocations++;
+            return new UnauthorizedResult();
+        };
+
+        Option.Some(new User(42)).ToOkOr(projection, alternative);
+        Assert.Equal(1, projectionInvocations);
+        Assert.Equal(0, alternativeInvocations);
+
+        Option.None<User>().ToOkOr(projection, alternative);
+        Assert.Equal(1, projectionInvocations);
+        Assert.Equal(1, alternativeInvocations);
+
+        Assert.Throws<ArgumentNullException>(() =>
+            Option.Some(new User(42)).ToOkOr(null!));
+        Assert.Throws<ArgumentNullException>(() =>
+            Option.Some(new User(42)).ToOkOr<User, string>(null!, alternative));
+        Assert.Throws<ArgumentNullException>(() =>
+            Option.Some(new User(42)).ToOkOr(projection, null!));
+        Assert.Throws<InvalidOperationException>(() =>
+            Option.None<User>().ToOkOr(() => null!));
+        Assert.Throws<ArgumentNullException>(() =>
+            Option.Some(new User(42)).ToOkOr(_ => (string)null!, alternative));
     }
 
     [Fact]
@@ -362,6 +423,15 @@ public sealed class MvcResultExtensionsTests
     }
 
     private sealed record User(int Id);
+
+    private sealed class TestController : ControllerBase
+    {
+        public ActionResult<User> ToUnauthorized(Option<User> option) =>
+            option.ToOkOr(Unauthorized);
+
+        public ActionResult<string> ToConflict(Option<User> option) =>
+            option.ToOkOr(user => user.Id.ToString(), Conflict);
+    }
 
     private sealed record DomainError(string Code);
 
