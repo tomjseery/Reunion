@@ -105,6 +105,8 @@ jobs:
           dotnet format tests/PackageConsumers/Reunion.Validation.Consumer.Net11/Reunion.Validation.Consumer.Net11.csproj --verify-no-changes --no-restore
           ./eng/Verify-AmbiguousConversions.ps1 -ProjectPath tests/PackageConsumers/Reunion.Consumer.Net10/Reunion.Consumer.Net10.csproj -PackageVersion $env:REUNION_PACKAGE_VERSION
           ./eng/Verify-AmbiguousConversions.ps1 -ProjectPath tests/PackageConsumers/Reunion.Consumer.Net11/Reunion.Consumer.Net11.csproj -PackageVersion $env:REUNION_PACKAGE_VERSION
+          ./eng/Verify-InterfacePayloadConversion.ps1 -ProjectPath tests/Reunion.Tests/Reunion.Tests.csproj -Framework net10.0
+          ./eng/Verify-InterfacePayloadConversion.ps1 -ProjectPath tests/Reunion.Tests/Reunion.Tests.csproj -Framework net11.0
 
       - name: Build and run net10 package consumer
         run: dotnet run --project tests/PackageConsumers/Reunion.Consumer.Net10/Reunion.Consumer.Net10.csproj --configuration Release --no-restore -p:ReunionPackageVersion=$env:REUNION_PACKAGE_VERSION

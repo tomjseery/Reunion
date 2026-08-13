@@ -42,6 +42,7 @@ Reunion.None.Equals(Reunion.None other) -> bool
 Reunion.None.None() -> void
 static Reunion.None.operator !=(Reunion.None left, Reunion.None right) -> bool
 static Reunion.None.operator ==(Reunion.None left, Reunion.None right) -> bool
+Reunion.NamedCaseExtensions
 Reunion.Option
 Reunion.Option<T>
 Reunion.Option<T>.Bind<TResult>(System.Func<T, Reunion.Option<TResult>>! bind) -> Reunion.Option<TResult>
@@ -174,6 +175,9 @@ static Reunion.Option<T>.implicit operator Reunion.Option<T>(T value) -> Reunion
 static Reunion.OptionExtensions.ToOption<T>(this System.Threading.Tasks.Task<T?>! source) -> System.Threading.Tasks.Task<Reunion.Option<T!>>!
 static Reunion.OptionExtensions.ToOption<T>(this T? value) -> Reunion.Option<T!>
 static Reunion.OptionExtensions.ToOption<T>(this T? value) -> Reunion.Option<T>
+static Reunion.NamedCaseExtensions.ToFailure<TError>(this TError error) -> Reunion.Failure<TError>
+static Reunion.NamedCaseExtensions.ToSome<T>(this T value) -> Reunion.Some<T>
+static Reunion.NamedCaseExtensions.ToSuccess<TValue>(this TValue value) -> Reunion.Success<TValue>
 static Reunion.Result.Failure(string! error) -> Reunion.Result
 static Reunion.Result.Failure<TValue, TError>(TError error) -> Reunion.Result<TValue, TError>
 static Reunion.Result.Failure<TValue>(string! error) -> Reunion.Result<TValue>
