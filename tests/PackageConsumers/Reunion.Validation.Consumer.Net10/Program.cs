@@ -28,9 +28,9 @@ Require(ConversionOverloads.Select(new Valid()) == "validation",
     "Named-case conversion became ambiguous.");
 var concert = new Concert(7);
 var checkout = await Result.Success<Concert, CheckoutError>(concert)
-    .Bind(value => invalid.Map<Concert, CheckoutError>(
-        () => value,
-        mapped => new CheckoutError.Invalid(mapped)))
+    .Ensure(
+        _ => invalid,
+        mapped => new CheckoutError.Invalid(mapped))
     .MapAsync(value => Task.FromResult(value.Id));
 Require(checkout.IsFailure, "Invalid validation did not short-circuit the package pipeline.");
 

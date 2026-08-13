@@ -3,7 +3,7 @@ using Reunion.Errors;
 namespace Reunion.Validation;
 
 /// <summary>Provides task-based operations for validation results.</summary>
-public static class TaskValidationResultExtensions
+public static partial class TaskValidationResultExtensions
 {
     /// <summary>Creates a value from valid validation after awaiting the source.</summary>
     public static async Task<Result<TValue, ValidationErrors>> Map<TValue>(

@@ -5,6 +5,37 @@ namespace Reunion.Validation;
 /// <summary>Provides accumulation and Result-family conversions for validation results.</summary>
 public static partial class ValidationResultExtensions
 {
+    /// <summary>Validates a successful typed-error result while preserving its value.</summary>
+    public static Result<TValue, TError> Ensure<TValue, TError>(
+        this Result<TValue, TError> result,
+        Func<TValue, ValidationResult> validate,
+        Func<ValidationErrors, TError> mapError)
+        where TValue : notnull
+        where TError : notnull
+    {
+        _ = result.IsSuccess;
+        ArgumentNullException.ThrowIfNull(validate);
+        ArgumentNullException.ThrowIfNull(mapError);
+
+        return result.Bind(value =>
+            validate(value).Map<TValue, TError>(() => value, mapError));
+    }
+
+    /// <summary>Validates a successful string-error result while preserving its value.</summary>
+    public static Result<TValue> Ensure<TValue>(
+        this Result<TValue> result,
+        Func<TValue, ValidationResult> validate,
+        Func<ValidationErrors, string> mapError)
+        where TValue : notnull
+    {
+        _ = result.IsSuccess;
+        ArgumentNullException.ThrowIfNull(validate);
+        ArgumentNullException.ThrowIfNull(mapError);
+
+        return result.Bind(value =>
+            validate(value).Bind(() => Result.Success(value), mapError));
+    }
+
     /// <summary>Combines independent validations, accumulating every error.</summary>
     /// <param name="source">The validations to combine in enumeration order.</param>
     /// <returns>
