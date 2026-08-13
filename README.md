@@ -259,29 +259,7 @@ boundary.
 field stay in left-to-right order with duplicates retained. The inputs remain unchanged; combining
 two invalid values creates a new immutable `ValidationErrors` collection.
 
-`Combine` is the accumulating boundary. Direct `Map`, `Bind`, `MapError`, tap, and recovery
-operations use ordinary fail-fast composition: invalid validation does not invoke a valid-case
-continuation. Operations that retain the validation vocabulary return `ValidationResult`; creating
-a value returns `Result<TValue, ValidationErrors>`, and mapping to an application-owned error
-returns the corresponding Result carrier.
-
-For example, a validated value can continue through an application pipeline without a guard or a
-preliminary `ToResult` call:
-
-```csharp
-return concertModule.GetByIdAsync(concertId)
-    .OrFailure<ConcertDto, CheckoutError>(
-        new CheckoutError.ConcertNotFound(concertId))
-    .Bind(concert =>
-        ticketValidator.CanPurchaseTickets(concert, quantity)
-            .Map<ConcertDto, CheckoutError>(
-                () => concert,
-                errors => new CheckoutError.Invalid(MapErrors(errors))))
-    .MapAsync(concert => CreateCheckoutAsync(concert, quantity));
-```
-
-Guard-style observation, terminal `Match`, explicit conversion, and fluent composition remain
-available for different call-site shapes. There is no implicit conversion from raw
+Validation converts explicitly to the Result family. There is no implicit conversion from raw
 `ValidationErrors`; only `Valid` and `Invalid` convert to `ValidationResult`:
 
 ```csharp
@@ -290,11 +268,6 @@ ValidationResult validation = validator.Validate(request);
 if (validation.IsInvalid)
     return validation.ToResult();
 ```
-
-The lossless conversion from `ValidationResult` to `UnitResult<ValidationErrors>` is also implicit
-for assignments and method arguments. It returns the same stored carrier, including preserving an
-uninitialized default as an uninitialized `UnitResult`; it exists in both package assets and does
-not replace the direct composition methods because C# member lookup does not follow conversions.
 
 Value-bearing methods can use the named failure returned by `TryGetFailure` for an early return:
 

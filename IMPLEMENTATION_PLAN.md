@@ -346,17 +346,7 @@ accumulation optional while preserving the dependency-free and validation-agnost
 Binary and collection `Combine` operations accumulate all validation failures. For repeated
 fields, messages remain in left-to-right encounter order and duplicates are preserved. Inputs are
 never mutated; combining two invalid values creates a new immutable `ValidationErrors` collection.
-Ordinary `Map`, `Bind`, error mapping, tap, and recovery operations are deliberately fail-fast and
-have synchronous, task-source, and asynchronous-callback forms. Operations that retain the fixed
-validation cases return `ValidationResult`; value production and application-error mapping return
-the corresponding Result-family carrier. `ToResult`, `TryGetFailure`, `TryGetErrors`, and `Match`
-remain available for explicit conversion, guards, and terminal observation.
-
-The lossless implicit conversion from `ValidationResult` to `UnitResult<ValidationErrors>` is safe
-on both target frameworks because it returns the wrapper's single field directly. Valid, invalid,
-and default values therefore retain their exact state in assignments and method arguments without
-allocation. It adds useful carrier interoperability beyond `ToResult()` while remaining
-complementary to direct methods, since C# does not use conversions for member discovery. Raw
+Explicit `ToResult` and `TryGetFailure` operations bridge to the existing Result family. Raw
 `ValidationErrors` never converts implicitly to `ValidationResult`.
 
 The shared `Match` API requires both cases on net10 and net11. The net11 asset additionally exposes
