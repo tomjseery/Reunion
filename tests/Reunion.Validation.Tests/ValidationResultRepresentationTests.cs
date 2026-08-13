@@ -14,7 +14,7 @@ public sealed class ValidationResultRepresentationTests
 
         var field = Assert.Single(fields);
         Assert.Equal(typeof(UnitResult<ValidationErrors>), field.FieldType);
-        Assert.Equal("result", field.Name);
+        Assert.Equal("unitResult", field.Name);
         Assert.DoesNotContain(fields, candidate =>
             candidate.GetCustomAttribute<CompilerGeneratedAttribute>() is not null);
         Assert.Equal(
