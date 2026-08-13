@@ -40,7 +40,7 @@ public readonly partial struct ValidationResult :
         if (!this.HasCase)
             return null;
 
-        if (this.result.TryGetError(out var errors))
+        if (this.unitResult.TryGetError(out var errors))
             return new Invalid(errors);
 
         return new Valid();
@@ -51,12 +51,12 @@ public readonly partial struct ValidationResult :
     bool IUnionMembers.TryGetValue(out Valid value)
     {
         value = default;
-        return this.HasCase && this.result.IsSuccess;
+        return this.HasCase && this.unitResult.IsSuccess;
     }
 
     bool IUnionMembers.TryGetValue(out Invalid value)
     {
-        if (this.HasCase && this.result.TryGetError(out var errors))
+        if (this.HasCase && this.unitResult.TryGetError(out var errors))
         {
             value = new Invalid(errors);
             return true;

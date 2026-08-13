@@ -93,6 +93,18 @@ public readonly partial struct UnitResult<TError> : IEquatable<UnitResult<TError
         return this.tag is FailureTag;
     }
 
+    /// <summary>Creates a value when the result is successful and otherwise preserves the error.</summary>
+    public Result<TValue, TError> Map<TValue>(Func<TValue> map)
+        where TValue : notnull
+    {
+        this.EnsureInitialized();
+        ArgumentNullException.ThrowIfNull(map);
+
+        return this.tag is SuccessTag
+            ? Result.Success<TValue, TError>(map())
+            : Result.Failure<TValue, TError>(this.error!);
+    }
+
     /// <summary>Composes the result with another result-producing operation.</summary>
     public Result Bind(Func<Result> bind, Func<TError, string> mapError)
     {
