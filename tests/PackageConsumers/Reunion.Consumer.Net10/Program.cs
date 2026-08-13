@@ -23,6 +23,10 @@ Result<int, string> rawTypedFailure = "raw error";
 UnitResult<string> rawUnitFailure = "raw error";
 Option<int> rawSome = 42;
 Option<string> rawNone = null;
+IReadOnlyList<int> interfaceValues = [42];
+Result<IReadOnlyList<int>, string> inferredSuccess = interfaceValues.ToSuccess();
+Result<int, string> inferredFailure = "inferred error".ToFailure();
+Option<int> inferredSome = 42.ToSome();
 var query =
     from left in Result<int, string>.Success(20)
     from right in Result<int, string>.Success(22)
@@ -43,6 +47,9 @@ Require(rawTypedSuccess.IsSuccess && rawTypedFailure.IsFailure, "Raw typed Resul
 Require(rawUnitFailure.IsFailure, "Raw UnitResult error conversion failed.");
 Require(rawSome.IsSome, "Raw Option value conversion failed.");
 Require(rawNone.IsNone, "Null Option conversion failed.");
+Require(inferredSuccess.IsSuccess, "Inferred Success conversion failed.");
+Require(inferredFailure.IsFailure, "Inferred Failure conversion failed.");
+Require(inferredSome.IsSome, "Inferred Some conversion failed.");
 Require(Result.Success().Match(() => true, _ => false), "Conventional Result.Match failed.");
 Require(query.TryGetValue(out var queryValue) && queryValue == 42, "Result LINQ composition failed.");
 Require(new Success<int>(42).ToString() == "Success(42)", "Named case formatting failed.");
