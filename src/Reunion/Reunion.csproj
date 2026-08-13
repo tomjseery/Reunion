@@ -20,7 +20,7 @@
     <Description>A dependency-free Result and Option library for .NET 10 with preview C# custom-union support on .NET 11.</Description>
     <Authors>Thomas Seery</Authors>
     <PackageTags>result;option;functional;discriminated-union</PackageTags>
-    <PackageReleaseNotes>Initial prerelease with the migrated functional core, shared named cases, and preview .NET 11 custom-union support.</PackageReleaseNotes>
+    <PackageReleaseNotes>Initial prerelease with the migrated functional core, inferred named-case conversions, and preview .NET 11 custom-union support.</PackageReleaseNotes>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <RepositoryUrl>https://github.com/ThomasSeery/Reunion</RepositoryUrl>
