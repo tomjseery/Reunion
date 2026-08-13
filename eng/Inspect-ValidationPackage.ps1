@@ -21,6 +21,35 @@ try {
         throw "Unexpected Reunion.Validation library assets: $($actualAssets -join ', ')"
     }
 
+    $documentationAssets = @(
+        'lib/net10.0/Reunion.Validation.xml',
+        'lib/net11.0/Reunion.Validation.xml')
+    foreach ($documentationAsset in $documentationAssets) {
+        $entry = $archive.GetEntry($documentationAsset)
+        if ($null -eq $entry) {
+            throw "The package does not contain $documentationAsset."
+        }
+
+        $documentationReader = [System.IO.StreamReader]::new($entry.Open())
+        try {
+            $documentation = $documentationReader.ReadToEnd()
+        }
+        finally {
+            $documentationReader.Dispose()
+        }
+
+        $expectedMembers = @(
+            'M:Reunion.Validation.ValidationResult.Map``1',
+            'M:Reunion.Validation.ValidationResult.Bind',
+            'M:Reunion.Validation.TaskValidationResultExtensions.MapAsync``1',
+            'M:Reunion.Validation.ValidationResult.op_Implicit')
+        foreach ($expectedMember in $expectedMembers) {
+            if (-not $documentation.Contains($expectedMember)) {
+                throw "$documentationAsset does not describe $expectedMember."
+            }
+        }
+    }
+
     if ('README.md' -notin $entryNames) {
         throw 'The package does not contain its declared README.md.'
     }

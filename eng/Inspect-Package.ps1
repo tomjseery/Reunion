@@ -19,6 +19,25 @@ try {
         throw "Unexpected Reunion library assets: $($actualAssets -join ', ')"
     }
 
+    foreach ($documentationAsset in @('lib/net10.0/Reunion.xml', 'lib/net11.0/Reunion.xml')) {
+        $entry = $archive.GetEntry($documentationAsset)
+        if ($null -eq $entry) {
+            throw "The package does not contain $documentationAsset."
+        }
+
+        $documentationReader = [System.IO.StreamReader]::new($entry.Open())
+        try {
+            $documentation = $documentationReader.ReadToEnd()
+        }
+        finally {
+            $documentationReader.Dispose()
+        }
+
+        if (-not $documentation.Contains('M:Reunion.UnitResult`1.Map``1')) {
+            throw "$documentationAsset does not describe UnitResult.Map."
+        }
+    }
+
     if ('README.md' -notin $entryNames) {
         throw 'The package does not contain its declared README.md.'
     }

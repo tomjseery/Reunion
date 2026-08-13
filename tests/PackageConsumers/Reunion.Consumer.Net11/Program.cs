@@ -12,6 +12,8 @@ Result<int> rawValueSuccess = 42;
 Result<int, string> rawTypedSuccess = 42;
 Result<int, string> rawTypedFailure = "raw error";
 UnitResult<string> rawUnitFailure = "raw error";
+var mappedUnitSuccess = UnitResult.Success<string>().Map(() => 42);
+var mappedUnitFailure = UnitResult.Failure("error").Map(() => 42);
 Option<int> rawSome = 42;
 Option<string> rawNone = null;
 
@@ -27,6 +29,7 @@ Require(rawValueSuccess.IsSuccess, "Raw Result<T> success conversion failed.");
 Require(Match(rawTypedSuccess) == "success:42", "Raw typed Result success conversion failed.");
 Require(Match(rawTypedFailure) == "failure:raw error", "Raw typed Result failure conversion failed.");
 Require(rawUnitFailure.IsFailure, "Raw UnitResult error conversion failed.");
+Require(mappedUnitSuccess.IsSuccess && mappedUnitFailure.IsFailure, "UnitResult.Map composition failed.");
 Require(MatchOption(rawSome) == "some:42", "Raw Option value conversion failed.");
 Require(rawNone.IsNone, "Null Option conversion failed.");
 
