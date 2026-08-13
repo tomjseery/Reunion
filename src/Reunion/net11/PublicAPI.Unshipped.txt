@@ -1,4 +1,8 @@
 #nullable enable
+Reunion.UnitResult<TError>.Map<TValue>(System.Func<TValue>! map) -> Reunion.Result<TValue, TError>
+static Reunion.TaskResultExtensions.Map<TValue, TError>(this System.Threading.Tasks.Task<Reunion.UnitResult<TError>>! source, System.Func<TValue>! map) -> System.Threading.Tasks.Task<Reunion.Result<TValue, TError>>!
+static Reunion.TaskResultExtensions.MapAsync<TValue, TError>(this Reunion.UnitResult<TError> result, System.Func<System.Threading.Tasks.Task<TValue>!>! map) -> System.Threading.Tasks.Task<Reunion.Result<TValue, TError>>!
+static Reunion.TaskResultExtensions.MapAsync<TValue, TError>(this System.Threading.Tasks.Task<Reunion.UnitResult<TError>>! source, System.Func<System.Threading.Tasks.Task<TValue>!>! map) -> System.Threading.Tasks.Task<Reunion.Result<TValue, TError>>!
 Reunion.Option<T>.IUnionMembers
 Reunion.Option<T>.IUnionMembers.Create(Reunion.None none) -> Reunion.Option<T>
 Reunion.Option<T>.IUnionMembers.Create(Reunion.Some<T> some) -> Reunion.Option<T>

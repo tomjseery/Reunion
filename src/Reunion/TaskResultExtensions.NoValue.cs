@@ -409,6 +409,17 @@ public static partial class TaskResultExtensions
         (await source.ConfigureAwait(false)).Match(success, failure);
     }
 
+    /// <summary>Creates a value from a successful result after awaiting the source.</summary>
+    public static async Task<Result<TValue, TError>> Map<TValue, TError>(
+        this Task<UnitResult<TError>> source,
+        Func<TValue> map)
+        where TValue : notnull
+        where TError : notnull
+    {
+        ArgumentNullException.ThrowIfNull(source);
+        return (await source.ConfigureAwait(false)).Map(map);
+    }
+
     /// <summary>Composes the result with another result-producing operation.</summary>
     public static async Task<UnitResult<TError>> Bind<TError>(
         this Task<UnitResult<TError>> source,
@@ -588,6 +599,32 @@ public static partial class TaskResultExtensions
         await (await source.ConfigureAwait(false))
             .MatchAsync(success, failure)
             .ConfigureAwait(false);
+    }
+
+    /// <summary>Asynchronously creates a value from a successful result.</summary>
+    public static Task<Result<TValue, TError>> MapAsync<TValue, TError>(
+        this UnitResult<TError> result,
+        Func<Task<TValue>> map)
+        where TValue : notnull
+        where TError : notnull
+    {
+        result.EnsureInitialized();
+        ArgumentNullException.ThrowIfNull(map);
+
+        return result.Match(
+            () => MapUnitSuccessAsync<TValue, TError>(map),
+            error => Task.FromResult(Result.Failure<TValue, TError>(error)));
+    }
+
+    /// <summary>Asynchronously creates a value after awaiting the source.</summary>
+    public static async Task<Result<TValue, TError>> MapAsync<TValue, TError>(
+        this Task<UnitResult<TError>> source,
+        Func<Task<TValue>> map)
+        where TValue : notnull
+        where TError : notnull
+    {
+        ArgumentNullException.ThrowIfNull(source);
+        return await (await source.ConfigureAwait(false)).MapAsync(map).ConfigureAwait(false);
     }
 
     /// <summary>Asynchronously composes the result with another result-producing operation.</summary>
@@ -870,6 +907,12 @@ public static partial class TaskResultExtensions
         result.EnsureInitialized();
         return result;
     }
+
+    private static async Task<Result<TValue, TError>> MapUnitSuccessAsync<TValue, TError>(
+        Func<Task<TValue>> map)
+        where TValue : notnull
+        where TError : notnull =>
+        Result.Success<TValue, TError>(await RequireTask(map()).ConfigureAwait(false));
 
     private static async Task<Result<TValue, TError>> BindErrorSuccessAsync<TValue, TError>(
         Func<Task<Result<TValue, TError>>> bind)

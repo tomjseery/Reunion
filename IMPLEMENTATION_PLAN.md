@@ -352,6 +352,13 @@ validation cases return `ValidationResult`; value production and application-err
 the corresponding Result-family carrier. `ToResult`, `TryGetFailure`, `TryGetErrors`, and `Match`
 remain available for explicit conversion, guards, and terminal observation.
 
+`UnitResult<TError>` owns those ordinary composition semantics. Its value-producing `Map` primitive
+and existing bind/error/tap/recovery operations are the implementation source of truth;
+`ValidationResult` delegates directly to its stored `UnitResult<ValidationErrors>`, composing
+`MapError` before `Map` or `Bind` when the caller selects another error type. The wrapper adds only
+the fixed validation vocabulary, result wrapping where that vocabulary must be retained, and
+independent-error accumulation through `Combine`.
+
 The lossless implicit conversion from `ValidationResult` to `UnitResult<ValidationErrors>` is safe
 on both target frameworks because it returns the wrapper's single field directly. Valid, invalid,
 and default values therefore retain their exact state in assignments and method arguments without

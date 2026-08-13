@@ -265,6 +265,11 @@ continuation. Operations that retain the validation vocabulary return `Validatio
 a value returns `Result<TValue, ValidationErrors>`, and mapping to an application-owned error
 returns the corresponding Result carrier.
 
+Ordinary composition is owned by the stored `UnitResult<ValidationErrors>`. `ValidationResult`
+forwards directly to that carrier (`unitResult.Map(...)`, `unitResult.Bind(...)`, and the matching
+tap/recovery operations), composing `MapError` first when an application error type is requested.
+Only validation vocabulary adaptation and `Combine` remain specific to `ValidationResult`.
+
 For example, a validated value can continue through an application pipeline without a guard or a
 preliminary `ToResult` call:
 

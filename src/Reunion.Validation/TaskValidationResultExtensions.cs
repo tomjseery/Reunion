@@ -274,12 +274,7 @@ public static class TaskValidationResultExtensions
         Func<Task<TValue>> map)
         where TValue : notnull
     {
-        validation.EnsureInitialized();
-        ArgumentNullException.ThrowIfNull(map);
-
-        return validation.Match(
-            () => MapValidAsync<TValue, ValidationErrors>(map),
-            errors => Task.FromResult(Result.Failure<TValue, ValidationErrors>(errors)));
+        return validation.InnerResult.MapAsync<TValue, ValidationErrors>(map);
     }
 
     /// <summary>Asynchronously creates a value or maps validation errors.</summary>
@@ -290,13 +285,7 @@ public static class TaskValidationResultExtensions
         where TValue : notnull
         where TError : notnull
     {
-        validation.EnsureInitialized();
-        ArgumentNullException.ThrowIfNull(map);
-        ArgumentNullException.ThrowIfNull(mapError);
-
-        return validation.Match(
-            () => MapValidAsync<TValue, TError>(map),
-            errors => Task.FromResult(Result.Failure<TValue, TError>(mapError(errors))));
+        return validation.InnerResult.MapError(mapError).MapAsync<TValue, TError>(map);
     }
 
     /// <summary>Asynchronously creates a value after awaiting the validation source.</summary>
@@ -324,16 +313,15 @@ public static class TaskValidationResultExtensions
     }
 
     /// <summary>Asynchronously composes valid validation with another validation.</summary>
-    public static Task<ValidationResult> BindAsync(
+    public static async Task<ValidationResult> BindAsync(
         this ValidationResult validation,
         Func<Task<ValidationResult>> bind)
     {
-        validation.EnsureInitialized();
         ArgumentNullException.ThrowIfNull(bind);
-
-        return validation.Match(
-            () => BindValidationAsync(bind),
-            _ => Task.FromResult(validation));
+        var unitResult = await validation.InnerResult
+            .BindAsync(() => AwaitUnitResult(bind()))
+            .ConfigureAwait(false);
+        return ValidationResult.FromUnitResult(unitResult);
     }
 
     /// <summary>Asynchronously composes valid validation with a unit result.</summary>
@@ -341,12 +329,7 @@ public static class TaskValidationResultExtensions
         this ValidationResult validation,
         Func<Task<UnitResult<ValidationErrors>>> bind)
     {
-        validation.EnsureInitialized();
-        ArgumentNullException.ThrowIfNull(bind);
-
-        return validation.Match(
-            () => BindUnitAsync(bind),
-            errors => Task.FromResult(UnitResult.Failure(errors)));
+        return validation.InnerResult.BindAsync(bind);
     }
 
     /// <summary>Asynchronously composes valid validation with a value-bearing result.</summary>
@@ -355,12 +338,7 @@ public static class TaskValidationResultExtensions
         Func<Task<Result<TValue, ValidationErrors>>> bind)
         where TValue : notnull
     {
-        validation.EnsureInitialized();
-        ArgumentNullException.ThrowIfNull(bind);
-
-        return validation.Match(
-            () => BindResultAsync(bind),
-            errors => Task.FromResult(Result.Failure<TValue, ValidationErrors>(errors)));
+        return validation.InnerResult.BindAsync(bind);
     }
 
     /// <summary>Asynchronously composes valid validation with a status result.</summary>
@@ -369,13 +347,7 @@ public static class TaskValidationResultExtensions
         Func<Task<Result>> bind,
         Func<ValidationErrors, string> mapError)
     {
-        validation.EnsureInitialized();
-        ArgumentNullException.ThrowIfNull(bind);
-        ArgumentNullException.ThrowIfNull(mapError);
-
-        return validation.Match(
-            () => BindStatusAsync(bind),
-            errors => Task.FromResult(Result.Failure(mapError(errors))));
+        return validation.InnerResult.BindAsync(bind, mapError);
     }
 
     /// <summary>Asynchronously composes valid validation with a string-error value result.</summary>
@@ -385,13 +357,7 @@ public static class TaskValidationResultExtensions
         Func<ValidationErrors, string> mapError)
         where TValue : notnull
     {
-        validation.EnsureInitialized();
-        ArgumentNullException.ThrowIfNull(bind);
-        ArgumentNullException.ThrowIfNull(mapError);
-
-        return validation.Match(
-            () => BindStatusAsync(bind),
-            errors => Task.FromResult(Result.Failure<TValue>(mapError(errors))));
+        return validation.InnerResult.BindAsync(bind, mapError);
     }
 
     /// <summary>Asynchronously composes valid validation with a unit result and maps validation errors.</summary>
@@ -401,13 +367,7 @@ public static class TaskValidationResultExtensions
         Func<ValidationErrors, TError> mapError)
         where TError : notnull
     {
-        validation.EnsureInitialized();
-        ArgumentNullException.ThrowIfNull(bind);
-        ArgumentNullException.ThrowIfNull(mapError);
-
-        return validation.Match(
-            () => BindUnitAsync(bind),
-            errors => Task.FromResult(UnitResult.Failure(mapError(errors))));
+        return validation.InnerResult.MapError(mapError).BindAsync(bind);
     }
 
     /// <summary>Asynchronously composes valid validation with a value-bearing result and maps validation errors.</summary>
@@ -418,13 +378,7 @@ public static class TaskValidationResultExtensions
         where TValue : notnull
         where TError : notnull
     {
-        validation.EnsureInitialized();
-        ArgumentNullException.ThrowIfNull(bind);
-        ArgumentNullException.ThrowIfNull(mapError);
-
-        return validation.Match(
-            () => BindResultAsync(bind),
-            errors => Task.FromResult(Result.Failure<TValue, TError>(mapError(errors))));
+        return validation.InnerResult.MapError(mapError).BindAsync(bind);
     }
 
     /// <summary>Asynchronously composes validation after awaiting the source.</summary>
@@ -508,16 +462,12 @@ public static class TaskValidationResultExtensions
     }
 
     /// <summary>Asynchronously transforms validation errors.</summary>
-    public static Task<ValidationResult> MapErrorAsync(
+    public static async Task<ValidationResult> MapErrorAsync(
         this ValidationResult validation,
         Func<ValidationErrors, Task<ValidationErrors>> map)
     {
-        validation.EnsureInitialized();
-        ArgumentNullException.ThrowIfNull(map);
-
-        return validation.Match(
-            () => Task.FromResult(validation),
-            errors => MapValidationErrorAsync(errors, map));
+        var unitResult = await validation.InnerResult.MapErrorAsync(map).ConfigureAwait(false);
+        return ValidationResult.FromUnitResult(unitResult);
     }
 
     /// <summary>Asynchronously transforms validation errors into another error type.</summary>
@@ -526,12 +476,7 @@ public static class TaskValidationResultExtensions
         Func<ValidationErrors, Task<TError>> map)
         where TError : notnull
     {
-        validation.EnsureInitialized();
-        ArgumentNullException.ThrowIfNull(map);
-
-        return validation.Match(
-            () => Task.FromResult(UnitResult.Success<TError>()),
-            errors => MapUnitErrorAsync(errors, map));
+        return validation.InnerResult.MapErrorAsync<ValidationErrors, TError>(map);
     }
 
     /// <summary>Asynchronously transforms validation errors after awaiting the source.</summary>
@@ -554,55 +499,42 @@ public static class TaskValidationResultExtensions
     }
 
     /// <summary>Asynchronously observes valid validation.</summary>
-    public static Task<ValidationResult> TapAsync(
+    public static async Task<ValidationResult> TapAsync(
         this ValidationResult validation,
         Func<Task> action)
     {
-        validation.EnsureInitialized();
-        ArgumentNullException.ThrowIfNull(action);
-
-        return validation.Match(
-            () => ObserveAsync(validation, action),
-            _ => Task.FromResult(validation));
+        var unitResult = await validation.InnerResult.TapAsync(action).ConfigureAwait(false);
+        return ValidationResult.FromUnitResult(unitResult);
     }
 
     /// <summary>Asynchronously observes invalid validation.</summary>
-    public static Task<ValidationResult> TapErrorAsync(
+    public static async Task<ValidationResult> TapErrorAsync(
         this ValidationResult validation,
         Func<ValidationErrors, Task> action)
     {
-        validation.EnsureInitialized();
-        ArgumentNullException.ThrowIfNull(action);
-
-        return validation.Match(
-            () => Task.FromResult(validation),
-            errors => ObserveErrorAsync(validation, errors, action));
+        var unitResult = await validation.InnerResult.TapErrorAsync(action).ConfigureAwait(false);
+        return ValidationResult.FromUnitResult(unitResult);
     }
 
     /// <summary>Asynchronously recovers invalid validation after observing its errors.</summary>
-    public static Task<ValidationResult> RecoverAsync(
+    public static async Task<ValidationResult> RecoverAsync(
         this ValidationResult validation,
         Func<ValidationErrors, Task> fallback)
     {
-        validation.EnsureInitialized();
-        ArgumentNullException.ThrowIfNull(fallback);
-
-        return validation.Match(
-            () => Task.FromResult(validation),
-            errors => RecoverAsync(errors, fallback));
+        var unitResult = await validation.InnerResult.RecoverAsync(fallback).ConfigureAwait(false);
+        return ValidationResult.FromUnitResult(unitResult);
     }
 
     /// <summary>Asynchronously recovers invalid validation with another validation.</summary>
-    public static Task<ValidationResult> RecoverWithAsync(
+    public static async Task<ValidationResult> RecoverWithAsync(
         this ValidationResult validation,
         Func<ValidationErrors, Task<ValidationResult>> fallback)
     {
-        validation.EnsureInitialized();
         ArgumentNullException.ThrowIfNull(fallback);
-
-        return validation.Match(
-            () => Task.FromResult(validation),
-            errors => RecoverWithAsync(errors, fallback));
+        var unitResult = await validation.InnerResult
+            .RecoverWithAsync(errors => AwaitUnitResult(fallback(errors)))
+            .ConfigureAwait(false);
+        return ValidationResult.FromUnitResult(unitResult);
     }
 
     /// <summary>Asynchronously observes valid validation after awaiting the source.</summary>
@@ -643,98 +575,11 @@ public static class TaskValidationResultExtensions
             .ConfigureAwait(false);
     }
 
-    private static async Task<Result<TValue, TError>> MapValidAsync<TValue, TError>(
-        Func<Task<TValue>> map)
-        where TValue : notnull
-        where TError : notnull =>
-        Result.Success<TValue, TError>(await RequireTask(map()).ConfigureAwait(false));
-
-    private static async Task<ValidationResult> BindValidationAsync(
-        Func<Task<ValidationResult>> bind)
+    private static async Task<UnitResult<ValidationErrors>> AwaitUnitResult(
+        Task<ValidationResult> validation)
     {
-        var result = await RequireTask(bind()).ConfigureAwait(false);
-        result.EnsureInitialized();
-        return result;
-    }
-
-    private static async Task<UnitResult<TError>> BindUnitAsync<TError>(
-        Func<Task<UnitResult<TError>>> bind)
-        where TError : notnull
-    {
-        var result = await RequireTask(bind()).ConfigureAwait(false);
-        _ = result.IsSuccess;
-        return result;
-    }
-
-    private static async Task<Result<TValue, TError>> BindResultAsync<TValue, TError>(
-        Func<Task<Result<TValue, TError>>> bind)
-        where TValue : notnull
-        where TError : notnull
-    {
-        var result = await RequireTask(bind()).ConfigureAwait(false);
-        _ = result.IsSuccess;
-        return result;
-    }
-
-    private static async Task<Result> BindStatusAsync(Func<Task<Result>> bind)
-    {
-        var result = await RequireTask(bind()).ConfigureAwait(false);
-        _ = result.IsSuccess;
-        return result;
-    }
-
-    private static async Task<Result<TValue>> BindStatusAsync<TValue>(
-        Func<Task<Result<TValue>>> bind)
-        where TValue : notnull
-    {
-        var result = await RequireTask(bind()).ConfigureAwait(false);
-        _ = result.IsSuccess;
-        return result;
-    }
-
-    private static async Task<ValidationResult> MapValidationErrorAsync(
-        ValidationErrors errors,
-        Func<ValidationErrors, Task<ValidationErrors>> map) =>
-        ValidationResult.Invalid(await RequireTask(map(errors)).ConfigureAwait(false));
-
-    private static async Task<UnitResult<TError>> MapUnitErrorAsync<TError>(
-        ValidationErrors errors,
-        Func<ValidationErrors, Task<TError>> map)
-        where TError : notnull =>
-        UnitResult.Failure(await RequireTask(map(errors)).ConfigureAwait(false));
-
-    private static async Task<ValidationResult> ObserveAsync(
-        ValidationResult validation,
-        Func<Task> action)
-    {
-        await RequireTask(action()).ConfigureAwait(false);
-        return validation;
-    }
-
-    private static async Task<ValidationResult> ObserveErrorAsync(
-        ValidationResult validation,
-        ValidationErrors errors,
-        Func<ValidationErrors, Task> action)
-    {
-        await RequireTask(action(errors)).ConfigureAwait(false);
-        return validation;
-    }
-
-    private static async Task<ValidationResult> RecoverAsync(
-        ValidationErrors errors,
-        Func<ValidationErrors, Task> fallback)
-    {
-        await RequireTask(fallback(errors)).ConfigureAwait(false);
-        return ValidationResult.Valid();
-    }
-
-    private static async Task<ValidationResult> RecoverWithAsync(
-        ValidationErrors errors,
-        Func<ValidationErrors, Task<ValidationResult>> fallback)
-    {
-        var result = await RequireTask(fallback(errors)).ConfigureAwait(false);
-        result.EnsureInitialized();
-        return result;
+        var result = await RequireTask(validation).ConfigureAwait(false);
+        return result.InnerResult;
     }
 
     private static Task<T> RequireTask<T>(Task<T>? task)

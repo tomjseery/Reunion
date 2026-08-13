@@ -4,7 +4,8 @@ These projects are intentionally excluded from `Reunion.slnx`. They must consume
 never library project references, so solution restore and build cannot hide packaging or dependency
 errors.
 
-The two `Reunion.Consumer` projects reference only the dependency-free core package. The two
+The two `Reunion.Consumer` projects reference only the dependency-free core package and compile
+value-producing `UnitResult.Map` composition. The two
 `Reunion.Validation.Consumer` projects reference only `Reunion.Validation` and prove that it
 supplies the correct transitive `Reunion` and `Reunion.Errors` dependencies. The two
 validation consumers also compile the lossless unit conversion and an application-error-mapped,
