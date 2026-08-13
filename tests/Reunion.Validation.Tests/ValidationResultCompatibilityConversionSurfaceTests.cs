@@ -6,14 +6,14 @@ namespace Reunion.Validation.Tests;
 public sealed class ValidationResultCompatibilityConversionSurfaceTests
 {
     [Fact]
-    public void PublicConversionSurfaceContainsOnlyNamedCases()
+    public void PublicConversionSurfaceContainsNamedCasesAndLosslessUnitResult()
     {
         var conversions = typeof(ValidationResult)
             .GetMethods(BindingFlags.Public | BindingFlags.Static | BindingFlags.DeclaredOnly)
             .Where(method => method.Name is "op_Implicit")
             .ToArray();
 
-        Assert.Equal([typeof(Invalid), typeof(Valid)], conversions
+        Assert.Equal([typeof(Invalid), typeof(Valid), typeof(ValidationResult)], conversions
             .Select(method => method.GetParameters().Single().ParameterType)
             .OrderBy(candidate => candidate.Name));
     }
