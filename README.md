@@ -298,49 +298,54 @@ forwards directly to that carrier (`unitResult.Map(...)`, `unitResult.Bind(...)`
 tap/recovery operations), composing `MapError` first when an application error type is requested.
 Only validation vocabulary adaptation and `Combine` remain specific to `ValidationResult`.
 
-For example, a validated value can continue through an application pipeline without a guard or a
-preliminary `ToResult` call:
+`Ensure` applies structured validation to the successful value already owned by a Result. An
+existing failure bypasses validation, valid validation preserves the exact success value, and
+invalid validation becomes the operation-owned error selected by the mapper:
 
 ```csharp
 return concertModule.GetByIdAsync(concertId)
     .OrFailure<ConcertDto, CheckoutError>(
         new CheckoutError.ConcertNotFound(concertId))
-    .Bind(concert =>
-        ticketValidator.CanPurchaseTickets(concert, quantity)
-            .Map<ConcertDto, CheckoutError>(
-                () => concert,
-                errors => new CheckoutError.Invalid(MapErrors(errors))))
+    .Ensure(
+        concert => ticketValidator.CanPurchaseTickets(concert, quantity),
+        errors => new CheckoutError.Invalid(errors))
     .MapAsync(concert => CreateCheckoutAsync(concert, quantity));
 ```
 
-Guard-style observation, terminal `Match`, explicit conversion, and fluent composition remain
-available for different call-site shapes. There is no implicit conversion from raw
-`ValidationErrors`; only `Valid` and `Invalid` convert to `ValidationResult`:
+This keeps `ValidationResult` responsible for structured validation and accumulation without using
+`Map(() => existingValue, ...)` merely to put a Result's existing success value back into its own
+pipeline. Once `Ensure` enters Result composition, subsequent operations use ordinary fail-fast
+semantics.
+
+Guard-style observation remains valid when an imperative early return reads more clearly.
+`TryGetFailure` maps invalid validation directly into a named Result failure:
 
 ```csharp
 ValidationResult validation = validator.Validate(request);
 
-if (validation.IsInvalid)
-    return validation.ToResult();
+if (validation.TryGetFailure(
+    errors => new CommandError.ValidationFailed(errors),
+    out var failure))
+{
+    return failure;
+}
 ```
+
+Terminal `Match`, explicit conversion, and direct `ValidationResult` composition remain available
+for other call-site shapes. There is no implicit conversion from raw `ValidationErrors`; only
+`Valid` and `Invalid` convert to `ValidationResult`.
 
 The lossless conversion from `ValidationResult` to `UnitResult<ValidationErrors>` is also implicit
 for assignments and method arguments. It returns the same stored carrier, including preserving an
 uninitialized default as an uninitialized `UnitResult`; it exists in both package assets and does
 not replace the direct composition methods because C# member lookup does not follow conversions.
 
-Value-bearing methods can use the named failure returned by `TryGetFailure` for an early return:
+The unmapped `TryGetFailure` overload preserves `ValidationErrors` when that is already the
+operation's error type:
 
 ```csharp
 if (validation.TryGetFailure(out var failure))
     return failure;
-
-if (validation.TryGetFailure(
-    errors => new CommandError.ValidationFailed(errors),
-    out var domainFailure))
-{
-    return domainFailure;
-}
 ```
 
 `Match` is the portable, branch-complete API on both target frameworks:

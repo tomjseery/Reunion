@@ -42,6 +42,8 @@ try {
             'M:Reunion.Validation.ValidationResult.Map``1',
             'M:Reunion.Validation.ValidationResult.Bind',
             'M:Reunion.Validation.TaskValidationResultExtensions.MapAsync``1',
+            'M:Reunion.Validation.ValidationResultExtensions.Ensure``2',
+            'M:Reunion.Validation.TaskValidationResultExtensions.EnsureAsync``2',
             'M:Reunion.Validation.ValidationResult.op_Implicit')
         foreach ($expectedMember in $expectedMembers) {
             if (-not $documentation.Contains($expectedMember)) {
