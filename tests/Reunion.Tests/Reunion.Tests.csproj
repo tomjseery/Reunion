@@ -34,4 +34,8 @@
     <Compile Remove="CompilerContractTests.cs;ResultUnionConversionSurfaceTests.cs" />
   </ItemGroup>
 
+  <ItemGroup Condition="'$(VerifyInterfacePayloadConversion)' != 'true'">
+    <Compile Remove="InterfacePayloadConversionContract.cs" />
+  </ItemGroup>
+
 </Project>
