@@ -352,6 +352,13 @@ validation cases return `ValidationResult`; value production and application-err
 the corresponding Result-family carrier. `ToResult`, `TryGetFailure`, `TryGetErrors`, and `Match`
 remain available for explicit conversion, guards, and terminal observation.
 
+Result-aware `Ensure` applies a `ValidationResult`-producing validator to an existing successful
+`Result<TValue>` or `Result<TValue, TError>` and preserves that exact value when validation is valid.
+It maps invalid structured errors into the operation-owned error type, short-circuits existing
+Result failures, and has synchronous validator, task-source, and asynchronous validator forms.
+This interoperability avoids using `ValidationResult.Map(() => existingValue, ...)` to reconstruct
+a value already owned by the Result while retaining `Combine` as the accumulating phase.
+
 `UnitResult<TError>` owns those ordinary composition semantics. Its value-producing `Map` primitive
 and existing bind/error/tap/recovery operations are the implementation source of truth;
 `ValidationResult` delegates directly to its stored `UnitResult<ValidationErrors>`, composing
