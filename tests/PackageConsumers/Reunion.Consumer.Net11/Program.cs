@@ -16,6 +16,10 @@ var mappedUnitSuccess = UnitResult.Success<string>().Map(() => 42);
 var mappedUnitFailure = UnitResult.Failure("error").Map(() => 42);
 Option<int> rawSome = 42;
 Option<string> rawNone = null;
+IReadOnlyList<int> interfaceValues = [42];
+Result<IReadOnlyList<int>, string> inferredSuccess = interfaceValues.ToSuccess();
+Result<int, string> inferredFailure = "inferred error".ToFailure();
+Option<int> inferredSome = 42.ToSome();
 
 Require(Match(success) == "success:42", "Exhaustive success matching failed.");
 Require(Match(failure) == "failure:error", "Exhaustive failure matching failed.");
@@ -32,6 +36,9 @@ Require(rawUnitFailure.IsFailure, "Raw UnitResult error conversion failed.");
 Require(mappedUnitSuccess.IsSuccess && mappedUnitFailure.IsFailure, "UnitResult.Map composition failed.");
 Require(MatchOption(rawSome) == "some:42", "Raw Option value conversion failed.");
 Require(rawNone.IsNone, "Null Option conversion failed.");
+Require(inferredSuccess.IsSuccess, "Inferred Success conversion failed.");
+Require(inferredFailure.IsFailure, "Inferred Failure conversion failed.");
+Require(inferredSome.IsSome, "Inferred Some conversion failed.");
 
 Require(success.TryGetValue(out var resultValue) && resultValue == 42, "Result.TryGetValue(out var) was ambiguous or incorrect.");
 Require(some.TryGetValue(out var optionValue) && optionValue == 42, "Option.TryGetValue(out var) was ambiguous or incorrect.");

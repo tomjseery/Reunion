@@ -98,6 +98,34 @@ Result<object, object> broadSuccess = Result.Success<object, object>(value);
 Result<object, object> broadFailure = Result.Failure<object, object>(error);
 ```
 
+Payload-bearing named cases can also be created with inferred extension methods:
+
+```csharp
+Success<User> success = user.ToSuccess();
+Failure<Error> failure = error.ToFailure();
+Some<User> some = user.ToSome();
+```
+
+These are especially useful at an asynchronous boundary where the declared payload is an
+interface or abstract class. Although Reunion's generic conversion operator is legal to declare,
+C# ignores a constructed user-defined implicit conversion whose source is an interface type. The
+language both forbids directly declaring conversions to or from interfaces and ignores the generic
+equivalent when closed over an interface. The inferred named case instead has its own conversion to
+the declared Result type. See the
+[C# conversion-operator rules](https://learn.microsoft.com/dotnet/csharp/language-reference/language-specification/classes#15104-conversion-operators).
+
+```csharp
+async Task<Result<IReadOnlyList<ApplicationDto>, ApplicationError>> GetApplicationsAsync()
+{
+    return (await mapper.ToDtosAsync(applications)).ToSuccess();
+}
+```
+
+Inference uses the expression's declared type. Keep an interface or abstract payload declared as
+that abstraction when the destination Result uses it. Each extension constructs the existing
+named case and therefore applies the same null and error validation as its constructor. `ToSome()`
+rejects null; use `ToOption()` when null should produce `None`.
+
 Factories remain available when there is no target type or when conventional construction is more
 readable.
 
