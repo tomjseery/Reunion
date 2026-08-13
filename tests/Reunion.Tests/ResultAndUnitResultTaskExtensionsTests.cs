@@ -54,6 +54,8 @@ public sealed class ResultAndUnitResultTaskExtensionsTests
         var unitBound = await success.Bind(() => UnitResult.Success<string>());
         var bound = await success
             .Bind(() => Result.Success<int, string>(42));
+        var value = await success.Map(() => 42);
+        var failedValue = await failure.Map(() => 42);
         var mapped = await failure
             .MapError(error => error.Length);
         var tappedSuccess = await success.Tap(() => successes++);
@@ -64,6 +66,8 @@ public sealed class ResultAndUnitResultTaskExtensionsTests
         Assert.Equal(5, matched);
         Assert.Equal(UnitResult.Success<string>(), unitBound);
         Assert.Equal(Result.Success<int, string>(42), bound);
+        Assert.Equal(Result.Success<int, string>(42), value);
+        Assert.Equal(Result.Failure<int, string>("error"), failedValue);
         Assert.Equal(UnitResult.Failure(5), mapped);
         Assert.Equal(UnitResult.Success<string>(), tappedSuccess);
         Assert.Equal(UnitResult.Failure("error"), tapped);
@@ -122,6 +126,8 @@ public sealed class ResultAndUnitResultTaskExtensionsTests
             });
         var unitBound = await UnitResult.Success<string>().BindAsync(
             () => Task.FromResult(UnitResult.Success<string>()));
+        var value = await UnitResult.Success<string>().MapAsync(() => Task.FromResult(42));
+        var failedValue = await UnitResult.Failure("error").MapAsync(() => Task.FromResult(42));
         var bound = await UnitResult.Success<string>().BindAsync(
             () => Task.FromResult(Result.Success<int, string>(42)));
         var tappedSuccess = await UnitResult.Success<string>().TapAsync(() => Task.CompletedTask);
@@ -135,6 +141,8 @@ public sealed class ResultAndUnitResultTaskExtensionsTests
 
         Assert.Equal(5, matched);
         Assert.Equal(UnitResult.Success<string>(), unitBound);
+        Assert.Equal(Result.Success<int, string>(42), value);
+        Assert.Equal(Result.Failure<int, string>("error"), failedValue);
         Assert.Equal(Result.Success<int, string>(42), bound);
         Assert.Equal(UnitResult.Success<string>(), tappedSuccess);
         Assert.Equal(UnitResult.Failure("error"), tapped);
@@ -168,6 +176,8 @@ public sealed class ResultAndUnitResultTaskExtensionsTests
         Assert.Equal(
             UnitResult.Success<string>(),
             await unitSuccess.BindAsync(() => Task.FromResult(UnitResult.Success<string>())));
+        Assert.Equal(Result.Success<int, string>(42), await unitSuccess.MapAsync(() => Task.FromResult(42)));
+        Assert.Equal(Result.Failure<int, string>("error"), await unitFailure.MapAsync(() => Task.FromResult(42)));
         Assert.Equal(
             Result.Success<int, string>(42),
             await unitSuccess.BindAsync(() => Task.FromResult(Result.Success<int, string>(42))));
@@ -243,6 +253,8 @@ public sealed class ResultAndUnitResultTaskExtensionsTests
                 _ => Task.FromCanceled(cancellation.Token)));
         await Assert.ThrowsAsync<ArgumentNullException>(
             () => UnitResult.Success<string>().BindAsync(() => null!));
+        await Assert.ThrowsAsync<ArgumentNullException>(
+            () => UnitResult.Success<string>().MapAsync<int, string>(() => null!));
         await Assert.ThrowsAsync<InvalidOperationException>(
             () => Result.Success().BindAsync(() => Task.FromResult(default(Result))));
         await Assert.ThrowsAsync<InvalidOperationException>(

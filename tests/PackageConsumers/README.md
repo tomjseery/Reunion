@@ -4,9 +4,12 @@ These projects are intentionally excluded from `Reunion.slnx`. They must consume
 never library project references, so solution restore and build cannot hide packaging or dependency
 errors.
 
-The two `Reunion.Consumer` projects reference only the dependency-free core package. The two
+The two `Reunion.Consumer` projects reference only the dependency-free core package and compile
+value-producing `UnitResult.Map` composition. The two
 `Reunion.Validation.Consumer` projects reference only `Reunion.Validation` and prove that it
 supplies the correct transitive `Reunion` and `Reunion.Errors` dependencies. The two
+validation consumers also compile the lossless unit conversion and an application-error-mapped,
+value-carrying validation pipeline against the packed net10 and net11 assets. The two
 `Reunion.AspNetCore.Consumer` web projects reference only `Reunion.AspNetCore`; their restore and
 compilation prove that the integration package supplies the correct transitive dependencies and
 ASP.NET Core framework reference. Each web consumer compiles both the `HttpResults` and MVC

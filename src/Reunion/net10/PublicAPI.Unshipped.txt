@@ -1,3 +1,7 @@
 #nullable enable
+Reunion.UnitResult<TError>.Map<TValue>(System.Func<TValue>! map) -> Reunion.Result<TValue, TError>
 static Reunion.Result.implicit operator Reunion.Result(Reunion.Failure<string!> failure) -> Reunion.Result
 static Reunion.Result.implicit operator Reunion.Result(Reunion.Success success) -> Reunion.Result
+static Reunion.TaskResultExtensions.Map<TValue, TError>(this System.Threading.Tasks.Task<Reunion.UnitResult<TError>>! source, System.Func<TValue>! map) -> System.Threading.Tasks.Task<Reunion.Result<TValue, TError>>!
+static Reunion.TaskResultExtensions.MapAsync<TValue, TError>(this Reunion.UnitResult<TError> result, System.Func<System.Threading.Tasks.Task<TValue>!>! map) -> System.Threading.Tasks.Task<Reunion.Result<TValue, TError>>!
+static Reunion.TaskResultExtensions.MapAsync<TValue, TError>(this System.Threading.Tasks.Task<Reunion.UnitResult<TError>>! source, System.Func<System.Threading.Tasks.Task<TValue>!>! map) -> System.Threading.Tasks.Task<Reunion.Result<TValue, TError>>!

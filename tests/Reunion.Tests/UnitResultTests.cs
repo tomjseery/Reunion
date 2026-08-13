@@ -60,6 +60,26 @@ public sealed class UnitResultTests
     }
 
     [Fact]
+    public void Map_EachCase_InvokesOnlySuccessDelegate()
+    {
+        var invocations = 0;
+        var success = UnitResult.Success<string>().Map(() =>
+        {
+            invocations++;
+            return 42;
+        });
+        var failure = UnitResult.Failure("error").Map(() =>
+        {
+            invocations++;
+            return 42;
+        });
+
+        Assert.Equal(Result.Success<int, string>(42), success);
+        Assert.Equal(Result.Failure<int, string>("error"), failure);
+        Assert.Equal(1, invocations);
+    }
+
+    [Fact]
     public void MapErrorTapAndRecovery_InvokeOnlySelectedDelegates()
     {
         var successes = 0;
@@ -87,6 +107,7 @@ public sealed class UnitResultTests
         var result = UnitResult.Success<string>();
         Assert.Throws<ArgumentNullException>(() => result.Match<int>(null!, _ => 0));
         Assert.Throws<ArgumentNullException>(() => result.Match(() => 0, null!));
+        Assert.Throws<ArgumentNullException>(() => result.Map<int>(null!));
         Assert.Throws<ArgumentNullException>(() => result.Bind((Func<UnitResult<string>>)null!));
         Assert.Throws<ArgumentNullException>(() => result.MapError<int>(null!));
         Assert.Throws<ArgumentNullException>(() => result.Tap(null!));
@@ -99,6 +120,7 @@ public sealed class UnitResultTests
         var uninitialized = default(UnitResult<string>);
         Assert.Throws<InvalidOperationException>(() => _ = uninitialized.IsSuccess);
         Assert.Throws<InvalidOperationException>(() => uninitialized.TryGetError(out _));
+        Assert.Throws<InvalidOperationException>(() => uninitialized.Map(() => 42));
     }
 
     [Fact]

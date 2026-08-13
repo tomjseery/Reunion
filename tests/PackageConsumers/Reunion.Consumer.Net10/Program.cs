@@ -21,6 +21,8 @@ Result<int> rawValueSuccess = 42;
 Result<int, string> rawTypedSuccess = 42;
 Result<int, string> rawTypedFailure = "raw error";
 UnitResult<string> rawUnitFailure = "raw error";
+var mappedUnitSuccess = unitSuccess.Map(() => 42);
+var mappedUnitFailure = unitFailure.Map(() => 42);
 Option<int> rawSome = 42;
 Option<string> rawNone = null;
 var query =
@@ -41,6 +43,7 @@ Require(unitSuccess.IsSuccess && unitFailure.IsFailure, "UnitResult case convers
 Require(rawValueSuccess.IsSuccess, "Raw Result<T> success conversion failed.");
 Require(rawTypedSuccess.IsSuccess && rawTypedFailure.IsFailure, "Raw typed Result conversions failed.");
 Require(rawUnitFailure.IsFailure, "Raw UnitResult error conversion failed.");
+Require(mappedUnitSuccess.IsSuccess && mappedUnitFailure.IsFailure, "UnitResult.Map composition failed.");
 Require(rawSome.IsSome, "Raw Option value conversion failed.");
 Require(rawNone.IsNone, "Null Option conversion failed.");
 Require(Result.Success().Match(() => true, _ => false), "Conventional Result.Match failed.");
