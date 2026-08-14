@@ -422,25 +422,46 @@ MVC action-result execution, configured output formatters, and content negotiati
 mapping namespaces makes identical extension calls ambiguous by design rather than silently
 selecting an HTTP programming model.
 
-Every value-bearing terminal can either return the successful value unchanged or project it to a
-different response type at the endpoint boundary. The same matrix is available from
-`Reunion.AspNetCore.HttpResults` and `Reunion.AspNetCore.Mvc`:
+Every value-bearing terminal can return the successful value unchanged or project it to a different
+response type at the endpoint boundary. Both programming models provide this standard matrix:
+
+| Terminal | Existing value | Projected response |
+|---|---|---|
+| Option alternative | `ToOkOr(alternative)` | `ToOkOr(projection, alternative)` |
+| Option Not Found | `ToOkOrNotFound()` | `ToOkOrNotFound(projection)` |
+| Option No Content | `ToOkOrNoContent()` | `ToOkOrNoContent(projection)` |
+| Result OK | `ToOkOrProblem()` | `ToOkOrProblem(projection)` |
+| Result Created, no location | `ToCreatedOrProblem()` | `ToCreatedOrProblem(projection)` |
+| Result Created, explicit URI | `ToCreatedOrProblem(locationSelector)` | `ToCreatedOrProblem(projection, locationSelector)` |
+| Result Created at route | `ToCreatedAtRouteOrProblem(routeName, routeValues)` | `ToCreatedAtRouteOrProblem(projection, routeName, routeValues)` |
+
+MVC also provides the action-based Created terminal:
+
+| Terminal | Existing value | Projected response |
+|---|---|---|
+| Created at action | `ToCreatedAtActionOrProblem(actionName, routeValues)` | `ToCreatedAtActionOrProblem(projection, actionName, routeValues)` |
+
+The route values can be either an object or a selector from the original successful value. MVC's
+action overloads additionally accept a controller name. The automatic forms above apply to
+`Result<TValue, TError>` where `TError : IError`. Caller-mapped Results use the same shapes with an
+`errorMapper` argument:
 
 | Input | Existing value | Projected response |
 |---|---|---|
-| `Option<TValue>` | `ToOkOr(...)`, `ToOkOrNotFound()`, `ToOkOrNoContent()` | Add `projection` as the first argument |
-| `Result<TValue, TError>` where `TError : IError` | `ToOkOrProblem()` | `ToOkOrProblem(projection)` |
-| `Result<TValue, TError>` where `TError : IError` | `ToCreatedOrProblem(locationSelector)` | `ToCreatedOrProblem(projection, locationSelector)` |
 | `Result<TValue>` | `ToOkOrProblem(errorMapper)` | `ToOkOrProblem(projection, errorMapper)` |
-| `Result<TValue>` | `ToCreatedOrProblem(locationSelector, errorMapper)` | `ToCreatedOrProblem(projection, locationSelector, errorMapper)` |
-| `Result<TValue, TError>` with an explicit mapper | `ToOkOrProblem(errorMapper)` | `ToOkOrProblem(projection, errorMapper)` |
-| `Result<TValue, TError>` with an explicit mapper | `ToCreatedOrProblem(locationSelector, errorMapper)` | `ToCreatedOrProblem(projection, locationSelector, errorMapper)` |
+| `Result<TValue>` | `ToCreatedOrProblem(errorMapper)` | `ToCreatedOrProblem(projection, errorMapper)` |
+| `Result<TValue>` with URI | `ToCreatedOrProblem(locationSelector, errorMapper)` | `ToCreatedOrProblem(projection, locationSelector, errorMapper)` |
+| `Result<TValue, TError>` | `ToOkOrProblem(errorMapper)` | `ToOkOrProblem(projection, errorMapper)` |
+| `Result<TValue, TError>` | `ToCreatedOrProblem(errorMapper)` | `ToCreatedOrProblem(errorMapper, projection)` |
+| `Result<TValue, TError>` with URI | `ToCreatedOrProblem(locationSelector, errorMapper)` | `ToCreatedOrProblem(projection, locationSelector, errorMapper)` |
+| Either caller-mapped Result at route | Append `errorMapper` | Add `projection` first and append `errorMapper` |
+| Either caller-mapped Result at action (MVC) | Append `errorMapper` | Add `projection` first and append `errorMapper` |
 
-Created projections always select the location from the original successful value. Projection and
-location delegates run only for success. Unit and non-generic Results have no successful payload,
-so their OK and No Content terminals intentionally have no projected forms. `ToResults` already
-accepts any caller-defined success result, and MVC's output-generic `ToActionResult` accepts a
-success mapper returning `ActionResult<TResponse>`.
+Created projections always derive the URI or route values from the original successful value.
+Projection and routing delegates run only for success. Unit and non-generic Results have no
+successful payload, so their OK and No Content terminals intentionally have no projected forms.
+`ToResults` already accepts any caller-defined success result, and MVC's output-generic
+`ToActionResult` accepts a success mapper returning `ActionResult<TResponse>`.
 
 For example, a typed application Result can produce a transport response without an intermediate
 `Map`:
@@ -451,13 +472,32 @@ app.MapGet("/concerts/{id:int}", async (int id, ConcertService service) =>
         concert => concert.ToResponse()));
 ```
 
-The Created equivalent keeps routing based on the domain value while returning the projected body:
+The Created equivalents keep routing based on the domain value while returning the projected body:
 
 ```csharp
 app.MapPost("/concerts", async (CreateConcertRequest request, ConcertService service) =>
     (await service.CreateConcert(request)).ToCreatedOrProblem(
         concert => concert.ToResponse(),
         concert => $"/concerts/{concert.Id}"));
+```
+
+Named-route generation is available in both programming models:
+
+```csharp
+app.MapPost("/concerts", async (CreateConcertRequest request, ConcertService service) =>
+    (await service.CreateConcert(request)).ToCreatedAtRouteOrProblem(
+        concert => concert.ToResponse(),
+        "GetConcert",
+        concert => new { id = concert.Id }));
+```
+
+MVC controllers can generate the location from an action:
+
+```csharp
+return result.ToCreatedAtActionOrProblem(
+    concert => concert.ToResponse(),
+    nameof(GetConcert),
+    concert => new { id = concert.Id });
 ```
 
 ### Minimal API examples
