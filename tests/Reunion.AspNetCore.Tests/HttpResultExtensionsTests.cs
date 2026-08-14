@@ -223,6 +223,219 @@ public sealed class HttpResultExtensionsTests
     }
 
     [Fact]
+    public void LocationlessCreatedMappings_CoverEveryErrorShapeAndProjection()
+    {
+        var user = new User(42);
+        var applicationError = new ApplicationError(
+            ErrorDefinition.Conflict("user.conflict", "User conflict."));
+        var domainError = new DomainError("user.conflict");
+        var projectionInvocations = 0;
+        var mapperInvocations = 0;
+        Func<User, UserResponse> projection = value =>
+        {
+            projectionInvocations++;
+            return new(value.Id);
+        };
+        Func<DomainError, ProblemDetails> domainMapper = _ =>
+        {
+            mapperInvocations++;
+            return new() { Status = StatusCodes.Status409Conflict };
+        };
+        Func<string, ProblemDetails> stringMapper = _ =>
+        {
+            mapperInvocations++;
+            return new() { Status = StatusCodes.Status400BadRequest };
+        };
+
+        Results<Created<User>, ProblemHttpResult> automatic =
+            Result.Success<User, ApplicationError>(user).ToCreatedOrProblem();
+        Results<Created<UserResponse>, ProblemHttpResult> automaticProjected =
+            Result.Success<User, ApplicationError>(user).ToCreatedOrProblem(projection);
+        Results<Created<UserResponse>, ProblemHttpResult> automaticFailed =
+            Result.Failure<User, ApplicationError>(applicationError)
+                .ToCreatedOrProblem(projection);
+        Results<Created<User>, ProblemHttpResult> stringCreated = Result.Success(user)
+            .ToCreatedOrProblem(stringMapper);
+        Results<Created<UserResponse>, ProblemHttpResult> stringProjected = Result.Success(user)
+            .ToCreatedOrProblem(projection, stringMapper);
+        Results<Created<UserResponse>, ProblemHttpResult> stringFailed = Result.Failure<User>("failed")
+            .ToCreatedOrProblem(projection, stringMapper);
+        Results<Created<User>, ProblemHttpResult> genericCreated =
+            Result.Success<User, DomainError>(user).ToCreatedOrProblem(domainMapper);
+        Results<Created<UserResponse>, ProblemHttpResult> genericFailed =
+            Result.Failure<User, DomainError>(domainError)
+                .ToCreatedOrProblem(domainMapper, projection);
+
+        AssertLocationlessCreated(automatic, user);
+        AssertLocationlessCreated(automaticProjected, new UserResponse(42));
+        AssertProblem(automaticFailed.Result, StatusCodes.Status409Conflict, "User conflict.");
+        AssertLocationlessCreated(stringCreated, user);
+        AssertLocationlessCreated(stringProjected, new UserResponse(42));
+        AssertProblem(stringFailed.Result, StatusCodes.Status400BadRequest, null);
+        AssertLocationlessCreated(genericCreated, user);
+        Assert.Equal(
+            StatusCodes.Status409Conflict,
+            Assert.IsType<ProblemHttpResult>(genericFailed.Result).StatusCode);
+        Assert.Equal(2, projectionInvocations);
+        Assert.Equal(2, mapperInvocations);
+    }
+
+    [Fact]
+    public void LocationlessCreatedMappings_ValidateProjections()
+    {
+        var applicationResult = Result.Success<User, ApplicationError>(new(42));
+        var stringResult = Result.Success(new User(42));
+        var genericResult = Result.Success<User, DomainError>(new(42));
+        Func<string, ProblemDetails> stringMapper = ToInternalServerProblem;
+        Func<DomainError, ProblemDetails> genericMapper = _ =>
+            new() { Status = StatusCodes.Status400BadRequest };
+
+        Assert.Throws<ArgumentNullException>(() =>
+            applicationResult.ToCreatedOrProblem<User, ApplicationError, UserResponse>(null!));
+        Assert.Throws<ArgumentNullException>(() =>
+            stringResult.ToCreatedOrProblem<User, UserResponse>(null!, stringMapper));
+        Assert.Throws<ArgumentNullException>(() =>
+            genericResult.ToCreatedOrProblem<User, DomainError, UserResponse>(genericMapper, null!));
+        Assert.Throws<ArgumentNullException>(() =>
+            applicationResult.ToCreatedOrProblem(_ => (UserResponse)null!));
+        Assert.Throws<ArgumentNullException>(() =>
+            stringResult.ToCreatedOrProblem(_ => (UserResponse)null!, stringMapper));
+        Assert.Throws<ArgumentNullException>(() =>
+            genericResult.ToCreatedOrProblem(genericMapper, _ => (UserResponse)null!));
+        Assert.Throws<ArgumentNullException>(() =>
+            stringResult.ToCreatedOrProblem((Func<string, ProblemDetails>)null!));
+        Assert.Throws<ArgumentNullException>(() =>
+            genericResult.ToCreatedOrProblem((Func<DomainError, ProblemDetails>)null!));
+    }
+
+    [Fact]
+    public void CreatedAtRouteMappings_CoverEveryErrorShapeAndProjection()
+    {
+        var user = new User(42);
+        var applicationError = new ApplicationError(
+            ErrorDefinition.Conflict("user.conflict", "User conflict."));
+        var routeSelectorInvocations = 0;
+        var projectionInvocations = 0;
+        var mapperInvocations = 0;
+        Func<User, object?> routeValuesSelector = value =>
+        {
+            routeSelectorInvocations++;
+            return new { id = value.Id };
+        };
+        Func<User, UserResponse> projection = value =>
+        {
+            projectionInvocations++;
+            return new(value.Id);
+        };
+        Func<string, ProblemDetails> stringMapper = _ =>
+        {
+            mapperInvocations++;
+            return new() { Status = StatusCodes.Status400BadRequest };
+        };
+        Func<DomainError, ProblemDetails> domainMapper = _ =>
+        {
+            mapperInvocations++;
+            return new() { Status = StatusCodes.Status409Conflict };
+        };
+
+        Results<CreatedAtRoute<User>, ProblemHttpResult> created =
+            Result.Success<User, ApplicationError>(user)
+                .ToCreatedAtRouteOrProblem("user", new { id = 42 });
+        Results<CreatedAtRoute<UserResponse>, ProblemHttpResult> projected =
+            Result.Success<User, ApplicationError>(user)
+                .ToCreatedAtRouteOrProblem(projection, "user", routeValuesSelector);
+        Results<CreatedAtRoute<UserResponse>, ProblemHttpResult> failed =
+            Result.Failure<User, ApplicationError>(applicationError)
+                .ToCreatedAtRouteOrProblem(projection, "user", routeValuesSelector);
+        Results<CreatedAtRoute<User>, ProblemHttpResult> mapped = Result.Success(user)
+            .ToCreatedAtRouteOrProblem("user", new { id = 42 }, stringMapper);
+        Results<CreatedAtRoute<UserResponse>, ProblemHttpResult> stringFailed =
+            Result.Failure<User>("failed")
+                .ToCreatedAtRouteOrProblem(
+                    projection,
+                    "user",
+                    routeValuesSelector,
+                    stringMapper);
+        Results<CreatedAtRoute<User>, ProblemHttpResult> genericCreated =
+            Result.Success<User, DomainError>(user)
+                .ToCreatedAtRouteOrProblem("user", routeValuesSelector, domainMapper);
+        Results<CreatedAtRoute<UserResponse>, ProblemHttpResult> genericFailed =
+            Result.Failure<User, DomainError>(new("failed"))
+                .ToCreatedAtRouteOrProblem(
+                    projection,
+                    "user",
+                    routeValuesSelector,
+                    domainMapper);
+
+        var createdResult = Assert.IsType<CreatedAtRoute<User>>(created.Result);
+        Assert.Equal("user", createdResult.RouteName);
+        Assert.Equal(42, createdResult.RouteValues!["id"]);
+        Assert.Same(user, createdResult.Value);
+        var projectedResult = Assert.IsType<CreatedAtRoute<UserResponse>>(projected.Result);
+        Assert.Equal(new UserResponse(42), projectedResult.Value);
+        Assert.Equal("user", projectedResult.RouteName);
+        Assert.Equal(42, projectedResult.RouteValues!["id"]);
+        AssertProblem(failed.Result, StatusCodes.Status409Conflict, "User conflict.");
+        Assert.Same(user, Assert.IsType<CreatedAtRoute<User>>(mapped.Result).Value);
+        AssertProblem(stringFailed.Result, StatusCodes.Status400BadRequest, null);
+        Assert.Same(user, Assert.IsType<CreatedAtRoute<User>>(genericCreated.Result).Value);
+        Assert.Equal(
+            StatusCodes.Status409Conflict,
+            Assert.IsType<ProblemHttpResult>(genericFailed.Result).StatusCode);
+        Assert.Equal(1, projectionInvocations);
+        Assert.Equal(2, routeSelectorInvocations);
+        Assert.Equal(2, mapperInvocations);
+    }
+
+    [Fact]
+    public void CreatedAtRouteMappings_ValidateInputs()
+    {
+        var result = Result.Success<User, ApplicationError>(new(42));
+        var stringResult = Result.Success(new User(42));
+        var genericResult = Result.Success<User, DomainError>(new(42));
+        Func<string, ProblemDetails> stringMapper = ToInternalServerProblem;
+
+        Assert.Throws<ArgumentNullException>(() =>
+            result.ToCreatedAtRouteOrProblem("user", (Func<User, object?>)null!));
+        Assert.Throws<ArgumentNullException>(() =>
+            result.ToCreatedAtRouteOrProblem<User, ApplicationError, UserResponse>(
+                null!,
+                "user"));
+        Assert.Throws<ArgumentNullException>(() =>
+            result.ToCreatedAtRouteOrProblem(_ => (UserResponse)null!, "user"));
+        Assert.Throws<ArgumentNullException>(() =>
+            stringResult.ToCreatedAtRouteOrProblem(
+                "user",
+                new { id = 42 },
+                (Func<string, ProblemDetails>)null!));
+        Assert.Throws<ArgumentNullException>(() =>
+            genericResult.ToCreatedAtRouteOrProblem(
+                "user",
+                new { id = 42 },
+                (Func<DomainError, ProblemDetails>)null!));
+        Assert.Throws<ArgumentNullException>(() =>
+            stringResult.ToCreatedAtRouteOrProblem(
+                _ => (UserResponse)null!,
+                "user",
+                new { id = 42 },
+                stringMapper));
+    }
+
+    [Fact]
+    public void CreatedAtRouteConvenienceOverloads_InferProjectedStaticTypes()
+    {
+        var result = Result.Success<User, ApplicationError>(new(42));
+
+        Results<CreatedAtRoute<User>, ProblemHttpResult> created =
+            result.ToCreatedAtRouteOrProblem();
+        Results<CreatedAtRoute<UserResponse>, ProblemHttpResult> projected =
+            result.ToCreatedAtRouteOrProblem(user => new UserResponse(user.Id));
+
+        Assert.IsType<CreatedAtRoute<User>>(created.Result);
+        Assert.IsType<CreatedAtRoute<UserResponse>>(projected.Result);
+    }
+
+    [Fact]
     public void TypedApplicationErrors_ToResults_DispatchesCustomSuccessAndFailure()
     {
         var user = new User(42);
@@ -564,12 +777,22 @@ public sealed class HttpResultExtensionsTests
             Title = "Internal Server Error"
         };
 
-    private static void AssertProblem(IResult actual, int status, string detail)
+    private static void AssertProblem(IResult actual, int status, string? detail)
     {
         var problem = Assert.IsType<ProblemHttpResult>(actual);
         Assert.Equal(status, problem.StatusCode);
         Assert.Equal(status, problem.ProblemDetails.Status);
         Assert.Equal(detail, problem.ProblemDetails.Detail);
+    }
+
+    private static void AssertLocationlessCreated<T>(
+        Results<Created<T>, ProblemHttpResult> actual,
+        T expected)
+    {
+        var created = Assert.IsType<Created<T>>(actual.Result);
+        Assert.Equal(StatusCodes.Status201Created, created.StatusCode);
+        Assert.Null(created.Location);
+        Assert.Equal(expected, created.Value);
     }
 
     private static async Task<ResponseSnapshot> ExecuteAsync(IResult result)
