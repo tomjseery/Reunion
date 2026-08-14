@@ -422,6 +422,44 @@ MVC action-result execution, configured output formatters, and content negotiati
 mapping namespaces makes identical extension calls ambiguous by design rather than silently
 selecting an HTTP programming model.
 
+Every value-bearing terminal can either return the successful value unchanged or project it to a
+different response type at the endpoint boundary. The same matrix is available from
+`Reunion.AspNetCore.HttpResults` and `Reunion.AspNetCore.Mvc`:
+
+| Input | Existing value | Projected response |
+|---|---|---|
+| `Option<TValue>` | `ToOkOr(...)`, `ToOkOrNotFound()`, `ToOkOrNoContent()` | Add `projection` as the first argument |
+| `Result<TValue, TError>` where `TError : IError` | `ToOkOrProblem()` | `ToOkOrProblem(projection)` |
+| `Result<TValue, TError>` where `TError : IError` | `ToCreatedOrProblem(locationSelector)` | `ToCreatedOrProblem(projection, locationSelector)` |
+| `Result<TValue>` | `ToOkOrProblem(errorMapper)` | `ToOkOrProblem(projection, errorMapper)` |
+| `Result<TValue>` | `ToCreatedOrProblem(locationSelector, errorMapper)` | `ToCreatedOrProblem(projection, locationSelector, errorMapper)` |
+| `Result<TValue, TError>` with an explicit mapper | `ToOkOrProblem(errorMapper)` | `ToOkOrProblem(projection, errorMapper)` |
+| `Result<TValue, TError>` with an explicit mapper | `ToCreatedOrProblem(locationSelector, errorMapper)` | `ToCreatedOrProblem(projection, locationSelector, errorMapper)` |
+
+Created projections always select the location from the original successful value. Projection and
+location delegates run only for success. Unit and non-generic Results have no successful payload,
+so their OK and No Content terminals intentionally have no projected forms. `ToResults` already
+accepts any caller-defined success result, and MVC's output-generic `ToActionResult` accepts a
+success mapper returning `ActionResult<TResponse>`.
+
+For example, a typed application Result can produce a transport response without an intermediate
+`Map`:
+
+```csharp
+app.MapGet("/concerts/{id:int}", async (int id, ConcertService service) =>
+    (await service.GetConcert(id)).ToOkOrProblem(
+        concert => concert.ToResponse()));
+```
+
+The Created equivalent keeps routing based on the domain value while returning the projected body:
+
+```csharp
+app.MapPost("/concerts", async (CreateConcertRequest request, ConcertService service) =>
+    (await service.CreateConcert(request)).ToCreatedOrProblem(
+        concert => concert.ToResponse(),
+        concert => $"/concerts/{concert.Id}"));
+```
+
 ### Minimal API examples
 
 GET with `200 OK` or `404 Not Found`:

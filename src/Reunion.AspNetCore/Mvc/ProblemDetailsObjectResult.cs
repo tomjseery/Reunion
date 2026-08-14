@@ -1,55 +1,50 @@
 using System.Diagnostics;
-using System.Net;
 using System.Net.Mime;
 using System.Text.Json;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Reunion.AspNetCore;
+namespace Reunion.AspNetCore.Mvc;
 
-internal static class ApplicationProblemDetails
+internal sealed class ProblemDetailsObjectResult : ObjectResult
 {
-    internal const string CodeExtensionKey = "code";
-    internal const string TraceIdExtensionKey = "traceId";
+    private const string TraceIdExtensionKey = "traceId";
+    private readonly int statusCode;
 
-    internal static ProblemDetails Create(HttpStatusCode statusCode, string detail) =>
-        Create(statusCode, statusCode.ToReasonPhrase(), detail);
-
-    internal static ProblemDetails Create(
-        HttpStatusCode statusCode,
-        string title,
-        string detail) =>
-        new()
-        {
-            Status = (int)statusCode,
-            Title = title,
-            Detail = detail
-        };
-
-    internal static async Task WriteAsync(
-        HttpContext httpContext,
-        ProblemDetails problemDetails)
+    internal ProblemDetailsObjectResult(ProblemDetails problemDetails)
+        : base(problemDetails)
     {
-        var statusCode = problemDetails.Status
-            ?? throw new InvalidOperationException("ProblemDetails status is required.");
+        this.statusCode = problemDetails.Status
+            ?? throw new InvalidOperationException(
+                "The mapped problem details must specify a status code.");
+        StatusCode = this.statusCode;
+        ContentTypes.Add(MediaTypeNames.Application.ProblemJson);
+    }
+
+    public override async Task ExecuteResultAsync(ActionContext context)
+    {
+        var httpContext = context.HttpContext;
+        var problemDetails = (ProblemDetails)Value!;
         problemDetails.Instance = httpContext.Request.PathBase.Add(httpContext.Request.Path);
         problemDetails.Extensions[TraceIdExtensionKey] =
             Activity.Current?.Id ?? httpContext.TraceIdentifier;
-        httpContext.Response.StatusCode = statusCode;
+        httpContext.Response.StatusCode = this.statusCode;
 
         var problemDetailsService = httpContext.RequestServices
             .GetService<IProblemDetailsService>();
 
         if (problemDetailsService is not null)
         {
-            var context = new ProblemDetailsContext
+            var problemDetailsContext = new ProblemDetailsContext
             {
                 HttpContext = httpContext,
                 ProblemDetails = problemDetails
             };
 
-            if (await problemDetailsService.TryWriteAsync(context).ConfigureAwait(false))
+            if (await problemDetailsService
+                    .TryWriteAsync(problemDetailsContext)
+                    .ConfigureAwait(false))
                 return;
         }
 

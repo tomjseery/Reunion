@@ -1,3 +1,4 @@
+using System.Net;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Reunion;
@@ -9,6 +10,8 @@ Option<User> found = new Some<User>(user);
 Result<User, UserError> created = new Success<User>(user);
 var missingError = new UserError(ErrorDefinition.NotFound<UserError.UserNotFound>());
 Result<User, UserError> missing = new Failure<UserError>(missingError);
+var badRequest = ProblemDetails.Create(HttpStatusCode.BadRequest, "The request is invalid.");
+var missingDetails = ProblemDetails.Create(missingError);
 
 var httpController = new HttpResultEndpoints();
 var mvcController = new MvcEndpoints();
@@ -23,20 +26,28 @@ var mvcProblem = mvcMissing.Result as ObjectResult;
 var mvcDetails = mvcProblem?.Value as ProblemDetails;
 
 Require(httpGet.Result is Ok<User>, "The HttpResults GET mapping did not return Ok<User>.");
-Require(httpPost.Result is Created<User> httpCreated && httpCreated.Location == "/users/42", "The HttpResults POST mapping did not preserve Location.");
+Require(
+    httpPost.Result is Created<UserResponse> { Location: "/users/42", Value.Id: 42 },
+    "The HttpResults projected POST mapping did not preserve its response or Location.");
 Require(mvcGet.Result is OkObjectResult, "The MVC GET mapping did not return OkObjectResult.");
-Require(mvcPost.Result is CreatedResult mvcCreated && mvcCreated.Location == "/users/42", "The MVC POST mapping did not preserve Location.");
+Require(
+    badRequest is { Status: StatusCodes.Status400BadRequest, Title: "Bad Request" }
+    && missingDetails.Status == StatusCodes.Status404NotFound,
+    "The ProblemDetails factories did not preserve their HTTP mappings.");
+Require(
+    mvcPost.Result is CreatedResult { Location: "/users/42", Value: UserResponse { Id: 42 } },
+    "The MVC projected POST mapping did not preserve its response or Location.");
 Require(
     httpProblem?.StatusCode == StatusCodes.Status404NotFound
     && httpProblem.ProblemDetails.Extensions.TryGetValue(
-        ErrorProblemDetails.CodeExtensionKey,
+        ProblemDetailsExtensions.CodeExtensionKey,
         out var httpCode)
     && Equals(httpCode, "user.not_found"),
     "The HttpResults typed error did not use the automatic not-found problem mapping.");
 Require(
     mvcProblem?.StatusCode == StatusCodes.Status404NotFound
     && mvcDetails?.Extensions.TryGetValue(
-        ErrorProblemDetails.CodeExtensionKey,
+        ProblemDetailsExtensions.CodeExtensionKey,
         out var mvcCode) == true
     && Equals(mvcCode, "user.not_found"),
     "The MVC typed error did not use the automatic not-found problem mapping.");
@@ -57,6 +68,10 @@ static void Require(bool condition, string message)
 }
 
 public sealed record User(int Id);
+
+public sealed record UserResponse(int Id);
+
+public sealed record ConsumerError(string Code);
 
 public sealed record UserError(ErrorDefinition Definition) : IError
 {

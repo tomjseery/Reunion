@@ -262,6 +262,188 @@ public sealed class HttpResultExtensionsTests
     }
 
     [Fact]
+    public void ProjectedTypedErrorTerminals_ReturnProjectedTypesAndRunOnlySuccessDelegates()
+    {
+        var user = new User(42);
+        var error = new ApplicationError(
+            ErrorDefinition.NotFound("user.not_found", "User not found."));
+        var projectionInvocations = 0;
+        var locationInvocations = 0;
+        Func<User, UserResponse> projection = value =>
+        {
+            projectionInvocations++;
+            return new UserResponse(value.Id);
+        };
+        Func<User, string> locationSelector = value =>
+        {
+            locationInvocations++;
+            return $"/users/{value.Id}";
+        };
+
+        Results<Ok<UserResponse>, ProblemHttpResult> ok =
+            Result.Success<User, ApplicationError>(user).ToOkOrProblem(projection);
+        Results<Ok<UserResponse>, ProblemHttpResult> failed =
+            Result.Failure<User, ApplicationError>(error).ToOkOrProblem(projection);
+        Results<Created<UserResponse>, ProblemHttpResult> created =
+            Result.Success<User, ApplicationError>(user)
+                .ToCreatedOrProblem(projection, locationSelector);
+        Results<Created<UserResponse>, ProblemHttpResult> createFailed =
+            Result.Failure<User, ApplicationError>(error)
+                .ToCreatedOrProblem(projection, locationSelector);
+
+        Assert.Equal(42, Assert.IsType<Ok<UserResponse>>(ok.Result).Value!.Id);
+        AssertProblem(failed.Result, StatusCodes.Status404NotFound, "User not found.");
+        var createdResult = Assert.IsType<Created<UserResponse>>(created.Result);
+        Assert.Equal("/users/42", createdResult.Location);
+        Assert.Equal(42, createdResult.Value!.Id);
+        AssertProblem(createFailed.Result, StatusCodes.Status404NotFound, "User not found.");
+        Assert.Equal(2, projectionInvocations);
+        Assert.Equal(1, locationInvocations);
+    }
+
+    [Fact]
+    public void ProjectedStringErrorTerminals_ReturnProjectedTypesAndRunOnlySelectedDelegates()
+    {
+        var user = new User(42);
+        var projectionInvocations = 0;
+        var locationInvocations = 0;
+        var mapperInvocations = 0;
+        Func<User, UserResponse> projection = value =>
+        {
+            projectionInvocations++;
+            return new UserResponse(value.Id);
+        };
+        Func<User, string> locationSelector = value =>
+        {
+            locationInvocations++;
+            return $"/users/{value.Id}";
+        };
+        Func<string, ProblemDetails> errorMapper = error =>
+        {
+            mapperInvocations++;
+            return new ProblemDetails { Status = 409, Detail = error };
+        };
+
+        Results<Ok<UserResponse>, ProblemHttpResult> ok = Result.Success(user)
+            .ToOkOrProblem(projection, errorMapper);
+        Results<Ok<UserResponse>, ProblemHttpResult> failed = Result.Failure<User>("missing")
+            .ToOkOrProblem(projection, errorMapper);
+        Results<Created<UserResponse>, ProblemHttpResult> created = Result.Success(user)
+            .ToCreatedOrProblem(projection, locationSelector, errorMapper);
+        Results<Created<UserResponse>, ProblemHttpResult> createFailed =
+            Result.Failure<User>("invalid")
+                .ToCreatedOrProblem(projection, locationSelector, errorMapper);
+
+        Assert.Equal(42, Assert.IsType<Ok<UserResponse>>(ok.Result).Value!.Id);
+        AssertProblem(failed.Result, StatusCodes.Status409Conflict, "missing");
+        var createdResult = Assert.IsType<Created<UserResponse>>(created.Result);
+        Assert.Equal("/users/42", createdResult.Location);
+        Assert.Equal(42, createdResult.Value!.Id);
+        AssertProblem(createFailed.Result, StatusCodes.Status409Conflict, "invalid");
+        Assert.Equal(2, projectionInvocations);
+        Assert.Equal(1, locationInvocations);
+        Assert.Equal(2, mapperInvocations);
+    }
+
+    [Fact]
+    public void ProjectedGenericErrorTerminals_ReturnProjectedTypesAndRunOnlySelectedDelegates()
+    {
+        var user = new User(42);
+        var error = new DomainError("user.missing");
+        var projectionInvocations = 0;
+        var locationInvocations = 0;
+        var mapperInvocations = 0;
+        Func<User, UserResponse> projection = value =>
+        {
+            projectionInvocations++;
+            return new UserResponse(value.Id);
+        };
+        Func<User, string> locationSelector = value =>
+        {
+            locationInvocations++;
+            return $"/users/{value.Id}";
+        };
+        Func<DomainError, ProblemDetails> errorMapper = value =>
+        {
+            mapperInvocations++;
+            return new ProblemDetails { Status = 404, Detail = value.Code };
+        };
+
+        Results<Ok<UserResponse>, ProblemHttpResult> ok =
+            Result.Success<User, DomainError>(user).ToOkOrProblem(projection, errorMapper);
+        Results<Ok<UserResponse>, ProblemHttpResult> failed =
+            Result.Failure<User, DomainError>(error).ToOkOrProblem(projection, errorMapper);
+        Results<Created<UserResponse>, ProblemHttpResult> created =
+            Result.Success<User, DomainError>(user)
+                .ToCreatedOrProblem(projection, locationSelector, errorMapper);
+        Results<Created<UserResponse>, ProblemHttpResult> createFailed =
+            Result.Failure<User, DomainError>(error)
+                .ToCreatedOrProblem(projection, locationSelector, errorMapper);
+
+        Assert.Equal(42, Assert.IsType<Ok<UserResponse>>(ok.Result).Value!.Id);
+        AssertProblem(failed.Result, StatusCodes.Status404NotFound, "user.missing");
+        var createdResult = Assert.IsType<Created<UserResponse>>(created.Result);
+        Assert.Equal("/users/42", createdResult.Location);
+        Assert.Equal(42, createdResult.Value!.Id);
+        AssertProblem(createFailed.Result, StatusCodes.Status404NotFound, "user.missing");
+        Assert.Equal(2, projectionInvocations);
+        Assert.Equal(1, locationInvocations);
+        Assert.Equal(2, mapperInvocations);
+    }
+
+    [Fact]
+    public void ProjectedTerminals_ValidateDelegatesAndProjectionResults()
+    {
+        var user = new User(42);
+        var applicationResult = Result.Success<User, ApplicationError>(user);
+        var stringResult = Result.Success(user);
+        var genericResult = Result.Success<User, DomainError>(user);
+        Func<User, UserResponse> projection = value => new UserResponse(value.Id);
+        Func<User, string> locationSelector = value => $"/users/{value.Id}";
+        Func<string, ProblemDetails> stringMapper = _ => new() { Status = 500 };
+        Func<DomainError, ProblemDetails> genericMapper = _ => new() { Status = 500 };
+
+        Assert.Throws<ArgumentNullException>(() =>
+            applicationResult.ToOkOrProblem<User, ApplicationError, UserResponse>(null!));
+        Assert.Throws<ArgumentNullException>(() =>
+            applicationResult.ToCreatedOrProblem(projection, null!));
+        Assert.Throws<ArgumentNullException>(() =>
+            stringResult.ToOkOrProblem<User, UserResponse>(null!, stringMapper));
+        Assert.Throws<ArgumentNullException>(() =>
+            stringResult.ToCreatedOrProblem(projection, locationSelector, null!));
+        Assert.Throws<ArgumentNullException>(() =>
+            genericResult.ToOkOrProblem<User, DomainError, UserResponse>(null!, genericMapper));
+        Assert.Throws<ArgumentNullException>(() =>
+            genericResult.ToCreatedOrProblem(projection, null!, genericMapper));
+        Assert.Throws<ArgumentNullException>(() =>
+            applicationResult.ToOkOrProblem(_ => (UserResponse)null!));
+        Assert.Throws<ArgumentNullException>(() =>
+            applicationResult.ToCreatedOrProblem(
+                _ => (UserResponse)null!,
+                locationSelector));
+        Assert.Throws<ArgumentNullException>(() =>
+            stringResult.ToOkOrProblem(_ => (UserResponse)null!, stringMapper));
+        Assert.Throws<ArgumentNullException>(() =>
+            stringResult.ToCreatedOrProblem(
+                _ => (UserResponse)null!,
+                locationSelector,
+                stringMapper));
+        Assert.Throws<ArgumentNullException>(() =>
+            genericResult.ToOkOrProblem(_ => (UserResponse)null!, genericMapper));
+        Assert.Throws<ArgumentNullException>(() =>
+            genericResult.ToCreatedOrProblem(
+                _ => (UserResponse)null!,
+                locationSelector,
+                genericMapper));
+        Assert.Throws<InvalidOperationException>(() =>
+            applicationResult.ToCreatedOrProblem(projection, _ => " "));
+        Assert.Throws<InvalidOperationException>(() =>
+            stringResult.ToCreatedOrProblem(projection, _ => " ", stringMapper));
+        Assert.Throws<InvalidOperationException>(() =>
+            genericResult.ToCreatedOrProblem(projection, _ => " ", genericMapper));
+    }
+
+    [Fact]
     public void CustomStringErrorMapper_PreservesCallerProblem()
     {
         var problem = new ValidationProblemDetails(
@@ -415,6 +597,8 @@ public sealed class HttpResultExtensionsTests
     }
 
     private sealed record User(int Id);
+
+    private sealed record UserResponse(int Id);
 
     private sealed record DomainError(string Code);
 
