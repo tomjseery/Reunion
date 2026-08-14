@@ -1,4 +1,3 @@
-using System.Runtime.CompilerServices;
 using Microsoft.AspNetCore.Mvc;
 using Reunion.Errors;
 
@@ -7,16 +6,7 @@ namespace Reunion.AspNetCore.Mvc;
 /// <summary>Maps result values to ASP.NET Core MVC action results.</summary>
 public static class ResultActionResultExtensions
 {
-    /// <summary>Maps success with a caller-supplied action result and a typed error to problem details.</summary>
-    [OverloadResolutionPriority(1)]
-    public static ActionResult<TValue> ToActionResult<TValue, TError>(
-        this Result<TValue, TError> result,
-        Func<TValue, ActionResult<TValue>> successMapper)
-        where TValue : notnull
-        where TError : IError
-        => result.ToActionResult<TValue, TError, TValue>(successMapper);
-
-    /// <summary>Maps success to a caller-supplied action result with a different response type and a typed error to problem details.</summary>
+    /// <summary>Maps success to a caller-supplied action result and a typed error to problem details.</summary>
     public static ActionResult<TResponse> ToActionResult<TValue, TError, TResponse>(
         this Result<TValue, TError> result,
         Func<TValue, ActionResult<TResponse>> successMapper)
@@ -47,7 +37,8 @@ public static class ResultActionResultExtensions
         this Result<TValue, TError> result)
         where TValue : notnull
         where TError : IError =>
-        result.ToActionResult(value => new OkObjectResult(value));
+        result.ToActionResult<TValue, TError, TValue>(
+            value => new OkObjectResult(value));
 
     /// <summary>Projects a successful value to OK and maps a typed error to problem details.</summary>
     public static ActionResult<TResponse> ToOkOrProblem<TValue, TError, TResponse>(
@@ -69,7 +60,8 @@ public static class ResultActionResultExtensions
         where TError : IError
     {
         ArgumentNullException.ThrowIfNull(locationSelector);
-        return result.ToActionResult(value => Create(value, locationSelector));
+        return result.ToActionResult<TValue, TError, TValue>(
+            value => Create(value, locationSelector));
     }
 
     /// <summary>Projects a successful value to Created, selects its location from the original value, and maps a typed error to problem details.</summary>

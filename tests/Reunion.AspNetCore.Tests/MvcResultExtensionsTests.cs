@@ -239,7 +239,7 @@ public sealed class MvcResultExtensionsTests
     {
         Assert.Throws<InvalidOperationException>(() =>
             Result.Success<User, ApplicationError>(new User(42))
-                .ToActionResult(_ => null!));
+                .ToActionResult<User, ApplicationError, User>(_ => null!));
         Assert.Throws<InvalidOperationException>(() =>
             UnitResult.Success<ApplicationError>()
                 .ToActionResult(() => null!));
