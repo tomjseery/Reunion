@@ -4,7 +4,7 @@ using Reunion.Errors;
 
 namespace Reunion.AspNetCore.Tests;
 
-public sealed class ErrorProblemDetailsTests
+public sealed class ProblemDetailsExtensionsTests
 {
     public static TheoryData<ErrorDefinition, int, string> Cases =>
         new()
@@ -32,13 +32,13 @@ public sealed class ErrorProblemDetailsTests
         int expectedStatus,
         string expectedTitle)
     {
-        var details = ErrorProblemDetails.Create(new TestError(definition));
+        var details = ProblemDetails.Create(new TestError(definition));
 
         Assert.IsType<ProblemDetails>(details);
         Assert.Equal(expectedStatus, details.Status);
         Assert.Equal(expectedTitle, details.Title);
         Assert.Equal(definition.Message, details.Detail);
-        Assert.Equal(definition.Code, details.Extensions[ErrorProblemDetails.CodeExtensionKey]);
+        Assert.Equal(definition.Code, details.Extensions[ProblemDetailsExtensions.CodeExtensionKey]);
     }
 
     [Fact]
@@ -53,21 +53,23 @@ public sealed class ErrorProblemDetailsTests
                     ["name"] = ["Name is required."]
                 }));
 
-        var details = ErrorProblemDetails.Create(new TestError(validation));
+        var details = ProblemDetails.Create(new TestError(validation));
 
         var validationDetails = Assert.IsType<ValidationProblemDetails>(details);
         Assert.Equal(StatusCodes.Status400BadRequest, validationDetails.Status);
         Assert.Equal("Name is required.", Assert.Single(validationDetails.Errors["name"]));
-        Assert.Equal("test.invalid", validationDetails.Extensions[ErrorProblemDetails.CodeExtensionKey]);
+        Assert.Equal(
+            "test.invalid",
+            validationDetails.Extensions[ProblemDetailsExtensions.CodeExtensionKey]);
     }
 
     [Fact]
     public void Create_NullErrorOrDefinition_Throws()
     {
         Assert.Throws<ArgumentNullException>(
-            () => ErrorProblemDetails.Create<TestError>(null!));
+            () => ProblemDetails.Create<TestError>(null!));
         Assert.Throws<InvalidOperationException>(
-            () => ErrorProblemDetails.Create(new NullDefinitionError()));
+            () => ProblemDetails.Create(new NullDefinitionError()));
     }
 
     private sealed record TestError(ErrorDefinition Definition) : IError;
