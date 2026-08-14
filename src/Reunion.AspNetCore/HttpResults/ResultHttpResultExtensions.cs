@@ -6,7 +6,7 @@ using Reunion.Errors;
 namespace Reunion.AspNetCore.HttpResults;
 
 /// <summary>Maps result values to strongly typed ASP.NET Core HTTP results.</summary>
-public static class ResultHttpResultExtensions
+public static partial class ResultHttpResultExtensions
 {
     /// <summary>Maps success with a caller-supplied HTTP result and a typed error to problem details.</summary>
     public static Results<TSuccess, ProblemHttpResult> ToResults<TValue, TError, TSuccess>(
@@ -52,6 +52,25 @@ public static class ResultHttpResultExtensions
     {
         ArgumentNullException.ThrowIfNull(projection);
         return result.Map(projection).ToOkOrProblem();
+    }
+
+    /// <summary>Maps a successful value to Created without a location and a typed error to problem details.</summary>
+    public static Results<Created<TValue>, ProblemHttpResult> ToCreatedOrProblem<TValue, TError>(
+        this Result<TValue, TError> result)
+        where TValue : notnull
+        where TError : IError =>
+        result.ToResults(value => Create(value));
+
+    /// <summary>Projects a successful value to Created without a location and maps a typed error to problem details.</summary>
+    public static Results<Created<TResponse>, ProblemHttpResult> ToCreatedOrProblem<TValue, TError, TResponse>(
+        this Result<TValue, TError> result,
+        Func<TValue, TResponse> projection)
+        where TValue : notnull
+        where TError : IError
+        where TResponse : notnull
+    {
+        ArgumentNullException.ThrowIfNull(projection);
+        return result.ToResults(value => Create(value, projection));
     }
 
     /// <summary>Maps a successful value to Created and a typed error to problem details.</summary>
@@ -138,6 +157,33 @@ public static class ResultHttpResultExtensions
         return result.Map(projection).ToOkOrProblem(errorMapper);
     }
 
+    /// <summary>Maps a successful value to Created without a location and failure with a caller-supplied problem mapper.</summary>
+    public static Results<Created<TValue>, ProblemHttpResult> ToCreatedOrProblem<TValue>(
+        this Result<TValue> result,
+        Func<string, ProblemDetails> errorMapper)
+        where TValue : notnull
+    {
+        ArgumentNullException.ThrowIfNull(errorMapper);
+        return result.Match<Results<Created<TValue>, ProblemHttpResult>>(
+            value => Create(value),
+            error => MapProblem(error, errorMapper));
+    }
+
+    /// <summary>Projects a successful value to Created without a location and maps failure with a caller-supplied problem mapper.</summary>
+    public static Results<Created<TResponse>, ProblemHttpResult> ToCreatedOrProblem<TValue, TResponse>(
+        this Result<TValue> result,
+        Func<TValue, TResponse> projection,
+        Func<string, ProblemDetails> errorMapper)
+        where TValue : notnull
+        where TResponse : notnull
+    {
+        ArgumentNullException.ThrowIfNull(projection);
+        ArgumentNullException.ThrowIfNull(errorMapper);
+        return result.Match<Results<Created<TResponse>, ProblemHttpResult>>(
+            value => Create(value, projection),
+            error => MapProblem(error, errorMapper));
+    }
+
     /// <summary>Maps a successful value to Created and failure with a caller-supplied problem mapper.</summary>
     public static Results<Created<TValue>, ProblemHttpResult> ToCreatedOrProblem<TValue>(
         this Result<TValue> result,
@@ -194,6 +240,35 @@ public static class ResultHttpResultExtensions
         ArgumentNullException.ThrowIfNull(projection);
         ArgumentNullException.ThrowIfNull(errorMapper);
         return result.Map(projection).ToOkOrProblem(errorMapper);
+    }
+
+    /// <summary>Maps a successful value to Created without a location and failure with a caller-supplied problem mapper.</summary>
+    public static Results<Created<TValue>, ProblemHttpResult> ToCreatedOrProblem<TValue, TError>(
+        this Result<TValue, TError> result,
+        Func<TError, ProblemDetails> errorMapper)
+        where TValue : notnull
+        where TError : notnull
+    {
+        ArgumentNullException.ThrowIfNull(errorMapper);
+        return result.Match<Results<Created<TValue>, ProblemHttpResult>>(
+            value => Create(value),
+            error => MapProblem(error, errorMapper));
+    }
+
+    /// <summary>Projects a successful value to Created without a location and maps failure with a caller-supplied problem mapper.</summary>
+    public static Results<Created<TResponse>, ProblemHttpResult> ToCreatedOrProblem<TValue, TError, TResponse>(
+        this Result<TValue, TError> result,
+        Func<TError, ProblemDetails> errorMapper,
+        Func<TValue, TResponse> projection)
+        where TValue : notnull
+        where TError : notnull
+        where TResponse : notnull
+    {
+        ArgumentNullException.ThrowIfNull(projection);
+        ArgumentNullException.ThrowIfNull(errorMapper);
+        return result.Match<Results<Created<TResponse>, ProblemHttpResult>>(
+            value => Create(value, projection),
+            error => MapProblem(error, errorMapper));
     }
 
     /// <summary>Maps a successful value to Created and failure with a caller-supplied problem mapper.</summary>
@@ -287,6 +362,17 @@ public static class ResultHttpResultExtensions
         where TSuccess : IResult =>
         successMapper()
             ?? throw new InvalidOperationException("The success mapper returned null.");
+
+    private static Created<TValue> Create<TValue>(
+        TValue value)
+        where TValue : notnull =>
+        TypedResults.Created<TValue>((string?)null, value);
+
+    private static Created<TResponse> Create<TValue, TResponse>(
+        TValue value,
+        Func<TValue, TResponse> projection)
+        where TResponse : notnull =>
+        TypedResults.Created<TResponse>((string?)null, Project(value, projection));
 
     private static Created<TValue> Create<TValue>(
         TValue value,
