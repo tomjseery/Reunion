@@ -177,6 +177,24 @@ public readonly partial struct Result<TValue, TError> : IEquatable<Result<TValue
         return result;
     }
 
+    /// <summary>Composes the result while mapping its existing error to the next error type.</summary>
+    public UnitResult<TNextError> Bind<TNextError>(
+        Func<TValue, UnitResult<TNextError>> bind,
+        Func<TError, TNextError> mapError)
+        where TNextError : notnull
+    {
+        this.EnsureInitialized();
+        ArgumentNullException.ThrowIfNull(bind);
+        ArgumentNullException.ThrowIfNull(mapError);
+
+        if (this.tag is FailureTag)
+            return UnitResult.Failure(mapError(this.error!));
+
+        var result = bind(this.value!);
+        result.EnsureInitialized();
+        return result;
+    }
+
     /// <summary>Composes the result with another result-producing operation.</summary>
     public Result<TNext, TError> Bind<TNext>(Func<TValue, Result<TNext, TError>> bind)
         where TNext : notnull
@@ -186,6 +204,25 @@ public readonly partial struct Result<TValue, TError> : IEquatable<Result<TValue
 
         if (this.tag is FailureTag)
             return Result.Failure<TNext, TError>(this.error!);
+
+        var result = bind(this.value!);
+        result.EnsureInitialized();
+        return result;
+    }
+
+    /// <summary>Composes the result while mapping its existing error to the next error type.</summary>
+    public Result<TNext, TNextError> Bind<TNext, TNextError>(
+        Func<TValue, Result<TNext, TNextError>> bind,
+        Func<TError, TNextError> mapError)
+        where TNext : notnull
+        where TNextError : notnull
+    {
+        this.EnsureInitialized();
+        ArgumentNullException.ThrowIfNull(bind);
+        ArgumentNullException.ThrowIfNull(mapError);
+
+        if (this.tag is FailureTag)
+            return Result.Failure<TNext, TNextError>(mapError(this.error!));
 
         var result = bind(this.value!);
         result.EnsureInitialized();

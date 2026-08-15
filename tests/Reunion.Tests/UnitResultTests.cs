@@ -80,6 +80,52 @@ public sealed class UnitResultTests
     }
 
     [Fact]
+    public void Bind_MappedError_InfersContinuationErrorType()
+    {
+        var binds = 0;
+        var mappings = 0;
+        Func<UnitResult<ApplicationError>> unitBind = () =>
+        {
+            binds++;
+            return UnitResult.Success<ApplicationError>();
+        };
+        Func<Result<int, ApplicationError>> valueBind = () =>
+        {
+            binds++;
+            return Result.Success<int, ApplicationError>(42);
+        };
+        var success = UnitResult.Success<int>();
+        var failure = UnitResult.Failure(2);
+
+        Assert.Equal(UnitResult.Success<ApplicationError>(), success.Bind(unitBind, error =>
+        {
+            mappings++;
+            return new MappedError(error);
+        }));
+        Assert.Equal(
+            UnitResult.Failure<ApplicationError>(new MappedError(2)),
+            failure.Bind(unitBind, error =>
+            {
+                mappings++;
+                return new MappedError(error);
+            }));
+        Assert.Equal(Result.Success<int, ApplicationError>(42), success.Bind(valueBind, error =>
+        {
+            mappings++;
+            return new MappedError(error);
+        }));
+        Assert.Equal(
+            Result.Failure<int, ApplicationError>(new MappedError(2)),
+            failure.Bind(valueBind, error =>
+            {
+                mappings++;
+                return new MappedError(error);
+            }));
+        Assert.Equal(2, binds);
+        Assert.Equal(2, mappings);
+    }
+
+    [Fact]
     public void MapErrorTapAndRecovery_InvokeOnlySelectedDelegates()
     {
         var successes = 0;
@@ -152,4 +198,8 @@ public sealed class UnitResultTests
         Assert.Empty(type.GetConstructors(BindingFlags.Public | BindingFlags.Instance));
         Assert.DoesNotContain(type.GetProperties(), property => property.Name is "Value" or "Error");
     }
+
+    private abstract record ApplicationError;
+
+    private sealed record MappedError(int Value) : ApplicationError;
 }

@@ -153,6 +153,52 @@ public sealed class ResultTests
     }
 
     [Fact]
+    public void Bind_MappedError_InfersContinuationErrorType()
+    {
+        var binds = 0;
+        var mappings = 0;
+        Func<int, UnitResult<ApplicationError>> unitBind = _ =>
+        {
+            binds++;
+            return UnitResult.Success<ApplicationError>();
+        };
+        Func<int, Result<string, ApplicationError>> valueBind = value =>
+        {
+            binds++;
+            return Result.Success<string, ApplicationError>(value.ToString());
+        };
+        var success = Result.Success<int, int>(2);
+        var failure = Result.Failure<int, int>(3);
+
+        Assert.Equal(UnitResult.Success<ApplicationError>(), success.Bind(unitBind, error =>
+        {
+            mappings++;
+            return new MappedError(error);
+        }));
+        Assert.Equal(
+            UnitResult.Failure<ApplicationError>(new MappedError(3)),
+            failure.Bind(unitBind, error =>
+            {
+                mappings++;
+                return new MappedError(error);
+            }));
+        Assert.Equal(Result.Success<string, ApplicationError>("2"), success.Bind(valueBind, error =>
+        {
+            mappings++;
+            return new MappedError(error);
+        }));
+        Assert.Equal(
+            Result.Failure<string, ApplicationError>(new MappedError(3)),
+            failure.Bind(valueBind, error =>
+            {
+                mappings++;
+                return new MappedError(error);
+            }));
+        Assert.Equal(2, binds);
+        Assert.Equal(2, mappings);
+    }
+
+    [Fact]
     public void MapError_EachCase_MapsOnlyFailure()
     {
         var invocations = 0;
@@ -421,4 +467,8 @@ public sealed class ResultTests
     }
 
     private sealed class TestException : Exception;
+
+    private abstract record ApplicationError;
+
+    private sealed record MappedError(int Value) : ApplicationError;
 }
