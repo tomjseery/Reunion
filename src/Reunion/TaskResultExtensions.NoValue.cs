@@ -430,6 +430,18 @@ public static partial class TaskResultExtensions
         return (await source.ConfigureAwait(false)).Bind(bind);
     }
 
+    /// <summary>Composes the result while mapping its existing error to the next error type.</summary>
+    public static async Task<UnitResult<TNextError>> Bind<TError, TNextError>(
+        this Task<UnitResult<TError>> source,
+        Func<UnitResult<TNextError>> bind,
+        Func<TError, TNextError> mapError)
+        where TError : notnull
+        where TNextError : notnull
+    {
+        ArgumentNullException.ThrowIfNull(source);
+        return (await source.ConfigureAwait(false)).Bind(bind, mapError);
+    }
+
     /// <summary>Composes the result with another result-producing operation.</summary>
     public static async Task<Result> Bind<TError>(
         this Task<UnitResult<TError>> source,
@@ -462,6 +474,19 @@ public static partial class TaskResultExtensions
     {
         ArgumentNullException.ThrowIfNull(source);
         return (await source.ConfigureAwait(false)).Bind(bind);
+    }
+
+    /// <summary>Composes the result while mapping its existing error to the next error type.</summary>
+    public static async Task<Result<TValue, TNextError>> Bind<TValue, TError, TNextError>(
+        this Task<UnitResult<TError>> source,
+        Func<Result<TValue, TNextError>> bind,
+        Func<TError, TNextError> mapError)
+        where TValue : notnull
+        where TError : notnull
+        where TNextError : notnull
+    {
+        ArgumentNullException.ThrowIfNull(source);
+        return (await source.ConfigureAwait(false)).Bind(bind, mapError);
     }
 
     /// <summary>Transforms the failure error while preserving success.</summary>
@@ -653,6 +678,37 @@ public static partial class TaskResultExtensions
             .ConfigureAwait(false);
     }
 
+    /// <summary>Asynchronously composes the result while mapping its existing error.</summary>
+    public static Task<UnitResult<TNextError>> BindAsync<TError, TNextError>(
+        this UnitResult<TError> result,
+        Func<Task<UnitResult<TNextError>>> bind,
+        Func<TError, TNextError> mapError)
+        where TError : notnull
+        where TNextError : notnull
+    {
+        result.EnsureInitialized();
+        ArgumentNullException.ThrowIfNull(bind);
+        ArgumentNullException.ThrowIfNull(mapError);
+
+        return result.Match(
+            () => BindErrorSuccessAsync(bind),
+            error => Task.FromResult(UnitResult.Failure(mapError(error))));
+    }
+
+    /// <summary>Asynchronously composes the result while mapping its existing error after awaiting the source.</summary>
+    public static async Task<UnitResult<TNextError>> BindAsync<TError, TNextError>(
+        this Task<UnitResult<TError>> source,
+        Func<Task<UnitResult<TNextError>>> bind,
+        Func<TError, TNextError> mapError)
+        where TError : notnull
+        where TNextError : notnull
+    {
+        ArgumentNullException.ThrowIfNull(source);
+        return await (await source.ConfigureAwait(false))
+            .BindAsync(bind, mapError)
+            .ConfigureAwait(false);
+    }
+
     /// <summary>Asynchronously composes the result with another result-producing operation.</summary>
     public static Task<Result> BindAsync<TError>(
         this UnitResult<TError> result,
@@ -738,6 +794,39 @@ public static partial class TaskResultExtensions
         ArgumentNullException.ThrowIfNull(source);
         return await (await source.ConfigureAwait(false))
             .BindAsync(bind)
+            .ConfigureAwait(false);
+    }
+
+    /// <summary>Asynchronously composes the result while mapping its existing error.</summary>
+    public static Task<Result<TValue, TNextError>> BindAsync<TValue, TError, TNextError>(
+        this UnitResult<TError> result,
+        Func<Task<Result<TValue, TNextError>>> bind,
+        Func<TError, TNextError> mapError)
+        where TValue : notnull
+        where TError : notnull
+        where TNextError : notnull
+    {
+        result.EnsureInitialized();
+        ArgumentNullException.ThrowIfNull(bind);
+        ArgumentNullException.ThrowIfNull(mapError);
+
+        return result.Match(
+            () => BindErrorSuccessAsync(bind),
+            error => Task.FromResult(Result.Failure<TValue, TNextError>(mapError(error))));
+    }
+
+    /// <summary>Asynchronously composes the result while mapping its existing error after awaiting the source.</summary>
+    public static async Task<Result<TValue, TNextError>> BindAsync<TValue, TError, TNextError>(
+        this Task<UnitResult<TError>> source,
+        Func<Task<Result<TValue, TNextError>>> bind,
+        Func<TError, TNextError> mapError)
+        where TValue : notnull
+        where TError : notnull
+        where TNextError : notnull
+    {
+        ArgumentNullException.ThrowIfNull(source);
+        return await (await source.ConfigureAwait(false))
+            .BindAsync(bind, mapError)
             .ConfigureAwait(false);
     }
 
