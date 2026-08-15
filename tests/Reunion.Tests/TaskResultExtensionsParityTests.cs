@@ -90,6 +90,54 @@ public sealed class TaskResultExtensionsParityTests
     }
 
     [Fact]
+    public async Task TaskSourceMappedBindOverloads_InferContinuationErrorType()
+    {
+        var invocations = 0;
+        var unitSuccess = Task.FromResult(UnitResult.Success<int>());
+        var unitFailure = Task.FromResult(UnitResult.Failure(2));
+        var valueSuccess = Task.FromResult(Result.Success<int, int>(3));
+        var valueFailure = Task.FromResult(Result.Failure<int, int>(4));
+
+        Assert.Equal(
+            UnitResult.Success<ApplicationError>(),
+            await unitSuccess.Bind(UnitContinuation, error => new MappedError(error)));
+        Assert.Equal(
+            UnitResult.Failure<ApplicationError>(new MappedError(2)),
+            await unitFailure.Bind(UnitContinuation, error => new MappedError(error)));
+        Assert.Equal(
+            Result.Success<int, ApplicationError>(42),
+            await unitSuccess.Bind(ValueContinuation, error => new MappedError(error)));
+        Assert.Equal(
+            Result.Failure<int, ApplicationError>(new MappedError(2)),
+            await unitFailure.Bind(ValueContinuation, error => new MappedError(error)));
+        Assert.Equal(
+            UnitResult.Success<ApplicationError>(),
+            await valueSuccess.Bind(_ => UnitContinuation(), error => new MappedError(error)));
+        Assert.Equal(
+            UnitResult.Failure<ApplicationError>(new MappedError(4)),
+            await valueFailure.Bind(_ => UnitContinuation(), error => new MappedError(error)));
+        Assert.Equal(
+            Result.Success<int, ApplicationError>(42),
+            await valueSuccess.Bind(_ => ValueContinuation(), error => new MappedError(error)));
+        Assert.Equal(
+            Result.Failure<int, ApplicationError>(new MappedError(4)),
+            await valueFailure.Bind(_ => ValueContinuation(), error => new MappedError(error)));
+        Assert.Equal(4, invocations);
+
+        UnitResult<ApplicationError> UnitContinuation()
+        {
+            invocations++;
+            return UnitResult.Success<ApplicationError>();
+        }
+
+        Result<int, ApplicationError> ValueContinuation()
+        {
+            invocations++;
+            return Result.Success<int, ApplicationError>(42);
+        }
+    }
+
+    [Fact]
     public async Task ResultBindAsyncOverloads_BareAndTaskReceivers_PreserveCasesAndMapErrors()
     {
         var invocations = 0;
@@ -196,6 +244,58 @@ public sealed class TaskResultExtensionsParityTests
         Assert.Equal(Result.Failure<string>("2"), await Task.FromResult(failure).BindAsync(valueBind, error => error.ToString()));
 
         Assert.Equal(4, invocations);
+    }
+
+    [Fact]
+    public async Task TypedMappedBindAsync_InfersContinuationErrorForBareAndTaskReceivers()
+    {
+        var invocations = 0;
+        var unitSuccess = UnitResult.Success<int>();
+        var unitFailure = UnitResult.Failure(2);
+        var valueSuccess = Result.Success<int, int>(3);
+        var valueFailure = Result.Failure<int, int>(4);
+
+        Assert.Equal(
+            UnitResult.Success<ApplicationError>(),
+            await unitSuccess.BindAsync(UnitContinuation, error => new MappedError(error)));
+        Assert.Equal(
+            UnitResult.Failure<ApplicationError>(new MappedError(2)),
+            await unitFailure.BindAsync(UnitContinuation, error => new MappedError(error)));
+        Assert.Equal(
+            Result.Success<int, ApplicationError>(42),
+            await Task.FromResult(unitSuccess)
+                .BindAsync(ValueContinuation, error => new MappedError(error)));
+        Assert.Equal(
+            Result.Failure<int, ApplicationError>(new MappedError(2)),
+            await Task.FromResult(unitFailure)
+                .BindAsync(ValueContinuation, error => new MappedError(error)));
+        Assert.Equal(
+            UnitResult.Success<ApplicationError>(),
+            await valueSuccess.BindAsync(_ => UnitContinuation(), error => new MappedError(error)));
+        Assert.Equal(
+            UnitResult.Failure<ApplicationError>(new MappedError(4)),
+            await valueFailure.BindAsync(_ => UnitContinuation(), error => new MappedError(error)));
+        Assert.Equal(
+            Result.Success<int, ApplicationError>(42),
+            await Task.FromResult(valueSuccess)
+                .BindAsync(_ => ValueContinuation(), error => new MappedError(error)));
+        Assert.Equal(
+            Result.Failure<int, ApplicationError>(new MappedError(4)),
+            await Task.FromResult(valueFailure)
+                .BindAsync(_ => ValueContinuation(), error => new MappedError(error)));
+        Assert.Equal(4, invocations);
+
+        Task<UnitResult<ApplicationError>> UnitContinuation()
+        {
+            invocations++;
+            return Task.FromResult(UnitResult.Success<ApplicationError>());
+        }
+
+        Task<Result<int, ApplicationError>> ValueContinuation()
+        {
+            invocations++;
+            return Task.FromResult(Result.Success<int, ApplicationError>(42));
+        }
     }
 
     [Fact]
@@ -308,7 +408,9 @@ public sealed class TaskResultExtensionsParityTests
         });
         Assert.Throws<ArgumentNullException>(() =>
         {
-            _ = UnitResult.Success<string>().BindAsync(null!, error => error);
+            _ = UnitResult.Success<string>().BindAsync(
+                (Func<Task<Result>>)null!,
+                error => error);
         });
         Assert.Throws<ArgumentNullException>(() =>
         {
@@ -427,4 +529,8 @@ public sealed class TaskResultExtensionsParityTests
     }
 
     private sealed class TestException : Exception;
+
+    private abstract record ApplicationError;
+
+    private sealed record MappedError(int Value) : ApplicationError;
 }
