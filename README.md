@@ -298,6 +298,17 @@ forwards directly to that carrier (`unitResult.Map(...)`, `unitResult.Bind(...)`
 tap/recovery operations), composing `MapError` first when an application error type is requested.
 Only validation vocabulary adaptation and `Combine` remain specific to `ValidationResult`.
 
+When a typed Result continues in a different error vocabulary, `Bind` and `BindAsync` accept the
+error mapping directly. The continuation supplies the destination error type, so a concrete error
+case is contextually converted to its application-owned parent without a cast or a separate
+`MapError` step:
+
+```csharp
+return profileValidation.BindAsync(
+    CreateArtistAsync,
+    errors => new CreateArtistError.Invalid(errors));
+```
+
 `Ensure` applies structured validation to the successful value already owned by a Result. An
 existing failure bypasses validation, valid validation preserves the exact success value, and
 invalid validation becomes the operation-owned error selected by the mapper:
