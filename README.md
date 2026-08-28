@@ -126,6 +126,21 @@ that abstraction when the destination Result uses it. Each extension constructs 
 named case and therefore applies the same null and error validation as its constructor. `ToSome()`
 rejects null; use `ToOption()` when null should produce `None`.
 
+`ToNullable()` is the outward exit, for a boundary that must not carry an `Option<T>` — a serialized
+DTO, a protobuf message, or another framework contract. It is two constraint-overloaded extensions,
+one for `where T : struct` and one for `where T : class`, because `T?` denotes `Nullable<T>` in the
+first case and a nullable reference in the second. A projected overload avoids a `Map` immediately
+before the exit:
+
+```csharp
+Guid? bookingId = bookingIdOption.ToNullable();
+RefundResponse? refund = refundOption.ToNullable(value => new RefundResponse(value.RefundId));
+```
+
+Both overloads live in the `Reunion` namespace, so `ToNullable()` resolves from the payload type
+without naming the declaring class. In a generic method constrained only to `where T : notnull`
+neither overload applies: keep the option, or add the `struct` or `class` constraint the exit needs.
+
 Factories remain available when there is no target type or when conventional construction is more
 readable.
 
