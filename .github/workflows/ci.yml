@@ -14,10 +14,6 @@ on:
         description: Push the packed packages to the feed.
         type: boolean
         default: false
-    secrets:
-      nuget-api-key:
-        description: nuget.org API key with push rights for the Reunion packages.
-        required: false
 
 jobs:
   build-test-pack:
@@ -27,6 +23,13 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Exchange OIDC token for a short-lived nuget.org key
+        if: ${{ inputs.publish }}
+        id: nuget-login
+        uses: NuGet/login@v1
+        with:
+          user: tseery
 
       - name: Install .NET 10 and pinned .NET 11 preview
         uses: actions/setup-dotnet@v4
@@ -145,7 +148,7 @@ jobs:
         if: ${{ inputs.publish }}
         shell: pwsh
         env:
-          NUGET_API_KEY: ${{ secrets.nuget-api-key }}
+          NUGET_API_KEY: ${{ steps.nuget-login.outputs.NUGET_API_KEY }}
         run: |
           $packages = Get-ChildItem artifacts/packages -Filter "*.$env:REUNION_PACKAGE_VERSION.nupkg"
           if ($packages.Count -eq 0) { throw "No packages found for version $env:REUNION_PACKAGE_VERSION." }
