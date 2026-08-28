@@ -15,9 +15,10 @@ jobs:
 
   publish:
     needs: version
+    permissions:
+      contents: read
+      id-token: write
     uses: ./.github/workflows/ci.yml
     with:
       package-version: ${{ needs.version.outputs.package-version }}
       publish: true
-    secrets:
-      nuget-api-key: ${{ secrets.NUGET_API_KEY }}
