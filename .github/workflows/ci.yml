@@ -1,14 +1,29 @@
-name: CI
+﻿name: CI
 
 on:
   push:
+    tags-ignore: ['**']
   pull_request:
+  workflow_call:
+    inputs:
+      package-version:
+        description: Version to stamp on the packages. Defaults to a throwaway CI version.
+        type: string
+        required: false
+      publish:
+        description: Push the packed packages to the feed.
+        type: boolean
+        default: false
+    secrets:
+      packages-token:
+        description: PAT with write:packages on the feed's owning org.
+        required: false
 
 jobs:
   build-test-pack:
     runs-on: windows-latest
     env:
-      REUNION_PACKAGE_VERSION: 0.1.0-ci.${{ github.run_id }}.${{ github.run_attempt }}
+      REUNION_PACKAGE_VERSION: ${{ inputs.package-version || format('0.1.0-ci.{0}.{1}', github.run_id, github.run_attempt) }}
 
     steps:
       - uses: actions/checkout@v4
@@ -125,3 +140,14 @@ jobs:
 
       - name: Build and run net11 Validation package consumer
         run: dotnet run --project tests/PackageConsumers/Reunion.Validation.Consumer.Net11/Reunion.Validation.Consumer.Net11.csproj --configuration Release --no-restore -p:ReunionPackageVersion=$env:REUNION_PACKAGE_VERSION
+
+      - name: Push packages
+        if: ${{ inputs.publish }}
+        shell: pwsh
+        env:
+          PACKAGES_TOKEN: ${{ secrets.packages-token }}
+        run: |
+          dotnet nuget push "artifacts/packages/*.$env:REUNION_PACKAGE_VERSION.nupkg" `
+            --source https://nuget.pkg.github.com/Concertable/index.json `
+            --api-key $env:PACKAGES_TOKEN `
+            --skip-duplicate
