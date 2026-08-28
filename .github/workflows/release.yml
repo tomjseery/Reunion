@@ -1,4 +1,4 @@
-name: Release
+﻿name: Release
 
 on:
   push:
@@ -20,4 +20,4 @@ jobs:
       package-version: ${{ needs.version.outputs.package-version }}
       publish: true
     secrets:
-      packages-token: ${{ secrets.PACKAGES_TOKEN }}
+      nuget-api-key: ${{ secrets.NUGET_API_KEY }}

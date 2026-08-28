@@ -15,8 +15,8 @@ on:
         type: boolean
         default: false
     secrets:
-      packages-token:
-        description: PAT with write:packages on the feed's owning org.
+      nuget-api-key:
+        description: nuget.org API key with push rights for the Reunion packages.
         required: false
 
 jobs:
@@ -145,14 +145,14 @@ jobs:
         if: ${{ inputs.publish }}
         shell: pwsh
         env:
-          PACKAGES_TOKEN: ${{ secrets.packages-token }}
+          NUGET_API_KEY: ${{ secrets.nuget-api-key }}
         run: |
           $packages = Get-ChildItem artifacts/packages -Filter "*.$env:REUNION_PACKAGE_VERSION.nupkg"
           if ($packages.Count -eq 0) { throw "No packages found for version $env:REUNION_PACKAGE_VERSION." }
           foreach ($package in $packages) {
             dotnet nuget push $package.FullName `
-              --source https://nuget.pkg.github.com/Concertable/index.json `
-              --api-key $env:PACKAGES_TOKEN `
+              --source https://api.nuget.org/v3/index.json `
+              --api-key $env:NUGET_API_KEY `
               --skip-duplicate
             if ($LASTEXITCODE -ne 0) { throw "Push failed for $($package.Name)." }
           }
