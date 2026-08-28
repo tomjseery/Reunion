@@ -24,6 +24,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Exchange OIDC token for a short-lived nuget.org key
+        if: ${{ inputs.publish }}
+        id: nuget-login
+        uses: NuGet/login@v1
+        with:
+          user: tseery
+
       - name: Install .NET 10 and pinned .NET 11 preview
         uses: actions/setup-dotnet@v4
         with:
@@ -136,13 +143,6 @@ jobs:
 
       - name: Build and run net11 Validation package consumer
         run: dotnet run --project tests/PackageConsumers/Reunion.Validation.Consumer.Net11/Reunion.Validation.Consumer.Net11.csproj --configuration Release --no-restore -p:ReunionPackageVersion=$env:REUNION_PACKAGE_VERSION
-
-      - name: Exchange OIDC token for a short-lived nuget.org key
-        if: ${{ inputs.publish }}
-        id: nuget-login
-        uses: NuGet/login@v1
-        with:
-          user: tseery
 
       - name: Push packages
         if: ${{ inputs.publish }}
