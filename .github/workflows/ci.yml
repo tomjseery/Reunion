@@ -147,7 +147,12 @@ jobs:
         env:
           PACKAGES_TOKEN: ${{ secrets.packages-token }}
         run: |
-          dotnet nuget push "artifacts/packages/*.$env:REUNION_PACKAGE_VERSION.nupkg" `
-            --source https://nuget.pkg.github.com/Concertable/index.json `
-            --api-key $env:PACKAGES_TOKEN `
-            --skip-duplicate
+          $packages = Get-ChildItem artifacts/packages -Filter "*.$env:REUNION_PACKAGE_VERSION.nupkg"
+          if ($packages.Count -eq 0) { throw "No packages found for version $env:REUNION_PACKAGE_VERSION." }
+          foreach ($package in $packages) {
+            dotnet nuget push $package.FullName `
+              --source https://nuget.pkg.github.com/Concertable/index.json `
+              --api-key $env:PACKAGES_TOKEN `
+              --skip-duplicate
+            if ($LASTEXITCODE -ne 0) { throw "Push failed for $($package.Name)." }
+          }
