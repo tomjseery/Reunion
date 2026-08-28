@@ -10,10 +10,6 @@ on:
         description: Version to stamp on the packages. Defaults to a throwaway CI version.
         type: string
         required: false
-      publish:
-        description: Push the packed packages to the feed.
-        type: boolean
-        default: false
 
 jobs:
   build-test-pack:
@@ -24,12 +20,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Exchange OIDC token for a short-lived nuget.org key
-        if: ${{ inputs.publish }}
-        id: nuget-login
-        uses: NuGet/login@v1
-        with:
-          user: tseery
 
       - name: Install .NET 10 and pinned .NET 11 preview
         uses: actions/setup-dotnet@v4
@@ -92,6 +82,13 @@ jobs:
           ./eng/Inspect-AspNetCorePackage.ps1 -PackagePath $aspNetCorePackagePath -ExpectedVersion $env:REUNION_PACKAGE_VERSION
           ./eng/Inspect-ValidationPackage.ps1 -PackagePath $validationPackagePath -ExpectedVersion $env:REUNION_PACKAGE_VERSION
 
+      - name: Upload packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: packages
+          path: artifacts/packages/*.nupkg
+          if-no-files-found: error
+
       - name: Restore clean package consumers
         run: |
           $packageSource = (Resolve-Path -LiteralPath artifacts/packages).Path
@@ -144,18 +141,3 @@ jobs:
       - name: Build and run net11 Validation package consumer
         run: dotnet run --project tests/PackageConsumers/Reunion.Validation.Consumer.Net11/Reunion.Validation.Consumer.Net11.csproj --configuration Release --no-restore -p:ReunionPackageVersion=$env:REUNION_PACKAGE_VERSION
 
-      - name: Push packages
-        if: ${{ inputs.publish }}
-        shell: pwsh
-        env:
-          NUGET_API_KEY: ${{ steps.nuget-login.outputs.NUGET_API_KEY }}
-        run: |
-          $packages = Get-ChildItem artifacts/packages -Filter "*.$env:REUNION_PACKAGE_VERSION.nupkg"
-          if ($packages.Count -eq 0) { throw "No packages found for version $env:REUNION_PACKAGE_VERSION." }
-          foreach ($package in $packages) {
-            dotnet nuget push $package.FullName `
-              --source https://api.nuget.org/v3/index.json `
-              --api-key $env:NUGET_API_KEY `
-              --skip-duplicate
-            if ($LASTEXITCODE -ne 0) { throw "Push failed for $($package.Name)." }
-          }
