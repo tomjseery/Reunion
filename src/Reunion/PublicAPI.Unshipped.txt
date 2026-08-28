@@ -62,6 +62,8 @@ Reunion.Option<T>.TryGetValue(out T value) -> bool
 Reunion.Option<T>.ValueOr(T fallback) -> T
 Reunion.Option<T>.ValueOrElse(System.Func<T>! fallback) -> T
 Reunion.OptionExtensions
+Reunion.OptionReferenceNullableExtensions
+Reunion.OptionValueNullableExtensions
 Reunion.Some<T>
 Reunion.Some<T>.Deconstruct(out T value) -> void
 Reunion.Some<T>.Equals(Reunion.Some<T> other) -> bool
@@ -175,6 +177,10 @@ static Reunion.Option<T>.implicit operator Reunion.Option<T>(T value) -> Reunion
 static Reunion.OptionExtensions.ToOption<T>(this System.Threading.Tasks.Task<T?>! source) -> System.Threading.Tasks.Task<Reunion.Option<T!>>!
 static Reunion.OptionExtensions.ToOption<T>(this T? value) -> Reunion.Option<T!>
 static Reunion.OptionExtensions.ToOption<T>(this T? value) -> Reunion.Option<T>
+static Reunion.OptionReferenceNullableExtensions.ToNullable<T, TResult>(this Reunion.Option<T> option, System.Func<T, TResult!>! map) -> TResult?
+static Reunion.OptionReferenceNullableExtensions.ToNullable<T>(this Reunion.Option<T!> option) -> T?
+static Reunion.OptionValueNullableExtensions.ToNullable<T, TResult>(this Reunion.Option<T> option, System.Func<T, TResult>! map) -> TResult?
+static Reunion.OptionValueNullableExtensions.ToNullable<T>(this Reunion.Option<T> option) -> T?
 static Reunion.NamedCaseExtensions.ToFailure<TError>(this TError error) -> Reunion.Failure<TError>
 static Reunion.NamedCaseExtensions.ToSome<T>(this T value) -> Reunion.Some<T>
 static Reunion.NamedCaseExtensions.ToSuccess<TValue>(this TValue value) -> Reunion.Success<TValue>
