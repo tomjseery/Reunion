@@ -13,12 +13,51 @@ jobs:
       - id: strip
         run: echo "value=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
 
-  publish:
-    needs: version
+  preflight:
+    runs-on: ubuntu-latest
     permissions:
       contents: read
       id-token: write
+    steps:
+      - name: Verify the trusted-publishing policy accepts this workflow
+        uses: NuGet/login@v1
+        with:
+          user: tseery
+
+  build:
+    needs: [version, preflight]
     uses: ./.github/workflows/ci.yml
     with:
       package-version: ${{ needs.version.outputs.package-version }}
-      publish: true
+
+  push:
+    needs: [version, build]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: packages
+          path: packages
+
+      - name: Exchange OIDC token for a short-lived nuget.org key
+        id: nuget-login
+        uses: NuGet/login@v1
+        with:
+          user: tseery
+
+      - name: Push packages
+        env:
+          NUGET_API_KEY: ${{ steps.nuget-login.outputs.NUGET_API_KEY }}
+        run: |
+          shopt -s nullglob
+          packages=(packages/*.${{ needs.version.outputs.package-version }}.nupkg)
+          if [ ${#packages[@]} -eq 0 ]; then
+            echo "No packages found for version ${{ needs.version.outputs.package-version }}." >&2
+            exit 1
+          fi
+          for package in "${packages[@]}"; do
+            dotnet nuget push "$package"               --source https://api.nuget.org/v3/index.json               --api-key "$NUGET_API_KEY"               --skip-duplicate
+          done
