@@ -1,4 +1,4 @@
 {
   "schema_version": 1,
-  "provider": "work-items:manage"
+  "provider": "personal:work-item"
 }
