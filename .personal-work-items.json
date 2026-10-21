@@ -8,5 +8,6 @@
     "bug": "Bug",
     "mistake": "Task",
     "debt": "Task"
-  }
+  },
+  "provider": "personal:work-item"
 }
