@@ -18,7 +18,7 @@ solution. Prefer exhaustive union matching, native conversions, and compiler-enf
 in the .NET 11 asset. Compatibility helpers that exist only to emulate those capabilities belong in
 the .NET 10 asset and must not leak into or dictate the .NET 11 surface.
 
-<!-- BEGIN personal:rules sha256:f878befe2d5e1e69bc6e5cc2ed10c6e684ce894987ff4a9861c7cc2b802fe802 -->
+<!-- BEGIN personal:rules sha256:eee7a719bb90e67aaa81ac101a45836dd099bc745fee61216c99ec7d6075f12d -->
 # Personal rules
 
 These rules govern every project that explicitly adopts `personal@tj-agents`. Adoption records the
@@ -32,8 +32,9 @@ Keep one current supported solution. When replacing behavior, remove the superse
 fallback implementations, adapters, configuration formats, compatibility branches and forwarding or
 migration docs. Migrate all known callers, project declarations, installed registrations, generated
 artifacts and live runtime entry points in the same cutover, and coordinate upgrades with the actual
-collaborating developers. A commit that removes or renames a skill while a tracked source still names its
-old `<package>:<name>` is blocked until every reference is migrated or deleted.
+collaborating developers. Run each migration once during the cutover and delete it; never ship migration
+or cleanup code that runs again later. CI fails a commit that removes or renames a skill while a tracked source
+still names its old `<package>:<name>`.
 
 Verify the entry points people actually use on every supported platform, including Windows and Linux
 launch paths where supported. Source edits, successful generation, passing unit tests and version commands
